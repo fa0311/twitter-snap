@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "scripts": {
     "dev:cli": "npx tsx src/cli.ts 1518623997054918657",
     "dev:style": "react-scripts start",
