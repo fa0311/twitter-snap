@@ -1,11 +1,11 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.6",
+  "version": "0.0.8",
   "scripts": {
     "dev:cli": "npx tsx src/cli.ts 1518623997054918657",
     "dev:style": "react-scripts start",
     "start": "node dist/cli.js 1518623997054918657",
-    "build": "npx tsc && npx cpx2 assets/* dist/assets"
+    "build": "npx tsc && npx cpx2 src/assets/* dist/assets"
   },
   "bin": {
     "twitter-snap": "dist/cli.js"
@@ -15,16 +15,16 @@
     "commander": "^11.1.0",
     "satori": "^0.10.9",
     "twitter-openapi-typescript": "^0.0.19",
-    "typescript": "^4.9.5"
+    "react": "^18.2.0"
   },
   "devDependencies": {
     "@types/jest": "^27.5.2",
     "@types/node": "^16.18.60",
     "@types/react": "^18.2.34",
     "@types/react-dom": "^18.0.11",
-    "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "typescript": "^4.9.5"
   },
   "eslintConfig": {
     "extends": [

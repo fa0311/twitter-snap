@@ -1,12 +1,15 @@
 #!/usr/bin/env node
 import { TwitterSnap } from "./core/twitterSnap";
 import { Command } from "commander";
-import { promises as fs } from "fs";
+import { promises as fs, realpathSync } from "fs";
+import * as path from "path";
 
-const version = "0.0.6";
-const font = "assets/NotoSansCJKjp-Regular.otf";
-const boldFont = "assets/NotoSansCJKjp-Bold.otf";
-const emojiFont = "assets/twemoji/{code}.svg";
+const current = path.dirname(realpathSync(__filename));
+
+const version = "0.0.8";
+const font = path.join(current, "./assets/NotoSansCJKjp-Regular.otf");
+const boldFont = path.join(current, "./assets/NotoSansCJKjp-Bold.otf");
+const emojiFont = path.join(current, "./assets/twemoji/{code}.svg");
 
 const program = new Command();
 program.name("twitter-snap").version(version);
