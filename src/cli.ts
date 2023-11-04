@@ -3,7 +3,7 @@ import { TwitterSnap } from "./core/twitterSnap";
 import { Command } from "commander";
 import { promises as fs } from "fs";
 
-const version = "0.0.5";
+const version = "0.0.6";
 const font = "assets/NotoSansCJKjp-Regular.otf";
 const boldFont = "assets/NotoSansCJKjp-Bold.otf";
 const emojiFont = "assets/twemoji/{code}.svg";

@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.5",
+  "version": "0.0.6",
   "scripts": {
     "dev:cli": "npx tsx src/cli.ts 1518623997054918657",
     "dev:style": "react-scripts start",
@@ -8,7 +8,7 @@
     "build": "npx tsc && npx cpx2 assets/* dist/assets"
   },
   "bin": {
-    "twitter-snap": "dist/bin.js"
+    "twitter-snap": "dist/cli.js"
   },
   "dependencies": {
     "@napi-rs/image": "^1.7.0",
