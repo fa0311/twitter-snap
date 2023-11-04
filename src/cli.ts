@@ -1,7 +1,8 @@
+#!/usr/bin/env node
 import { TwitterSnap } from "./core/twitterSnap";
 import { Command } from "commander";
 
-const version = "0.0.1";
+const version = "0.0.4";
 const font = "assets/NotoSansCJKjp-Regular.otf";
 const boldFont = "assets/NotoSansCJKjp-Bold.otf";
 

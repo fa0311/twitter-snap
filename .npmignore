@@ -1,0 +1,6 @@
+/assets
+/node_modules
+/public
+/src
+/dist/index.*
+output.png

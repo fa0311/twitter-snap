@@ -1,4 +1,4 @@
-node_modules
-dist
-assets/*
-dist
+/node_modules
+/dist
+/assets/*
+output.png
