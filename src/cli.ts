@@ -13,18 +13,19 @@ program
   .argument("<string>", "tweet url or tweet id")
   .option("-o, --output <path>", "output file path", "output.png")
   .option("-w, --width <number>", "image width", "600")
-  .option("-h, --height <number>", "image height", "400")
+  .option("-h, --height <number>", "image height")
+  .option("-s, --style <string>", "style", "normal")
   .option("--font <path>", "font path", font)
   .option("--bold-font <path>", "bold font path", boldFont)
-  .action(async (text, { output, width, height, font, boldFont }) => {
+  .action(async (text, { output, width, height, style, font, boldFont }) => {
     const id = isNaN(text) ? text.split("/").pop() : text;
     const twitterSnap = new TwitterSnap({
       width: parseInt(width),
-      height: parseInt(height),
+      height: height ? parseInt(height) : undefined,
       font: font,
       boldFont: boldFont,
     });
-    const writer = await twitterSnap.render(id);
+    const writer = await twitterSnap.render({ id, styleName: style });
     await writer.save(output);
     process.exit(0);
   });

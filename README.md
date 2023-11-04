@@ -4,7 +4,7 @@ Create beautiful Tweet images fast.
 Fast, good design, Browser is not a dependency.
 
 ```shell
-npx twitter-snap https://twitter.com/elonmusk/status/1518623997054918657 -h 200
+npx twitter-snap https://twitter.com/elonmusk/status/1518623997054918657
 ```
 
 ![image](./docs/img/output.png)
