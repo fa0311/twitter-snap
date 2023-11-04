@@ -1,8 +1,8 @@
 import satori, { SatoriOptions } from "satori";
 import { Transformer } from "@napi-rs/image";
 import Normal from "./../style/normal";
-import * as fs from "fs";
-
+import { promises as fs } from "fs";
+import { FontOptions } from "./satori";
 import { TwitterOpenApi, TweetApiUtilsData } from "twitter-openapi-typescript";
 
 export type StyleComponent = (props: {
@@ -12,9 +12,8 @@ export type StyleComponent = (props: {
 type TwitterSnapParams = {
   width: number;
   height?: number;
-  font: string;
-  boldFont: string;
-  lang?: string;
+  font: FontOptions[];
+  emojiFont: string;
 };
 type TwitterSnapRenderParams = {
   id: string;
@@ -37,22 +36,20 @@ export class TwitterSnap {
     this.option = {
       width: this.width,
       height: this.height,
-      fonts: [
-        {
-          name: "Regular",
-          data: fs.readFileSync(param.font),
-          weight: 400,
-          style: "normal",
-          lang: param.lang,
-        },
-        {
-          name: "Bold",
-          data: fs.readFileSync(param.boldFont),
-          weight: 700,
-          style: "normal",
-          lang: param.lang,
-        },
-      ],
+      fonts: param.font,
+      loadAdditionalAsset: async (code: string, segment: string) => {
+        if (code === "emoji") {
+          const base64Header = "data:image/svg+xml;base64,";
+          const unicode = Array.from(segment)
+            .map((c) => c.codePointAt(0)!.toString(16))
+            .join("-");
+          const res = await fs.readFile(
+            param.emojiFont.replace("{code}", unicode)
+          );
+          return `${base64Header}${res.toString("base64")}`;
+        }
+        return "";
+      },
     };
   }
 
@@ -129,51 +126,51 @@ export class TwitterSnapWriter {
   };
 
   svg = async (output: string) => {
-    await fs.promises.writeFile(output, this.data);
+    await fs.writeFile(output, this.data);
   };
   raw = async (output: string) => {
-    await fs.promises.writeFile(output, this.data);
+    await fs.writeFile(output, this.data);
   };
   jpeg = async (output: string) => {
     const data = await (await this.trasformer()).jpeg();
-    await fs.promises.writeFile(output, data);
+    await fs.writeFile(output, data);
   };
   png = async (output: string) => {
     const data = await (await this.trasformer()).png();
-    await fs.promises.writeFile(output, data);
+    await fs.writeFile(output, data);
   };
 
   bmp = async (output: string) => {
     const data = await (await this.trasformer()).bmp();
-    await fs.promises.writeFile(output, data);
+    await fs.writeFile(output, data);
   };
 
   ico = async (output: string) => {
     const data = await (await this.trasformer()).ico();
-    await fs.promises.writeFile(output, data);
+    await fs.writeFile(output, data);
   };
   tiff = async (output: string) => {
     const data = await (await this.trasformer()).tiff();
-    await fs.promises.writeFile(output, data);
+    await fs.writeFile(output, data);
   };
   webp = async (output: string) => {
     const data = await (await this.trasformer()).webp();
-    await fs.promises.writeFile(output, data);
+    await fs.writeFile(output, data);
   };
   avif = async (output: string) => {
     const data = await (await this.trasformer()).avif();
-    await fs.promises.writeFile(output, data);
+    await fs.writeFile(output, data);
   };
   pnm = async (output: string) => {
     const data = await (await this.trasformer()).pnm();
-    await fs.promises.writeFile(output, data);
+    await fs.writeFile(output, data);
   };
   tga = async (output: string) => {
     const data = await (await this.trasformer()).tga();
-    await fs.promises.writeFile(output, data);
+    await fs.writeFile(output, data);
   };
   farbfeld = async (output: string) => {
     const data = await (await this.trasformer()).farbfeld();
-    await fs.promises.writeFile(output, data);
+    await fs.writeFile(output, data);
   };
 }

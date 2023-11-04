@@ -20,7 +20,7 @@ Options:
   -o, --output <path>    output file path (default: "output.png")
   -w, --width <number>   image width (default: "600")
   -h, --height <number>  image height (default: "400")
-  --font <path>          font path (default: "assets/NotoSansCJKjp-Regular.otf")
-  --bold-font <path>     bold font path (default: "assets/NotoSansCJKjp-Bold.otf")
+  --font <path>          font path (default: "assets/NotoSansCJK-Regular.otf")
+  --bold-font <path>     bold font path (default: "assets/NotoSansCJK-Bold.otf")
   --help                 display help for command
 ```

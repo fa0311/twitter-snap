@@ -5,6 +5,7 @@ const Normal: StyleComponent = ({ data }) => {
   const name = data.user.legacy.name;
   const id = data.user.legacy.screenName;
   const text = data.tweet.legacy!.fullText;
+  const lang = data.tweet.legacy!.lang;
 
   const indices: {
     start: number;
@@ -25,6 +26,7 @@ const Normal: StyleComponent = ({ data }) => {
           style={{
             width: "100%",
             borderRadius: "10px",
+            border: "1px solid #e6e6e6",
           }}
           src={m.mediaUrlHttps}
         />
@@ -56,16 +58,25 @@ const Normal: StyleComponent = ({ data }) => {
   const textSplit = Array.from(text).reduce((acc, cur, i) => {
     const isStart = indices.some(({ start }) => start === i);
     const isEnd = indices.some(({ end }) => end === i);
-    if (isStart) {
-      const indice = indices.find(({ start }) => start === i)!;
-      acc.push({ text: "", span: indice.span, fn: indice.fn });
-    }
-    if (isEnd || (i === 0 && !isStart)) {
+
+    if (isEnd || i === 0 || cur === "\n") {
       acc.push({
-        text: cur,
-        span: true,
+        text: "",
+        span: cur !== "\n",
         fn: (text) => <span key={i}>{text}</span>,
       });
+    } else {
+      if (isStart) {
+        indices
+          .filter(({ start }) => start === i)
+          .forEach((indice) => {
+            acc.push({
+              text: "",
+              span: indice.span,
+              fn: indice.fn,
+            });
+          });
+      }
     }
     const last = acc.pop()!;
     last.text += cur;
@@ -96,6 +107,8 @@ const Normal: StyleComponent = ({ data }) => {
             fontSize: "17px",
             margin: "0px",
             marginTop: "12px",
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-all",
           }}
         >
           {t.map((t) => t.fn(t.text))}
@@ -108,6 +121,7 @@ const Normal: StyleComponent = ({ data }) => {
 
   return (
     <div
+      lang={lang}
       style={{
         display: "flex",
         justifyContent: "center",
