@@ -1,6 +1,4 @@
-import { Transformer } from "@napi-rs/image";
 import Normal from "./../style/normal";
-import { promises as fs } from "fs";
 import { ImageResponse } from "@vercel/og";
 import { TwitterOpenApi, TweetApiUtilsData } from "twitter-openapi-typescript";
 
