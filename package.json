@@ -15,7 +15,7 @@
     "@vercel/og": "^0.5.20",
     "commander": "^11.1.0",
     "react": "^18.2.0",
-    "twitter-openapi-typescript": "^0.0.19"
+    "twitter-openapi-typescript": "^0.0.20"
   },
   "devDependencies": {
     "@types/jest": "^27.5.2",
