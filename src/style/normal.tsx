@@ -12,24 +12,31 @@ const Normal: StyleComponent = ({ data }) => {
   const text =
     data.tweet.noteTweet?.noteTweetResults.result.text ??
     data.tweet.legacy!.fullText;
-  console.log(data.tweet);
 
   const lang = data.tweet.legacy!.lang;
 
   const indices: {
     start: number;
     end: number;
-    span: boolean;
-    fn: (text: string) => React.ReactElement;
+    fn: () => React.ReactElement;
   }[] = [];
+
+  // const indices: {
+  //   color: string;
+  //   italic: boolean;
+  //   bold: boolean;
+  // }[] = [];
 
   if (isNote) {
     data.tweet.legacy!.entities.media?.forEach((m) =>
       indices.push({
+        start: m.indices[0],
+        end: m.indices[0] + 1,
+        /*
         start: Array.from(text).length,
         end: Array.from(text).length + 1,
-        span: false,
-        fn: (text) => (
+        */
+        fn: () => (
           <img
             key={m.indices[0]}
             alt="img"
@@ -48,8 +55,7 @@ const Normal: StyleComponent = ({ data }) => {
       indices.push({
         start: m.indices[0],
         end: m.indices[1],
-        span: false,
-        fn: (text) => (
+        fn: () => (
           <img
             key={m.indices[0]}
             alt="img"
@@ -65,72 +71,53 @@ const Normal: StyleComponent = ({ data }) => {
     );
   }
 
-  [
-    ...(data.tweet.legacy!.entities.hashtags ?? []),
-    ...(data.tweet.legacy!.entities.urls ?? []),
-  ].forEach((m) =>
-    indices.push({
-      start: m.indices[0],
-      end: m.indices[1],
-      span: true,
-      fn: (text) => (
-        <span
-          key={m.indices[0]}
-          style={{
-            color: "#1d9bf0",
-          }}
-        >
-          {text}
-        </span>
-      ),
-    })
-  );
+  console.log(indices);
+  // 1721006592303251551
 
-  const textSplit = [...Array.from(text), ""].reduce((acc, cur, i) => {
-    const isStart = indices.some(({ start }) => start === i);
-    const isEnd = indices.some(({ end }) => end === i);
+  const textSplit = Array.from(text).map((acc, i) => {
+    const link = [
+      ...(data.tweet.legacy!.entities.hashtags ?? []),
+      ...(data.tweet.legacy!.entities.urls ?? []),
+    ].some(({ indices: [start, end] }) => start <= i && i < end);
 
-    if (isEnd || i === 0 || cur === "\n") {
-      acc.push({
-        text: "",
-        span: cur !== "\n",
-        fn: (text) => <span key={i}>{text}</span>,
-      });
-    } else {
-      if (isStart) {
-        indices
-          .filter(({ start }) => start === i)
-          .forEach((indice) => {
-            acc.push({
-              text: "",
-              span: indice.span,
-              fn: indice.fn,
-            });
-          });
-      }
-    }
-    const last = acc.pop()!;
-    last.text += cur;
-    return [...acc, last];
-  }, [] as { text: string; span: boolean; fn: (text: string) => React.ReactElement }[]);
+    return {
+      char: acc,
+      color: link ? "#1d9bf0" : undefined,
+    };
+  }, [] as { char: string; color?: string }[]);
 
   const textFlat = textSplit.reduce((acc, cur, i) => {
-    const prev = textSplit[i - 1]?.span ?? false;
-    if (cur.span || i === 0) {
-      if (prev) {
-        const last = acc.pop()!;
-        return [...acc, [...last, cur]];
-      } else {
-        return [...acc, [cur]];
-      }
+    const isStart =
+      indices.some(({ start }) => start === i) ||
+      indices.some(({ end }) => end === i - 1);
+
+    if (isStart || i === 0) {
+      return [
+        ...acc,
+        {
+          start: i,
+          end: i + 1,
+          data: [cur],
+        },
+      ];
     } else {
-      return [...acc, [cur]];
+      const last = acc.pop()!;
+      return [
+        ...acc,
+        { start: last.start, end: i + 1, data: [...last.data, cur] },
+      ];
     }
-  }, [] as { text: string; span: boolean; fn: (text: string) => React.ReactElement }[][]);
+  }, [] as { start: number; end: number; data: { char: string; color?: string }[] }[]);
+
+  console.log(textFlat);
 
   const textElement = textFlat.map((t, i) => {
-    const span = t[0].span;
-    if (span) {
+    const contains = indices.filter(
+      ({ start, end }) => start <= t.start && end <= t.end
+    );
+    if (contains.length) {
+      return contains[0].fn();
+    } else {
       return (
         <p
           key={i}
@@ -142,11 +129,18 @@ const Normal: StyleComponent = ({ data }) => {
             wordBreak: "break-all",
           }}
         >
-          {t.map((t) => t.fn(t.text))}
+          {t.data.map(({ char, color }, i) => (
+            <span
+              key={i}
+              style={{
+                color: color ?? undefined,
+              }}
+            >
+              {char}
+            </span>
+          ))}
         </p>
       );
-    } else {
-      return t[0].fn(t[0].text);
     }
   });
 
