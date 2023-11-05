@@ -1,10 +1,11 @@
+import { ReactElement } from "react";
 import Normal from "./../style/normal";
 import { ImageResponse } from "@vercel/og";
 import { TwitterOpenApi, TweetApiUtilsData } from "twitter-openapi-typescript";
 
 export type StyleComponent = (props: {
   data: TweetApiUtilsData;
-}) => React.ReactElement;
+}) => ReactElement;
 
 type TwitterSnapParams = {
   width: number;

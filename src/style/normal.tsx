@@ -1,3 +1,5 @@
+/* eslint-disable @next/next/no-img-element */
+
 import { StyleComponent } from "./../core/twitterSnap";
 
 const Normal: StyleComponent = ({ data }) => {
