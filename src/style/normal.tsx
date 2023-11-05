@@ -1,12 +1,19 @@
 /* eslint-disable @next/next/no-img-element */
-
+import React from "react";
 import { StyleComponent } from "./../core/twitterSnap";
 
 const Normal: StyleComponent = ({ data }) => {
   const icon = data.user.legacy.profileImageUrlHttps;
   const name = data.user.legacy.name;
   const id = data.user.legacy.screenName;
-  const text = data.tweet.legacy!.fullText;
+
+  const isNote = !!data.tweet.noteTweet;
+
+  const text =
+    data.tweet.noteTweet?.noteTweetResults.result.text ??
+    data.tweet.legacy!.fullText;
+  console.log(data.tweet);
+
   const lang = data.tweet.legacy!.lang;
 
   const indices: {
@@ -16,25 +23,47 @@ const Normal: StyleComponent = ({ data }) => {
     fn: (text: string) => React.ReactElement;
   }[] = [];
 
-  data.tweet.legacy!.entities.media?.forEach((m) =>
-    indices.push({
-      start: m.indices[0],
-      end: m.indices[1],
-      span: false,
-      fn: (text) => (
-        <img
-          key={m.indices[0]}
-          alt="img"
-          style={{
-            width: "100%",
-            borderRadius: "10px",
-            border: "1px solid #e6e6e6",
-          }}
-          src={m.mediaUrlHttps}
-        />
-      ),
-    })
-  );
+  if (isNote) {
+    data.tweet.legacy!.entities.media?.forEach((m) =>
+      indices.push({
+        start: Array.from(text).length,
+        end: Array.from(text).length + 1,
+        span: false,
+        fn: (text) => (
+          <img
+            key={m.indices[0]}
+            alt="img"
+            style={{
+              width: "100%",
+              borderRadius: "10px",
+              border: "1px solid #e6e6e6",
+            }}
+            src={m.mediaUrlHttps}
+          />
+        ),
+      })
+    );
+  } else {
+    data.tweet.legacy!.entities.media?.forEach((m) =>
+      indices.push({
+        start: m.indices[0],
+        end: m.indices[1],
+        span: false,
+        fn: (text) => (
+          <img
+            key={m.indices[0]}
+            alt="img"
+            style={{
+              width: "100%",
+              borderRadius: "10px",
+              border: "1px solid #e6e6e6",
+            }}
+            src={m.mediaUrlHttps}
+          />
+        ),
+      })
+    );
+  }
 
   [
     ...(data.tweet.legacy!.entities.hashtags ?? []),
@@ -57,7 +86,7 @@ const Normal: StyleComponent = ({ data }) => {
     })
   );
 
-  const textSplit = Array.from(text).reduce((acc, cur, i) => {
+  const textSplit = [...Array.from(text), ""].reduce((acc, cur, i) => {
     const isStart = indices.some(({ start }) => start === i);
     const isEnd = indices.some(({ end }) => end === i);
 

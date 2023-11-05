@@ -16,7 +16,6 @@ export default function Home() {
       .then((e) => e.json())
       .then((e) => setState(e.data));
   }, [id]);
-
   return (
     <>
       <input value={id} onChange={(e) => setId(e.target.value)} />
