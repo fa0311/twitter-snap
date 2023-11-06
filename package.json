@@ -14,8 +14,9 @@
     "@napi-rs/image": "^1.7.0",
     "@vercel/og": "^0.5.20",
     "commander": "^11.1.0",
+    "graphemesplit": "^2.4.4",
     "react": "^18.2.0",
-    "twitter-openapi-typescript": "^0.0.20"
+    "twitter-openapi-typescript": "^0.0.24"
   },
   "devDependencies": {
     "@types/jest": "^27.5.2",
