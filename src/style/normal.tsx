@@ -2,10 +2,9 @@
 import React from "react";
 import { StyleComponent } from "./../core/twitterSnap";
 import { NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum } from "twitter-openapi-typescript-generated";
+import split from "graphemesplit";
 
 const TweetConverter: StyleComponent = ({ data }) => {
-  const isNote = !!data.tweet.noteTweet;
-
   const note = data.tweet.noteTweet?.noteTweetResults.result;
   const legacy = data.tweet.legacy!;
 
@@ -24,25 +23,71 @@ const TweetConverter: StyleComponent = ({ data }) => {
     ],
   };
 
-  const inline = note?.media?.inlineMedia ?? [];
+  const inlineMedia = note?.media?.inlineMedia ?? [];
   const media = entities.media ?? [];
+  const richtextTags = note?.richtext?.richtextTags ?? [];
 
-  const lengthConvert = (length: number) => {
-    return Array.from(text.slice(0, length)).length;
-  };
+  const normalizeMap: {
+    array: number;
+    str: number;
+  }[] = [{ array: 0, str: 0 }];
 
-  const ConvertedRichtextTags = note?.richtext?.richtextTags.map(
+  const trueSplit = split(text).map((char, index) => ({ char, index }));
+
+  trueSplit.forEach(({ char }) => {
+    const last = normalizeMap[normalizeMap.length - 1];
+    normalizeMap.push({
+      array: Array.from(char).length + last.array,
+      str: char.length + last.str,
+    });
+  });
+
+  const normalizeRichtextTags = richtextTags.map(
     ({ fromIndex, toIndex, richtextTypes }) => ({
-      start: lengthConvert(fromIndex),
-      end: lengthConvert(toIndex),
+      start: normalizeMap.findIndex(({ str }) => str === fromIndex),
+      end: normalizeMap.findIndex(({ str }) => str === toIndex),
       type: richtextTypes,
     })
   );
 
-  const indices: {
+  const normalizeInlineMedia = inlineMedia.map(({ index, mediaId }) => ({
+    index: normalizeMap.findIndex(({ str }) => str === index),
+    mediaId,
+  }));
+
+  const normalizeHashtags = entities.hashtags.map(({ indices, tag }) => ({
+    start: normalizeMap.findIndex(({ array }) => array === indices[0]),
+    end: normalizeMap.findIndex(({ array }) => array === indices[1]),
+    tag,
+  }));
+
+  const normalizeMedia = entities.media.map(
+    ({ indices, idStr, mediaUrlHttps }) => ({
+      start: normalizeMap.findIndex(({ array }) => array === indices[0]),
+      end: normalizeMap.findIndex(({ array }) => array === indices[1]),
+      idStr,
+      mediaUrlHttps,
+    })
+  );
+
+  const normalizeUrls = entities.urls.map(({ indices, displayUrl }) => ({
+    start: normalizeMap.findIndex(({ array }) => array === indices[0]),
+    end: normalizeMap.findIndex(({ array }) => array === indices[1]),
+    displayUrl,
+  }));
+
+  const normalizeUserMentions = entities.userMentions.map(
+    ({ indices, screenName }) => ({
+      start: normalizeMap.findIndex(({ array }) => array === indices[0]),
+      end: normalizeMap.findIndex(({ array }) => array === indices[1]),
+      screenName,
+    })
+  );
+
+  const charIndices: {
     start: number;
     end: number;
-    fn: () => React.ReactElement;
+    chars: string[];
   }[] = [];
 
   const insert: {
@@ -50,11 +95,13 @@ const TweetConverter: StyleComponent = ({ data }) => {
     fn: () => React.ReactElement;
   }[] = [];
 
-  media.forEach((m) => {
-    const find = inline.find(({ mediaId }) => mediaId === m.idStr);
-    if (isNote) {
+  normalizeMedia.forEach((m) => {
+    const find = normalizeInlineMedia.find(
+      ({ mediaId }) => mediaId === m.idStr
+    );
+    if (find) {
       insert.push({
-        index: lengthConvert(find!.index),
+        index: find.index,
         fn: () => (
           <img
             key={m.idStr}
@@ -69,9 +116,14 @@ const TweetConverter: StyleComponent = ({ data }) => {
         ),
       });
     } else {
-      indices.push({
-        start: m.indices[0],
-        end: m.indices[1],
+      charIndices.push({
+        start: m.start,
+        end: m.end,
+        chars: [],
+      });
+
+      insert.push({
+        index: m.start,
         fn: () => (
           <img
             key={m.idStr}
@@ -87,26 +139,47 @@ const TweetConverter: StyleComponent = ({ data }) => {
       });
     }
   });
+  normalizeUrls.forEach(({ start, end, displayUrl }) => {
+    charIndices.push({
+      start: start,
+      end: end,
+      chars: split(displayUrl),
+    });
+  });
 
-  const charDataList = Array.from(text).map((acc, i) => {
-    const link = [...(entities.hashtags ?? []), ...(entities.urls ?? [])].some(
-      ({ indices: [start, end] }) => start <= i && i < end
+  const replacedSplit: typeof trueSplit = [];
+  trueSplit.forEach(({ char, index }) => {
+    const ignore = charIndices.some(
+      ({ start, end }) => start <= index && index < end
     );
-    const bold = ConvertedRichtextTags?.some(
-      ({ start, end, type }) =>
-        start <= i && i < end && type.includes(RichtextTypesEnum.Bold)
+    if (ignore) {
+      const start = charIndices.find(({ start }) => start === index);
+      start?.chars.forEach((c) => replacedSplit.push({ char: c, index }));
+    } else {
+      replacedSplit.push({ char, index });
+    }
+  });
+
+  const charDataList = replacedSplit.map(({ char, index }) => {
+    const link = [...normalizeHashtags, ...normalizeUrls].some(
+      ({ start, end }) => start <= index && index < end
     );
-    const italic = ConvertedRichtextTags?.some(
+    const bold = normalizeRichtextTags.some(
       ({ start, end, type }) =>
-        start <= i && i < end && type.includes(RichtextTypesEnum.Italic)
+        start <= index && index < end && type.includes(RichtextTypesEnum.Bold)
+    );
+    const italic = normalizeRichtextTags.some(
+      ({ start, end, type }) =>
+        start <= index && index < end && type.includes(RichtextTypesEnum.Italic)
     );
 
     return {
-      char: acc,
+      char: char,
+      index: index,
       properties: {
-        color: link ? "#1d9bf0" : undefined,
-        fontWeight: bold ? "bold" : undefined,
-        fontStyle: italic ? "italic" : undefined,
+        ...(link ? { color: "#1d9bf0" } : {}),
+        ...(bold ? { fontWeight: "bold" } : {}),
+        ...(italic ? { italic: "italic" } : {}),
       },
     };
   }, [] as { char: string; properties: React.CSSProperties }[]);
@@ -117,24 +190,22 @@ const TweetConverter: StyleComponent = ({ data }) => {
     data: { char: string; properties: React.CSSProperties }[];
   }[] = [];
 
-  charDataList.forEach((char, i) => {
-    const isStart =
-      indices.some(({ start }) => start === i) ||
-      indices.some(({ end }) => end === i - 1) ||
-      insert.some(({ index }) => index === i);
+  charDataList.forEach((data) => {
+    const index = data.index;
+    const split = insert.some((i) => i.index === index);
 
-    if (isStart || i === 0) {
+    if (split || index === 0) {
       textDataList.push({
-        start: i,
-        end: i + 1,
-        data: [char],
+        start: index,
+        end: index + 1,
+        data: [data],
       });
     } else {
       const last = textDataList.pop()!;
       textDataList.push({
         start: last.start,
-        end: i,
-        data: [...last.data, char],
+        end: index,
+        data: [...last.data, data],
       });
     }
   });
@@ -142,37 +213,52 @@ const TweetConverter: StyleComponent = ({ data }) => {
   const textElement: React.ReactElement[] = [];
 
   textDataList.forEach((t, i) => {
-    const contains = indices.filter(
-      ({ start, end }) => start <= t.start && t.end < end
+    textElement.push(
+      <p
+        key={i}
+        style={{
+          fontSize: "17px",
+          margin: "0px",
+          width: "100%",
+          display: "flex",
+          flexWrap: "wrap",
+        }}
+      >
+        {t.data.map(({ char, properties }, i) => (
+          <span
+            key={i}
+            style={{
+              ...properties,
+              ...(char == "\n" ? { width: "100%" } : {}),
+              ...(char == " " ? { width: "0.25em" } : {}),
+              ...(char == "\n" && t.data[i - 1]?.char == "\n"
+                ? { height: "1em" }
+                : {}),
+            }}
+          >
+            {char}
+          </span>
+        ))}
+      </p>
     );
 
-    if (contains.length) {
-      contains.forEach(({ fn }) => textElement.push(fn()));
-    } else {
-      textElement.push(
-        <p
-          key={i}
-          style={{
-            fontSize: "17px",
-            margin: "0px",
-            marginTop: "12px",
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-all",
-          }}
-        >
-          {t.data.map(({ char, properties }, i) => (
-            <span key={i} style={properties}>
-              {char}
-            </span>
-          ))}
-        </p>
-      );
-    }
     insert
       .filter(({ index }) => index - 1 === t.end)
       .forEach(({ fn }) => textElement.push(fn()));
   });
-  return <>{textElement}</>;
+  return (
+    <div
+      style={{
+        width: "100%",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        marginTop: "12px",
+      }}
+    >
+      {textElement}
+    </div>
+  );
 };
 
 const Normal: StyleComponent = ({ data }) => {
@@ -247,7 +333,7 @@ const Normal: StyleComponent = ({ data }) => {
             </p>
           </div>
         </div>
-        {TweetConverter({ data })}
+        <TweetConverter data={data} />
       </div>
     </div>
   );
