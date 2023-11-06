@@ -1,7 +1,7 @@
 "use client";
 import React, { use, useEffect } from "react";
 import { useState } from "react";
-import Normal from "./..//theme/normal";
+import Normal from "./../theme/normal";
 import { TweetApiUtilsData } from "twitter-openapi-typescript";
 
 export default function Home() {
@@ -21,7 +21,7 @@ export default function Home() {
       <input value={id} onChange={(e) => setId(e.target.value)} />
       {state && (
         <div
-          theme={{
+          style={{
             width: "600px",
             display: "flex",
             justifyContent: "center",
