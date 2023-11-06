@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
-import { StyleComponent } from "./../core/twitterSnap";
+import { themeComponent } from "./../core/twitterSnap";
 import { NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum } from "twitter-openapi-typescript-generated";
 import split from "graphemesplit";
 
-const TweetConverter: StyleComponent = ({ data }) => {
+const TweetConverter: themeComponent = ({ data }) => {
   const note = data.tweet.noteTweet?.noteTweetResults.result;
   const legacy = data.tweet.legacy!;
 
@@ -178,7 +178,7 @@ const TweetConverter: StyleComponent = ({ data }) => {
       index: index,
       properties: {
         ...(link ? { color: "#1d9bf0" } : {}),
-        ...(bold ? { fontWeight: "bold" } : {}),
+        ...(bold ? { fontWeight: "700" } : {}),
         ...(italic ? { italic: "italic" } : {}),
       },
     };
@@ -261,7 +261,7 @@ const TweetConverter: StyleComponent = ({ data }) => {
   );
 };
 
-const Normal: StyleComponent = ({ data }) => {
+const Normal: themeComponent = ({ data }) => {
   const icon = data.user.legacy.profileImageUrlHttps;
   const name = data.user.legacy.name;
   const id = data.user.legacy.screenName;
@@ -316,7 +316,7 @@ const Normal: StyleComponent = ({ data }) => {
             <p
               style={{
                 fontSize: "15px",
-                fontWeight: "bold",
+                fontWeight: "700",
                 margin: "0px",
               }}
             >

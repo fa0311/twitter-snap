@@ -9,6 +9,8 @@ npx twitter-snap https://twitter.com/elonmusk/status/1518623997054918657
 
 ![image](./docs/img/output.png)
 
+## Arguments
+
 ```shell
 Usage: twitter-snap [options] <string>
 
@@ -19,8 +21,26 @@ Options:
   -V, --version          output the version number
   -o, --output <path>    output file path (default: "output.png")
   -w, --width <number>   image width (default: "600")
-  -h, --height <number>  image height (default: "400")
-  --font <path>          font path (default: "assets/NotoSansCJK-Regular.otf")
-  --bold-font <path>     bold font path (default: "assets/NotoSansCJK-Bold.otf")
+  -h, --height <number>  image height
+  -t, --theme <string>   theme (default: "normal")
+  --fonts <path>         font config file path .json
+  --emoji <string>       emoji type (twemoji,openmoji,blobmoji,noto,fluent,fluentFlat) (default: "twemoji")
+  --cookies <path>       net escape cookie file path .txt
   --help                 display help for command
+```
+
+### Font
+
+You can specify the font by creating a font config file.
+
+```json
+[
+  {
+    "data": "./fonts/NotoSansJP-Regular.otf",
+    "name": "Noto Sans JP",
+    "weight": 400,
+    "theme": "normal",
+    "lang": "ja-JP"
+  }
+]
 ```

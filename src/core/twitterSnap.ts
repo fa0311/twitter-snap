@@ -1,43 +1,67 @@
 import { ReactElement } from "react";
-import Normal from "./../style/normal";
+import Normal from "./../theme/normal";
 import { ImageResponse } from "@vercel/og";
-import { TwitterOpenApi, TweetApiUtilsData } from "twitter-openapi-typescript";
+import { ImageResponseOptions } from "@vercel/og/dist/types";
+import {
+  TwitterOpenApi,
+  TwitterOpenApiClient,
+  TweetApiUtilsData,
+} from "twitter-openapi-typescript";
 
-export type StyleComponent = (props: {
+export type themeComponent = (props: {
   data: TweetApiUtilsData;
 }) => ReactElement;
 
 type TwitterSnapParams = {
   width: number;
   height?: number;
+  client?: TwitterOpenApiClient | Promise<TwitterOpenApiClient>;
+  fonts?: ImageResponseOptions["fonts"];
+  emoji?: ImageResponseOptions["emoji"];
 };
+
 type TwitterSnapRenderParams = {
   id: string;
-  styleName?: string;
+  themeName?: string;
 };
 
 export class TwitterSnap {
   width!: number;
   height!: number | undefined;
+  client!: TwitterOpenApiClient | Promise<TwitterOpenApiClient>;
+  fonts!: ImageResponseOptions["fonts"];
+  emoji!: ImageResponseOptions["emoji"];
 
-  static styles: { [key: string]: StyleComponent } = {
+  static themes: { [key: string]: themeComponent } = {
     normal: Normal,
   };
 
   constructor(param: TwitterSnapParams) {
     this.width = param.width;
     this.height = param.height;
+    this.client = param.client || new TwitterOpenApi().getGuestClient();
+    this.fonts = param.fonts || [];
+    this.emoji = param.emoji || "twemoji";
   }
 
-  render = async ({ id, styleName }: TwitterSnapRenderParams) => {
-    const client = await new TwitterOpenApi().getGuestClient();
-    const tweet = await client.getDefaultApi().getTweetResultByRestId({
+  getClient = async () => {
+    if (this.client instanceof Promise) {
+      this.client = await this.client;
+    }
+    return this.client;
+  };
+
+  render = async ({ id, themeName }: TwitterSnapRenderParams) => {
+    const api = (await this.getClient()).getDefaultApi();
+    const tweet = await api.getTweetResultByRestId({
       tweetId: id,
     });
-    const style = TwitterSnap.styles[styleName || "normal"];
-    const res = new ImageResponse(style({ data: tweet.data! }), {
+    const theme = TwitterSnap.themes[themeName || "normal"];
+    const res = new ImageResponse(theme({ data: tweet.data! }), {
       width: this.width,
       height: this.height,
+      fonts: this.fonts,
+      emoji: this.emoji,
     });
     return res;
   };
