@@ -1,6 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
 import { StyleComponent } from "./../core/twitterSnap";
+import split from "graphemesplit";
 
 const Normal: StyleComponent = ({ data }) => {
   const icon = data.user.legacy.profileImageUrlHttps;
@@ -15,9 +16,30 @@ const Normal: StyleComponent = ({ data }) => {
 
   const lang = data.tweet.legacy!.lang;
 
+  const entitySet = data.tweet.noteTweet?.noteTweetResults.result.entitySet;
+  const legacySet = data.tweet.legacy!.entities;
+  const entities = {
+    hashtags: [...(entitySet?.hashtags ?? []), ...(legacySet?.hashtags ?? [])],
+    media: [...(entitySet?.media ?? []), ...(legacySet?.media ?? [])],
+    symbols: entitySet?.symbols ?? [],
+    urls: [...(entitySet?.urls ?? []), ...(legacySet?.urls ?? [])],
+    userMentions: [
+      ...(entitySet?.userMentions ?? []),
+      ...(legacySet?.userMentions ?? []),
+    ],
+  };
+
+  const inline =
+    data.tweet.noteTweet?.noteTweetResults.result.media?.inlineMedia ?? [];
+
   const indices: {
     start: number;
     end: number;
+    fn: () => React.ReactElement;
+  }[] = [];
+
+  const insert: {
+    index: number;
     fn: () => React.ReactElement;
   }[] = [];
 
@@ -27,18 +49,15 @@ const Normal: StyleComponent = ({ data }) => {
   //   bold: boolean;
   // }[] = [];
 
-  if (isNote) {
-    data.tweet.legacy!.entities.media?.forEach((m) =>
-      indices.push({
-        start: m.indices[0],
-        end: m.indices[0] + 1,
-        /*
-        start: Array.from(text).length,
-        end: Array.from(text).length + 1,
-        */
+  const media = entities.media ?? [];
+  media.forEach((m) => {
+    const find = inline.find(({ mediaId }) => mediaId === m.idStr);
+    if (isNote) {
+      insert.push({
+        index: find?.index ?? Array.from(text).length,
         fn: () => (
           <img
-            key={m.indices[0]}
+            key={m.idStr}
             alt="img"
             style={{
               width: "100%",
@@ -48,16 +67,14 @@ const Normal: StyleComponent = ({ data }) => {
             src={m.mediaUrlHttps}
           />
         ),
-      })
-    );
-  } else {
-    data.tweet.legacy!.entities.media?.forEach((m) =>
+      });
+    } else {
       indices.push({
         start: m.indices[0],
         end: m.indices[1],
         fn: () => (
           <img
-            key={m.indices[0]}
+            key={m.idStr}
             alt="img"
             style={{
               width: "100%",
@@ -67,18 +84,14 @@ const Normal: StyleComponent = ({ data }) => {
             src={m.mediaUrlHttps}
           />
         ),
-      })
-    );
-  }
-
-  console.log(indices);
-  // 1721006592303251551
+      });
+    }
+  });
 
   const textSplit = Array.from(text).map((acc, i) => {
-    const link = [
-      ...(data.tweet.legacy!.entities.hashtags ?? []),
-      ...(data.tweet.legacy!.entities.urls ?? []),
-    ].some(({ indices: [start, end] }) => start <= i && i < end);
+    const link = [...(entities.hashtags ?? []), ...(entities.urls ?? [])].some(
+      ({ indices: [start, end] }) => start <= i && i < end
+    );
 
     return {
       char: acc,
@@ -89,7 +102,8 @@ const Normal: StyleComponent = ({ data }) => {
   const textFlat = textSplit.reduce((acc, cur, i) => {
     const isStart =
       indices.some(({ start }) => start === i) ||
-      indices.some(({ end }) => end === i - 1);
+      indices.some(({ end }) => end === i - 1) ||
+      insert.some(({ index }) => index === i);
 
     if (isStart || i === 0) {
       return [
@@ -102,23 +116,27 @@ const Normal: StyleComponent = ({ data }) => {
       ];
     } else {
       const last = acc.pop()!;
-      return [
-        ...acc,
-        { start: last.start, end: i + 1, data: [...last.data, cur] },
-      ];
+      return [...acc, { start: last.start, end: i, data: [...last.data, cur] }];
     }
   }, [] as { start: number; end: number; data: { char: string; color?: string }[] }[]);
 
-  console.log(textFlat);
+  console.log(data.tweet);
+  console.log("textFlat", textFlat);
+  console.log("indices", indices);
+  console.log("insert", insert);
 
-  const textElement = textFlat.map((t, i) => {
+  const textElement = textFlat.flatMap((t, i) => {
     const contains = indices.filter(
-      ({ start, end }) => start <= t.start && end <= t.end
+      ({ start, end }) => start <= t.start && t.end < end
     );
+    const insertLast = insert
+      .filter(({ index }) => index - 1 === t.end)
+      .map(({ fn }) => fn());
+
     if (contains.length) {
-      return contains[0].fn();
+      return [...contains.map(({ fn }) => fn()), ...insertLast];
     } else {
-      return (
+      return [
         <p
           key={i}
           style={{
@@ -139,8 +157,9 @@ const Normal: StyleComponent = ({ data }) => {
               {char}
             </span>
           ))}
-        </p>
-      );
+        </p>,
+        ...insertLast,
+      ];
     }
   });
 
