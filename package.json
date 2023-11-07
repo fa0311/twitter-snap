@@ -12,7 +12,6 @@
     "twitter-snap": "dist/cli.js"
   },
   "dependencies": {
-    "@napi-rs/image": "^1.7.0",
     "@vercel/og": "^0.5.20",
     "commander": "^11.1.0",
     "graphemesplit": "^2.4.4",
