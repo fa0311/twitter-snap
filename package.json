@@ -1,10 +1,11 @@
 {
   "name": "twitter-snap",
   "version": "0.0.10",
+  "type": "module",
   "scripts": {
-    "dev:cli": "npx tsx src/cli.ts 1518623997054918657",
+    "dev:cli": "npx tsx src/cli.ts",
     "dev:style": "next dev",
-    "start": "node dist/cli.js 1518623997054918657",
+    "start": "node dist/cli.js",
     "build": "npx tsc"
   },
   "bin": {

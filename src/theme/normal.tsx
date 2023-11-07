@@ -1,6 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
-import { themeComponent } from "./../core/twitterSnap";
+import { themeComponent } from "./../core/twitterSnap.js";
 import { NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum } from "twitter-openapi-typescript-generated";
 import split from "graphemesplit";
 

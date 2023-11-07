@@ -1,9 +1,9 @@
 #!/usr/bin/env node
-import { TwitterSnap } from "./core/twitterSnap";
+import { TwitterSnap } from "./core/twitterSnap.js";
 import { Command } from "commander";
 import { promises as fs } from "fs";
-import { getClient } from "./utils/cookies";
-import { getFonts } from "./utils/fonts";
+import { getClient } from "./utils/cookies.js";
+import { getFonts } from "./utils/fonts.js";
 
 const version = "0.0.10";
 
@@ -32,7 +32,7 @@ program
         height: height ? parseInt(height) : undefined,
         client: cookies && getClient(cookies),
         fonts: fonts && getFonts(fonts),
-        emoji: emoji || "twemoji",
+        emoji: emoji,
       });
 
       const res = await twitterSnap.render({ id, themeName: theme });

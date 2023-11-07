@@ -1,5 +1,5 @@
 import { ReactElement } from "react";
-import Normal from "./../theme/normal";
+import Normal from "./../theme/normal.js";
 import { ImageResponse } from "@vercel/og";
 import { ImageResponseOptions } from "@vercel/og/dist/types";
 import {
@@ -29,8 +29,8 @@ export class TwitterSnap {
   width!: number;
   height!: number | undefined;
   client!: TwitterOpenApiClient | Promise<TwitterOpenApiClient>;
-  fonts!: ImageResponseOptions["fonts"];
-  emoji!: ImageResponseOptions["emoji"];
+  fonts: ImageResponseOptions["fonts"];
+  emoji: ImageResponseOptions["emoji"];
 
   static themes: { [key: string]: themeComponent } = {
     normal: Normal,
@@ -40,8 +40,8 @@ export class TwitterSnap {
     this.width = param.width;
     this.height = param.height;
     this.client = param.client || new TwitterOpenApi().getGuestClient();
-    this.fonts = param.fonts || [];
-    this.emoji = param.emoji || "twemoji";
+    this.fonts = param.fonts;
+    this.emoji = param.emoji;
   }
 
   getClient = async () => {
