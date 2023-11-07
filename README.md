@@ -35,12 +35,19 @@ You can specify the font by creating a font config file.
 
 ```json
 [
-  {
-    "data": "./fonts/NotoSansJP-Regular.otf",
-    "name": "Noto Sans JP",
-    "weight": 400,
-    "theme": "normal",
-    "lang": "ja-JP"
-  }
+    {
+        "data": "NotoSansJP-Regular.ttf",
+        "name": "Noto Sans JP",
+        "weight": 400,
+        "theme": "normal",
+        "lang": "ja-JP"
+    },
+    {
+        "data": "NotoSansJP-Bold.ttf",
+        "name": "Noto Sans JP",
+        "weight": 700,
+        "theme": "normal",
+        "lang": "ja-JP"
+    }
 ]
 ```

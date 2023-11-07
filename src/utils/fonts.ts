@@ -16,7 +16,7 @@ type Fonts = ImageResponseOptions["fonts"];
 export const getFonts = async (path: string): Promise<Fonts> => {
   const raw = await fs.readFile(path, "utf-8");
   const fonts: FontOptions[] = JSON.parse(raw);
-  return Promise.all(
+  return await Promise.all(
     fonts.map(async (font) => {
       const data = await fs.readFile(font.data);
       return {

@@ -30,8 +30,8 @@ program
       const twitterSnap = new TwitterSnap({
         width: parseInt(width),
         height: height ? parseInt(height) : undefined,
-        client: cookies && getClient(cookies),
-        fonts: fonts && getFonts(fonts),
+        client: cookies && (await getClient(cookies)),
+        fonts: fonts && (await getFonts(fonts)),
         emoji: emoji,
       });
 

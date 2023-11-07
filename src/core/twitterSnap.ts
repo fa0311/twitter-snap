@@ -15,7 +15,7 @@ export type themeComponent = (props: {
 type TwitterSnapParams = {
   width: number;
   height?: number;
-  client?: TwitterOpenApiClient | Promise<TwitterOpenApiClient>;
+  client?: TwitterOpenApiClient;
   fonts?: ImageResponseOptions["fonts"];
   emoji?: ImageResponseOptions["emoji"];
 };
@@ -28,7 +28,7 @@ type TwitterSnapRenderParams = {
 export class TwitterSnap {
   width!: number;
   height!: number | undefined;
-  client!: TwitterOpenApiClient | Promise<TwitterOpenApiClient>;
+  client: TwitterOpenApiClient | undefined;
   fonts: ImageResponseOptions["fonts"];
   emoji: ImageResponseOptions["emoji"];
 
@@ -39,16 +39,14 @@ export class TwitterSnap {
   constructor(param: TwitterSnapParams) {
     this.width = param.width;
     this.height = param.height;
-    this.client = param.client || new TwitterOpenApi().getGuestClient();
+    this.client = param.client;
     this.fonts = param.fonts;
     this.emoji = param.emoji;
   }
 
   getClient = async () => {
-    if (this.client instanceof Promise) {
-      this.client = await this.client;
-    }
-    return this.client;
+    if (this.client) return this.client;
+    return await new TwitterOpenApi().getGuestClient();
   };
 
   render = async ({ id, themeName }: TwitterSnapRenderParams) => {
