@@ -36,8 +36,7 @@ program
       });
 
       const res = await twitterSnap.render({ id, themeName: theme });
-      const png = Buffer.from(await res.arrayBuffer());
-      await fs.writeFile(output, png);
+      await res(output);
 
       process.exit(0);
     }

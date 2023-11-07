@@ -1,10 +1,16 @@
 /* eslint-disable @next/next/no-img-element */
 import React from "react";
+import { ReactElement } from "react";
 import { themeComponent } from "./../core/twitterSnap.js";
 import { NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum } from "twitter-openapi-typescript-generated";
 import split from "graphemesplit";
+import { TweetApiUtilsData } from "twitter-openapi-typescript";
+import fs from "fs/promises";
+import ffmpeg from "fluent-ffmpeg";
 
-const TweetConverter: themeComponent = ({ data }) => {
+type TweetConverterProps = (props: { data: TweetApiUtilsData }) => ReactElement;
+
+const TweetConverter: TweetConverterProps = ({ data }) => {
   const note = data.tweet.noteTweet?.noteTweetResults.result;
   const legacy = data.tweet.legacy!;
 
@@ -268,75 +274,94 @@ const Normal: themeComponent = ({ data }) => {
 
   const lang = data.tweet.legacy!.lang;
 
-  return (
-    <div
-      lang={lang}
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        width: "100%",
-        height: "100%",
-        padding: "20px",
-        background:
-          "linear-gradient(-45deg, #0077F2ee 0%, #1DA1F2ee 50%,#4CFFE2ee 100%)",
-      }}
-    >
+  return {
+    element: (
       <div
+        lang={lang}
         style={{
-          width: "100%",
-          background: "white",
           display: "flex",
-          flexDirection: "column",
-          borderRadius: "10px",
-          padding: "12px",
+          justifyContent: "center",
+          alignItems: "center",
+          width: "100%",
+          height: "100%",
+          padding: "20px",
+          background:
+            "linear-gradient(-45deg, #0077F2ee 0%, #1DA1F2ee 50%,#4CFFE2ee 100%)",
         }}
       >
         <div
           style={{
+            width: "100%",
+            background: "white",
             display: "flex",
+            flexDirection: "column",
+            borderRadius: "10px",
+            padding: "12px",
           }}
         >
-          <img
-            alt="icon"
-            style={{
-              width: "40px",
-              height: "40px",
-              borderRadius: "50%",
-              marginRight: "12px",
-            }}
-            src={icon}
-          />
           <div
             style={{
               display: "flex",
-              flexDirection: "column",
             }}
           >
-            <p
+            <img
+              alt="icon"
               style={{
-                fontSize: "15px",
-                fontWeight: "700",
-                margin: "0px",
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                marginRight: "12px",
+              }}
+              src={icon}
+            />
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
               }}
             >
-              {name}
-            </p>
-            <p
-              style={{
-                fontSize: "15px",
-                margin: "0px",
-                color: "#536471",
-              }}
-            >
-              @{id}
-            </p>
+              <p
+                style={{
+                  fontSize: "15px",
+                  fontWeight: "700",
+                  margin: "0px",
+                }}
+              >
+                {name}
+              </p>
+              <p
+                style={{
+                  fontSize: "15px",
+                  margin: "0px",
+                  color: "#536471",
+                }}
+              >
+                @{id}
+              </p>
+            </div>
           </div>
+          <TweetConverter data={data} />
         </div>
-        <TweetConverter data={data} />
       </div>
-    </div>
-  );
+    ),
+    write: async ({ file, data }) => {
+      const png = Buffer.from(await data.arrayBuffer());
+      await fs.writeFile(`temp-${file}`, png);
+      const command = ffmpeg();
+      command.input(`temp-${file}`);
+      command.input("_");
+      command.complexFilter(
+        "[0]colorkey=green:0.01:1[c];[1]scale=540:300[v];[c][v]overlay=30:130[output]"
+      );
+      command.map("[output]");
+      command.output(`output-${file}.mp4`);
+      await new Promise((resolve, reject) => {
+        command.on("end", resolve);
+        command.on("error", reject);
+        command.run();
+      });
+    },
+  };
 };
 
 export default Normal;

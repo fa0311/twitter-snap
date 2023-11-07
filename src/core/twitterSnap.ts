@@ -8,9 +8,10 @@ import {
   TweetApiUtilsData,
 } from "twitter-openapi-typescript";
 
-export type themeComponent = (props: {
-  data: TweetApiUtilsData;
-}) => ReactElement;
+export type themeComponent = (props: { data: TweetApiUtilsData }) => {
+  write: (props: { file: string; data: ImageResponse }) => Promise<void>;
+  element: ReactElement;
+};
 
 type TwitterSnapParams = {
   width: number;
@@ -55,12 +56,15 @@ export class TwitterSnap {
       tweetId: id,
     });
     const theme = TwitterSnap.themes[themeName || "normal"];
-    const res = new ImageResponse(theme({ data: tweet.data! }), {
+    const { element, write } = theme({ data: tweet.data! });
+    const res = new ImageResponse(element, {
       width: this.width,
       height: this.height,
       fonts: this.fonts,
       emoji: this.emoji,
     });
-    return res;
+    return async (path: string) => {
+      return await write({ file: path, data: res });
+    };
   };
 }
