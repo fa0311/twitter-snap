@@ -5,7 +5,7 @@ import { promises as fs } from "fs";
 import { getClient } from "./utils/cookies";
 import { getFonts } from "./utils/fonts";
 
-const version = "0.0.8";
+const version = "0.0.10";
 
 const program = new Command();
 program.name("twitter-snap").version(version);
