@@ -4,7 +4,11 @@ Create beautiful Tweet images fast.
 Fast, good design, Browser is not a dependency.
 
 ```shell
-npx twitter-snap https://twitter.com/elonmusk/status/1518623997054918657
+npx twitter-snap@latest https://twitter.com/elonmusk/status/15186239970549186570
+```
+
+```shell
+npx twitter-snap 1518623997054918657
 ```
 
 ![image](./docs/img/output.png)
@@ -29,9 +33,9 @@ Options:
   --help                 display help for command
 ```
 
-### Font
+### Fonts
 
-You can specify the font by creating a font config file.
+You can specify the font by creating a font config file. (path: `--fonts`)
 
 ```json
 [

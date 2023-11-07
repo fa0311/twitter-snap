@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "type": "module",
   "scripts": {
     "dev:cli": "npx tsx src/cli.ts",
