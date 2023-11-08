@@ -13,6 +13,8 @@ export type themeComponent = (props: { data: TweetApiUtilsData }) => {
   element: ReactElement;
 };
 
+export type Component = (props: { data: TweetApiUtilsData }) => ReactElement;
+
 type TwitterSnapParams = {
   width: number;
   height?: number;

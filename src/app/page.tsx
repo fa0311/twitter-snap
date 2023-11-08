@@ -1,7 +1,7 @@
 "use client";
 import React, { use, useEffect } from "react";
 import { useState } from "react";
-import Normal from "./../theme/normal";
+import NormalComponent from "./../theme/normalComponent";
 import { TweetApiUtilsData } from "twitter-openapi-typescript";
 
 export default function Home() {
@@ -28,7 +28,7 @@ export default function Home() {
             alignItems: "center",
           }}
         >
-          <Normal data={state} />
+          <NormalComponent data={state} />
         </div>
       )}
     </>
