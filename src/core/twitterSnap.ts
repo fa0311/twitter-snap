@@ -8,16 +8,28 @@ import {
   TweetApiUtilsData,
 } from "twitter-openapi-typescript";
 
-export type themeComponent = (props: { data: TweetApiUtilsData }) => {
-  write: (props: { file: string; data: ImageResponse }) => Promise<void>;
+export type ThemeComponent = (props: {
+  data: TweetApiUtilsData;
+  param: TwitterSnapParams;
+}) => {
+  write: (props: {
+    name: string;
+    ext: string;
+    data: ImageResponse;
+  }) => Promise<void>;
   element: ReactElement;
 };
 
-export type Component = (props: { data: TweetApiUtilsData }) => ReactElement;
+export type Component = (props: {
+  data: TweetApiUtilsData;
+  param: TwitterSnapParams;
+}) => ReactElement;
 
-type TwitterSnapParams = {
+export type TwitterSnapParams = {
   width: number;
   height?: number;
+  format?: string;
+  margin?: number;
   client?: TwitterOpenApiClient;
   fonts?: ImageResponseOptions["fonts"];
   emoji?: ImageResponseOptions["emoji"];
@@ -27,25 +39,19 @@ type TwitterSnapRenderParams = {
   id: string;
   themeName?: string;
 };
+type TwitterSnapRenderResponse = (props: {
+  name: string;
+  ext: string;
+}) => Promise<void>;
 
 export class TwitterSnap {
-  width!: number;
-  height!: number | undefined;
   client: TwitterOpenApiClient | undefined;
-  fonts: ImageResponseOptions["fonts"];
-  emoji: ImageResponseOptions["emoji"];
 
-  static themes: { [key: string]: themeComponent } = {
+  static themes: { [key: string]: ThemeComponent } = {
     normal: Normal,
   };
 
-  constructor(param: TwitterSnapParams) {
-    this.width = param.width;
-    this.height = param.height;
-    this.client = param.client;
-    this.fonts = param.fonts;
-    this.emoji = param.emoji;
-  }
+  constructor(private param: TwitterSnapParams) {}
 
   getClient = async () => {
     if (this.client) return this.client;
@@ -58,15 +64,16 @@ export class TwitterSnap {
       tweetId: id,
     });
     const theme = TwitterSnap.themes[themeName || "normal"];
-    const { element, write } = theme({ data: tweet.data! });
-    const res = new ImageResponse(element, {
-      width: this.width,
-      height: this.height,
-      fonts: this.fonts,
-      emoji: this.emoji,
+    const { element, write } = theme({ data: tweet.data!, param: this.param });
+    const data = new ImageResponse(element, {
+      width: this.param.width,
+      height: this.param.height,
+      fonts: this.param.fonts,
+      emoji: this.param.emoji,
     });
-    return async (path: string) => {
-      return await write({ file: path, data: res });
+    const res: TwitterSnapRenderResponse = ({ name, ext }) => {
+      return write({ name, ext, data });
     };
+    return res;
   };
 }

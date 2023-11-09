@@ -3,9 +3,9 @@ import React from "react";
 import { Component } from "./../core/twitterSnap.js";
 import { NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum } from "twitter-openapi-typescript-generated";
 import split from "graphemesplit";
+import { getBiggerMedia } from "./normalUtils.js";
 
-const TweetComponent: Component = ({ data }) => {
-  const photoOnly = true;
+const TweetComponent: Component = ({ data, param }) => {
   const note = data.tweet.noteTweet?.noteTweetResults.result;
   const legacy = data.tweet.legacy!;
 
@@ -17,6 +17,11 @@ const TweetComponent: Component = ({ data }) => {
 
   const inlineMedia = note?.media?.inlineMedia ?? [];
   const richtextTags = note?.richtext?.richtextTags ?? [];
+  const margin = param.margin ?? 20;
+
+  const isVideo = param.format == "video";
+
+  const biggerMedia = getBiggerMedia(extEntities?.media ?? [], margin);
 
   const normalizeMap: {
     array: number;
@@ -56,7 +61,7 @@ const TweetComponent: Component = ({ data }) => {
   }));
 
   const normalizeMedia = [...(extEntities?.media ?? [])]
-    .filter((m) => photoOnly || m.type === "photo")
+    .filter((m) => !isVideo || m.type === "photo")
     .map(({ indices, idStr, mediaUrlHttps }) => ({
       start: normalizeMap.findIndex(({ array }) => array === indices[0]),
       end: normalizeMap.findIndex(({ array }) => array === indices[1]),
@@ -64,7 +69,7 @@ const TweetComponent: Component = ({ data }) => {
       mediaUrlHttps,
     }));
   const normalizeNoteMedia = [...(noteEntity?.media ?? [])]
-    .filter((m) => photoOnly || m.type === "photo")
+    .filter((m) => !isVideo || m.type === "photo")
     .map(({ indices, idStr, mediaUrlHttps }) => ({
       start: normalizeMap.findIndex(({ array }) => array === indices[0]),
       end: normalizeMap.findIndex(({ array }) => array === indices[1]),
@@ -143,24 +148,8 @@ const TweetComponent: Component = ({ data }) => {
           />
         ),
       });
-      // insert.push({
-      //   index: trueSplit.length,
-      //   fn: () => (
-      //     <img
-      //       key={m.idStr}
-      //       alt="img"
-      //       style={{
-      //         width: "100%",
-      //         borderRadius: "10px",
-      //         border: "1px solid #e6e6e6",
-      //       }}
-      //       src={m.mediaUrlHttps}
-      //     />
-      //   ),
-      // });
     }
   });
-  normalizeNoteMedia;
 
   normalizeUrls.forEach(({ start, end, displayUrl }) => {
     charIndices.push({
@@ -169,6 +158,21 @@ const TweetComponent: Component = ({ data }) => {
       chars: split(displayUrl),
     });
   });
+
+  if (biggerMedia && isVideo) {
+    insert.push({
+      index: trueSplit.length,
+      fn: () => (
+        <div
+          key={"biggerMedia"}
+          style={{
+            width: biggerMedia.width,
+            height: biggerMedia.height,
+          }}
+        ></div>
+      ),
+    });
+  }
 
   const replacedSplit: typeof trueSplit = [];
   trueSplit.forEach(({ char, index }) => {
@@ -233,10 +237,10 @@ const TweetComponent: Component = ({ data }) => {
     }
   });
 
-  console.log("insert", insert);
-  console.log("charIndices", charIndices);
-  console.log("textDataList", textDataList);
-  console.log("data", data);
+  // console.log("insert", insert);
+  // console.log("charIndices", charIndices);
+  // console.log("textDataList", textDataList);
+  // console.log("data", data);
 
   const textElement: React.ReactElement[] = [];
 
@@ -293,22 +297,11 @@ const TweetComponent: Component = ({ data }) => {
   );
 };
 
-const NormalComponent: Component = ({ data }) => {
+const NormalComponent: Component = ({ data, param }) => {
   const icon = data.user.legacy.profileImageUrlHttps;
   const name = data.user.legacy.name;
   const id = data.user.legacy.screenName;
   const lang = data.tweet.legacy!.lang;
-  const entities = data.tweet.legacy!.entities;
-  const media = entities.media ?? [];
-
-  const video = true;
-  const note = data.tweet.noteTweet?.noteTweetResults.result;
-  const legacy = data.tweet.legacy!;
-  const noteEntity = note?.entitySet;
-  const extEntities = legacy.extendedEntities;
-  [...(noteEntity?.media ?? []), ...(extEntities?.media ?? [])].filter(
-    (m) => video && m.type === "photo"
-  );
 
   return (
     <div
@@ -319,7 +312,7 @@ const NormalComponent: Component = ({ data }) => {
         alignItems: "center",
         width: "100%",
         height: "100%",
-        padding: "20px",
+        padding: param.margin ?? 20,
         background:
           "linear-gradient(-45deg, #0077F2ee 0%, #1DA1F2ee 50%,#4CFFE2ee 100%)",
       }}
@@ -375,7 +368,7 @@ const NormalComponent: Component = ({ data }) => {
             </p>
           </div>
         </div>
-        <TweetComponent data={data} />
+        <TweetComponent data={data} param={param} />
       </div>
     </div>
   );

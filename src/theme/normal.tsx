@@ -1,60 +1,57 @@
 import React from "react";
 
-import { themeComponent } from "./../core/twitterSnap.js";
+import { ThemeComponent } from "./../core/twitterSnap.js";
 import NormalComponent from "./normalComponent.js";
+import {
+  getBiggerMedia,
+  videoConverter,
+  videoConverterMute,
+} from "./normalUtils.js";
 
 import fs from "fs/promises";
-import ffmpeg from "fluent-ffmpeg";
 
-const Normal: themeComponent = ({ data }) => {
+const Normal: ThemeComponent = ({ data, param }) => {
   const extEntities = data.tweet.legacy!.extendedEntities;
   const extMedia = extEntities?.media ?? [];
-
   return {
-    element: <NormalComponent data={data} />,
+    element: <NormalComponent data={data} param={param} />,
 
-    write: async ({ file, data }) => {
-      const video = extMedia.filter((e) => e.type === "video");
-      if (video.length > 0) {
-        const [aspectWidth, aspectHeight] = video[0].videoInfo?.aspectRatio!;
-        const variants = video[0].videoInfo!.variants;
-        // const url = [...variants].sort(
-        //   (a, b) => (b.bitrate ?? 0) - (a.bitrate ?? 0)
-        // )[0].url;
-        const url = variants[0].url;
-        const margin = 30;
-        const width = 600 - margin * 2;
-        const height = (width / aspectWidth) * aspectHeight;
-
-        const png = Buffer.from(await data.arrayBuffer());
-        await fs.writeFile(`temp-${file}`, png);
-        const command = ffmpeg();
-        command.input(`temp-${file}`);
-        command.input(url);
-        command.complexFilter([
-          `[0]scale=trunc(iw/2)*2:trunc(ih/2)*2[i]`,
-          `[1]anull[audio]`,
-          `[1]scale=${width}:${height}[v]`,
-          `[i][v]overlay=30:H-${height + margin}[marge]`,
-        ]);
-
-        command.map("[marge]");
-        command.map("[audio]");
-        command.output(`output-${file}.mp4`);
-        console.log(
-          command
-            ._getArguments()
-            .map((e) => `"${e}"`)
-            .join(" ")
+    write: async ({ name, ext, data }) => {
+      if (param.format == "video") {
+        const v = extMedia.filter((e) => e.type === "video");
+        const margin = (param.margin ?? 20) + 12;
+        const { width, height } = getBiggerMedia(
+          extEntities?.media ?? [],
+          margin
         );
-        await new Promise((resolve, reject) => {
-          command.on("end", resolve);
-          command.on("error", reject);
-          command.run();
+
+        const video = v.map((e) => {
+          return [...e.videoInfo!.variants].sort((a, b) => {
+            if (a.bitrate === undefined) return -1;
+            if (b.bitrate === undefined) return 1;
+            return b.bitrate - a.bitrate;
+          })[0];
         });
+        const png = Buffer.from(await data.arrayBuffer());
+        await fs.writeFile(`temp-${name}.png`, png);
+        const args = {
+          video,
+          name,
+          ext,
+          width,
+          height,
+          margin,
+        };
+
+        try {
+          await videoConverter(args);
+        } catch (e) {
+          await videoConverterMute(args);
+        }
+        await fs.unlink(`temp-${name}.png`);
       } else {
         const png = Buffer.from(await data.arrayBuffer());
-        await fs.writeFile(file, png);
+        await fs.writeFile(`${name}.png`, png);
       }
     },
   };
