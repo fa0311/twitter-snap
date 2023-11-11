@@ -12,31 +12,33 @@ import path from "path";
 export type ThemeComponent = (props: {
   data: TweetApiUtilsData;
   param: TwitterSnapParams;
+  video: boolean;
 }) => {
-  write: (props: { output: string; data: ImageResponse }) => Promise<void>;
+  writePhoto: (props: { output: string; data: ImageResponse }) => Promise<void>;
+  writeVideo: (props: { output: string; data: ImageResponse }) => Promise<void>;
   element: ReactElement;
 };
 
 export type Component = (props: {
   data: TweetApiUtilsData;
-  param: TwitterSnapParams;
+  video: boolean;
 }) => ReactElement;
 
 export type TwitterSnapParams = {
   width: number;
   height?: number;
   client?: TwitterOpenApiClient;
+  themeName?: string;
   fonts?: ImageResponseOptions["fonts"];
   emoji?: ImageResponseOptions["emoji"];
-  autoFormat: boolean;
+  autoPhoto: boolean;
   removeTemp: boolean;
 };
 
 type TwitterSnapRenderParams = {
+  output: string;
   id: string;
-  themeName?: string;
 };
-type TwitterSnapRenderResponse = (props: { output: string }) => Promise<void>;
 
 export class TwitterSnap {
   static themes: { [key: string]: ThemeComponent } = {
@@ -50,7 +52,7 @@ export class TwitterSnap {
     return await new TwitterOpenApi().getGuestClient();
   };
 
-  render = async ({ id, themeName }: TwitterSnapRenderParams) => {
+  render = async ({ output, id }: TwitterSnapRenderParams) => {
     const api = (await this.getClient()).getDefaultApi();
     const tweet = await api.getTweetResultByRestId({
       tweetId: id,
@@ -58,25 +60,40 @@ export class TwitterSnap {
 
     const extEntities = tweet.data!.tweet.legacy!.extendedEntities;
     const extMedia = extEntities?.media ?? [];
-    const video = !!extMedia.find((e) => e.type !== "photo");
-    const theme = TwitterSnap.themes[themeName || "normal"];
-    const { element, write } = theme({ data: tweet.data!, param: this.param });
+    const videoInfo = !!extMedia.find((e) => e.type !== "photo");
+    const o = path.parse(output);
+
+    const video = (() => {
+      if (this.param.autoPhoto) {
+        if (videoInfo) {
+          return o.ext !== ".png";
+        } else {
+          return false;
+        }
+      } else {
+        return o.ext !== ".png";
+      }
+    })();
+
+    const theme = TwitterSnap.themes[this.param.themeName || "normal"];
+    const { element, writePhoto, writeVideo } = theme({
+      data: tweet.data!,
+      param: this.param,
+      video: video,
+    });
     const data = new ImageResponse(element, {
       width: this.param.width,
       height: this.param.height,
       fonts: this.param.fonts,
       emoji: this.param.emoji,
     });
-    const res: TwitterSnapRenderResponse = ({ output }) => {
-      if (this.param.autoFormat && video) {
-        return write({ output, data });
-      } else if (this.param.autoFormat && !video) {
-        const o = path.parse(output);
-        return write({ output: path.join(o.dir, `${o.name}.png`), data });
-      } else {
-        return write({ output, data });
-      }
-    };
-    return res;
+
+    if (video) {
+      return writeVideo({ output, data });
+    } else if (o.ext !== ".png") {
+      return writePhoto({ output: path.join(o.dir, `${o.name}.png`), data });
+    } else {
+      return writePhoto({ output, data });
+    }
   };
 }

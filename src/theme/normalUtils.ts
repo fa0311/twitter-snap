@@ -42,7 +42,7 @@ const dump = (command: ffmpeg.FfmpegCommand) => {
 };
 
 const run = (command: ffmpeg.FfmpegCommand): Promise<unknown> => {
-  dump(command);
+  // dump(command);
   return new Promise((resolve, reject) => {
     command.on("end", resolve);
     command.on("error", reject);
@@ -53,7 +53,7 @@ const run = (command: ffmpeg.FfmpegCommand): Promise<unknown> => {
 const runProbe = async (
   command: ffprobe.FfmpegCommand
 ): Promise<ffmpeg.FfprobeData> => {
-  dump(command);
+  // dump(command);
   return new Promise((resolve, reject) => {
     command.ffprobe((err, data) => {
       if (err) reject(err);
@@ -148,13 +148,13 @@ export const videoConverter = async ({
       `[i][video]overlay=30:H-${height + margin}[marge]`,
     ].flat()
   );
+  command.map("[marge]");
+  command.map("[audio]");
   const comment =
     "Snapped by twitter-snap https://github.com/fa0311/twitter-snap";
 
   command.addOption("-metadata", `title=${title}`);
   command.addOption("-metadata", `comment=${comment}`);
-  command.map("[marge]");
-  command.map("[audio]");
   command.output(output);
   await run(command);
 

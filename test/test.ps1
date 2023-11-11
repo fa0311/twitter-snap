@@ -16,7 +16,6 @@ npx tsx src/cli.ts 1722694735729668246 -o test/temp/1722694735729668246.png --co
 npx tsx src/cli.ts 1722118869178081318 -o test/temp/1722118869178081318.png --cookies cookies.txt # Aspect Ratio 16:9 and 9:16
 npx tsx src/cli.ts 1720694816835801584 -o test/temp/1720694816835801584.png --cookies cookies.txt # Note tweet
 
-npx tsx src/cli.ts 1518623997054918657 -o test/temp/1518623997054918657.mp4 --cookies cookies.txt # Text Tweet
 npx tsx src/cli.ts 1721901848825925837 -o test/temp/1721901848825925837.mp4 --cookies cookies.txt # Muted Video
 npx tsx src/cli.ts 1722694735729668246 -o test/temp/1722694735729668246.mp4 --cookies cookies.txt # Animated GIF
 npx tsx src/cli.ts 1722118869178081318 -o test/temp/1722118869178081318.mp4 --cookies cookies.txt # Aspect Ratio 16:9 and 9:16

@@ -7,9 +7,10 @@ import { getBiggerMedia, videoConverter } from "./normalUtils.js";
 import fs from "fs/promises";
 import path from "path";
 
-const Normal: ThemeComponent = ({ data, param }) => {
+const Normal: ThemeComponent = ({ data, param, video }) => {
   const extEntities = data.tweet.legacy!.extendedEntities;
   const extMedia = extEntities?.media ?? [];
+  const v = extMedia.filter((e) => e.type !== "photo");
 
   const screenName = data.user.legacy!.screenName;
   const id = data.tweet.legacy!.idStr;
@@ -17,16 +18,15 @@ const Normal: ThemeComponent = ({ data, param }) => {
   const title = `https://twitter.com/${screenName}/status/${id}`;
 
   return {
-    element: <NormalComponent data={data} param={param} />,
+    element: <NormalComponent data={data} video={video} />,
 
-    write: async ({ output, data }) => {
+    writePhoto: async ({ output, data }) => {
+      const png = Buffer.from(await data.arrayBuffer());
+      await fs.writeFile(output, png);
+    },
+
+    writeVideo: async ({ output, data }) => {
       const o = path.parse(output);
-      if (o.ext === ".png") {
-        const png = Buffer.from(await data.arrayBuffer());
-        await fs.writeFile(output, png);
-        return;
-      }
-      const v = extMedia.filter((e) => e.type !== "photo");
       const margin = 20 + 12;
       const { width, height } = getBiggerMedia(
         extEntities?.media ?? [],

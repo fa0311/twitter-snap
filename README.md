@@ -31,12 +31,24 @@ Options:
   --fonts <path>           font config file path .json
   --emoji <string>         emoji type (twemoji, openmoji, blobmoji, noto, fluent, fluentFlat) (default: "twemoji")
   --cookies <path>         net escape cookie file path .txt
-  --no-auto-output-format  auto output format
+  --auto-photo             if the tweet is not a video, save it as an image
   --no-remove-temp         no remove temp file
   --help                   display help for command
 ```
 
-### Fonts
+## Output file type
+
+```shell
+npx twitter-snap 1518623997054918657 -o output.png # output.png
+npx twitter-snap 1518623997054918657 -o output.mp4 # Error
+npx twitter-snap 1518623997054918657 -o output.mp4 --auto-photo # output.png
+
+npx twitter-snap 1585341984679469056 -o output.png # output.png
+npx twitter-snap 1585341984679469056 -o output.mp4 # output.mp4
+npx twitter-snap 1585341984679469056 -o output.mp4 --auto-photo # output.mp4
+```
+
+## Fonts
 
 You can specify the font by creating a font config file. (path: `--fonts`)
 
@@ -58,3 +70,7 @@ You can specify the font by creating a font config file. (path: `--fonts`)
     }
 ]
 ```
+
+## Dependence
+
+- [ffmpeg](https://ffmpeg.org/) (for video)

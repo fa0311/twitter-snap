@@ -5,7 +5,7 @@ import { NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum } from
 import split from "graphemesplit";
 import { getBiggerMedia } from "./normalUtils.js";
 
-const TweetComponent: Component = ({ data, param }) => {
+const TweetComponent: Component = ({ data, video }) => {
   const note = data.tweet.noteTweet?.noteTweetResults.result;
   const legacy = data.tweet.legacy!;
 
@@ -17,8 +17,6 @@ const TweetComponent: Component = ({ data, param }) => {
 
   const inlineMedia = note?.media?.inlineMedia ?? [];
   const richtextTags = note?.richtext?.richtextTags ?? [];
-
-  const isVideo = param.autoFormat;
 
   const biggerMedia = getBiggerMedia(extEntities?.media ?? [], 20);
 
@@ -59,22 +57,24 @@ const TweetComponent: Component = ({ data, param }) => {
     tag,
   }));
 
-  const normalizeMedia = [...(extEntities?.media ?? [])]
-    .filter((m) => !isVideo || m.type === "photo")
-    .map(({ indices, idStr, mediaUrlHttps }) => ({
+  const normalizeMedia = [...(extEntities?.media ?? [])].map(
+    ({ indices, idStr, mediaUrlHttps, type }) => ({
       start: normalizeMap.findIndex(({ array }) => array === indices[0]),
       end: normalizeMap.findIndex(({ array }) => array === indices[1]),
+      remove: video && type !== "photo",
       idStr,
       mediaUrlHttps,
-    }));
-  const normalizeNoteMedia = [...(noteEntity?.media ?? [])]
-    .filter((m) => !isVideo || m.type === "photo")
-    .map(({ indices, idStr, mediaUrlHttps }) => ({
+    })
+  );
+  const normalizeNoteMedia = [...(noteEntity?.media ?? [])].map(
+    ({ indices, idStr, mediaUrlHttps, type }) => ({
       start: normalizeMap.findIndex(({ array }) => array === indices[0]),
       end: normalizeMap.findIndex(({ array }) => array === indices[1]),
+      remove: video && type !== "photo",
       idStr,
       mediaUrlHttps,
-    }));
+    })
+  );
 
   const normalizeUrls = [
     ...(noteEntity?.urls ?? []),
@@ -110,9 +110,31 @@ const TweetComponent: Component = ({ data, param }) => {
       ({ mediaId }) => mediaId === m.idStr
     );
 
-    if (inline) {
+    if (m.remove) {
+      charIndices.push({
+        start: m.start,
+        end: m.end,
+        chars: [],
+      });
+    } else if (inline) {
       insert.push({
         index: inline.index,
+        fn: () => (
+          <img
+            key={m.idStr}
+            alt="img"
+            style={{
+              width: "100%",
+              borderRadius: "10px",
+              border: "1px solid #e6e6e6",
+            }}
+            src={m.mediaUrlHttps}
+          />
+        ),
+      });
+    } else if (note) {
+      insert.push({
+        index: trueSplit.length,
         fn: () => (
           <img
             key={m.idStr}
@@ -158,7 +180,7 @@ const TweetComponent: Component = ({ data, param }) => {
     });
   });
 
-  if (biggerMedia && isVideo) {
+  if (biggerMedia && video) {
     insert.push({
       index: trueSplit.length,
       fn: () => (
@@ -243,10 +265,6 @@ const TweetComponent: Component = ({ data, param }) => {
 
   const textElement: React.ReactElement[] = [];
 
-  insert
-    .filter(({ index }) => index === 0)
-    .forEach(({ fn }) => textElement.push(fn()));
-
   textDataList.forEach((t, i) => {
     textElement.push(
       <p
@@ -278,9 +296,15 @@ const TweetComponent: Component = ({ data, param }) => {
     );
 
     insert
-      .filter(({ index }) => index - 1 === t.end)
+      .filter(({ index }) => t.start <= index && index < t.end)
       .forEach(({ fn }) => textElement.push(fn()));
   });
+
+  const last = textDataList[textDataList.length - 1]?.end ?? 0;
+  insert
+    .filter(({ index }) => index >= last)
+    .forEach(({ fn }) => textElement.push(fn()));
+
   return (
     <div
       style={{
@@ -296,7 +320,7 @@ const TweetComponent: Component = ({ data, param }) => {
   );
 };
 
-const NormalComponent: Component = ({ data, param }) => {
+const NormalComponent: Component = ({ data, video }) => {
   const icon = data.user.legacy.profileImageUrlHttps;
   const name = data.user.legacy.name;
   const id = data.user.legacy.screenName;
@@ -367,7 +391,7 @@ const NormalComponent: Component = ({ data, param }) => {
             </p>
           </div>
         </div>
-        <TweetComponent data={data} param={param} />
+        <TweetComponent data={data} video={video} />
       </div>
     </div>
   );

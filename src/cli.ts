@@ -3,7 +3,6 @@ import { TwitterSnap, TwitterSnapParams } from "./core/twitterSnap.js";
 import { Command } from "commander";
 import { getClient } from "./utils/cookies.js";
 import { getFonts } from "./utils/fonts.js";
-import path from "path";
 
 const version = "0.0.10";
 
@@ -19,7 +18,7 @@ type param = {
   emoji?: TwitterSnapParams["emoji"];
   disableAuto?: boolean;
   cookies?: string;
-  autoOutputFormat?: boolean;
+  autoPhoto?: boolean;
   removeTemp?: boolean;
 };
 
@@ -35,7 +34,7 @@ program
   .option("--fonts <path>", "font config file path .json")
   .option("--emoji <string>", `emoji type ${emoji}`, "twemoji")
   .option("--cookies <path>", "net escape cookie file path .txt")
-  .option("--no-auto-output-format", "auto output format")
+  .option("--auto-photo", "if the tweet is not a video, save it as an image")
   .option("--no-remove-temp", "no remove temp file")
   .action(async (text, param: param) => {
     const id = isNaN(text) ? text.split("/").pop() : text;
@@ -44,15 +43,14 @@ program
       width: parseInt(param.width),
       height: param.height ? parseInt(param.height) : undefined,
       client: param.cookies ? await getClient(param.cookies) : undefined,
+      themeName: param.theme,
       fonts: param.fonts ? await getFonts(param.fonts) : undefined,
       emoji: param.emoji ? param.emoji : undefined,
-      autoFormat: param.autoOutputFormat ? true : false,
+      autoPhoto: param.autoPhoto ? true : false,
       removeTemp: param.removeTemp ? true : false,
     });
 
-    const res = await twitterSnap.render({ id, themeName: param.theme });
-    const output = param.output;
-    await res({ output });
+    await twitterSnap.render({ output: param.output, id });
 
     process.exit(0);
   });
