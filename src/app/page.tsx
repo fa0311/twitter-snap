@@ -28,7 +28,7 @@ export default function Home() {
             alignItems: "center",
           }}
         >
-          <NormalComponent data={state} video={false} />
+          <NormalComponent data={state} video={false} width={600} />
         </div>
       )}
     </>

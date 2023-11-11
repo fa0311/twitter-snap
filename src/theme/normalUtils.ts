@@ -6,9 +6,6 @@ import {
 import ffmpeg from "fluent-ffmpeg";
 import ffprobe from "fluent-ffmpeg";
 import path from "path";
-import log4js from "log4js";
-
-const logger = log4js.getLogger();
 
 export const getBiggerMedia = (
   extMedia: MediaExtended[],
