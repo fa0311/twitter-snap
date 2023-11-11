@@ -19,18 +19,21 @@ npx twitter-snap 1518623997054918657
 Usage: twitter-snap [options] <string>
 
 Arguments:
-  string                 tweet url or tweet id
+  string                   tweet url or tweet id
 
 Options:
-  -V, --version          output the version number
-  -o, --output <path>    output file path (default: "output.png")
-  -w, --width <number>   image width (default: "600")
-  -h, --height <number>  image height
-  -t, --theme <string>   theme (default: "normal")
-  --fonts <path>         font config file path .json
-  --emoji <string>       emoji type (twemoji,openmoji,blobmoji,noto,fluent,fluentFlat) (default: "twemoji")
-  --cookies <path>       net escape cookie file path .txt
-  --help                 display help for command
+  -V, --version            output the version number
+  -o, --output <path>      output file path (default: "output.png")
+  -w, --width <number>     image width (default: "600")
+  -h, --height <number>    image height
+  -t, --theme <string>     normal
+  --margin <number>        margin
+  --fonts <path>           font config file path .json
+  --emoji <string>         emoji type (twemoji, openmoji, blobmoji, noto, fluent, fluentFlat) (default: "twemoji")
+  --cookies <path>         net escape cookie file path .txt
+  --no-auto-output-format  auto output format
+  --no-remove-temp         no remove temp file
+  --help                   display help for command
 ```
 
 ### Fonts

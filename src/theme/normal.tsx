@@ -2,28 +2,32 @@ import React from "react";
 
 import { ThemeComponent } from "./../core/twitterSnap.js";
 import NormalComponent from "./normalComponent.js";
-import {
-  getBiggerMedia,
-  videoConverter,
-  videoConverterMute,
-} from "./normalUtils.js";
+import { getBiggerMedia, videoConverter } from "./normalUtils.js";
 
 import fs from "fs/promises";
+import path from "path";
 
 const Normal: ThemeComponent = ({ data, param }) => {
   const extEntities = data.tweet.legacy!.extendedEntities;
   const extMedia = extEntities?.media ?? [];
+
+  const screenName = data.user.legacy!.screenName;
+  const id = data.tweet.legacy!.idStr;
+
+  const title = `https://twitter.com/${screenName}/status/${id}`;
+
   return {
     element: <NormalComponent data={data} param={param} />,
 
-    write: async ({ name, ext, data }) => {
-      if (ext == "png") {
+    write: async ({ output, data }) => {
+      const o = path.parse(output);
+      if (o.ext === ".png") {
         const png = Buffer.from(await data.arrayBuffer());
-        await fs.writeFile(`${name}.png`, png);
+        await fs.writeFile(output, png);
         return;
       }
       const v = extMedia.filter((e) => e.type !== "photo");
-      const margin = (param.margin ?? 20) + 12;
+      const margin = 20 + 12;
       const { width, height } = getBiggerMedia(
         extEntities?.media ?? [],
         margin
@@ -37,18 +41,22 @@ const Normal: ThemeComponent = ({ data, param }) => {
         })[0];
       });
       const png = Buffer.from(await data.arrayBuffer());
-      await fs.writeFile(`temp-${name}.png`, png);
+      const name = path.join(o.dir, `temp-${o.name}.png`);
+      await fs.writeFile(name, png);
+
+      const removeTemp = param.removeTemp;
       const args = {
         video,
-        name,
-        ext,
+        title,
+        output,
         width,
         height,
         margin,
+        removeTemp,
       };
 
       await videoConverter(args);
-      await fs.unlink(`temp-${name}.png`);
+      await fs.unlink(name);
     },
   };
 };

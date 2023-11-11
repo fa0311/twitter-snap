@@ -3,7 +3,7 @@ import { TwitterSnap, TwitterSnapParams } from "./core/twitterSnap.js";
 import { Command } from "commander";
 import { getClient } from "./utils/cookies.js";
 import { getFonts } from "./utils/fonts.js";
-import { spilitFileName } from "./utils/file.js";
+import path from "path";
 
 const version = "0.0.10";
 
@@ -20,7 +20,7 @@ type param = {
   disableAuto?: boolean;
   cookies?: string;
   autoOutputFormat?: boolean;
-  noRemoveCache?: boolean;
+  removeTemp?: boolean;
 };
 
 const emoji = "(twemoji, openmoji, blobmoji, noto, fluent, fluentFlat)";
@@ -31,14 +31,12 @@ program
   .option("-w, --width <number>", "image width", "600")
   .option("-h, --height <number>", "image height")
   .option("-t, --theme <string>", Object.keys(TwitterSnap.themes).join())
-  .option("--format <string>", "output format")
   .option("--margin <number>", "margin")
   .option("--fonts <path>", "font config file path .json")
   .option("--emoji <string>", `emoji type ${emoji}`, "twemoji")
-  .option("--output-mode <string>", "output mode (auto, video, image)", "auto")
   .option("--cookies <path>", "net escape cookie file path .txt")
-  .option("--auto-output-format", "force output format")
-  .option("--no-remove-cache", "no remove cache")
+  .option("--no-auto-output-format", "auto output format")
+  .option("--no-remove-temp", "no remove temp file")
   .action(async (text, param: param) => {
     const id = isNaN(text) ? text.split("/").pop() : text;
 
@@ -49,11 +47,12 @@ program
       fonts: param.fonts ? await getFonts(param.fonts) : undefined,
       emoji: param.emoji ? param.emoji : undefined,
       autoFormat: param.autoOutputFormat ? true : false,
-      noRemoveCache: param.noRemoveCache ? true : false,
+      removeTemp: param.removeTemp ? true : false,
     });
 
     const res = await twitterSnap.render({ id, themeName: param.theme });
-    await res(spilitFileName(param.output));
+    const output = param.output;
+    await res({ output });
 
     process.exit(0);
   });

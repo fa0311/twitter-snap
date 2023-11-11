@@ -7,16 +7,13 @@ import {
   TwitterOpenApiClient,
   TweetApiUtilsData,
 } from "twitter-openapi-typescript";
+import path from "path";
 
 export type ThemeComponent = (props: {
   data: TweetApiUtilsData;
   param: TwitterSnapParams;
 }) => {
-  write: (props: {
-    name: string;
-    ext: string;
-    data: ImageResponse;
-  }) => Promise<void>;
+  write: (props: { output: string; data: ImageResponse }) => Promise<void>;
   element: ReactElement;
 };
 
@@ -28,22 +25,18 @@ export type Component = (props: {
 export type TwitterSnapParams = {
   width: number;
   height?: number;
-  margin?: number;
   client?: TwitterOpenApiClient;
   fonts?: ImageResponseOptions["fonts"];
   emoji?: ImageResponseOptions["emoji"];
   autoFormat: boolean;
-  noRemoveCache: boolean;
+  removeTemp: boolean;
 };
 
 type TwitterSnapRenderParams = {
   id: string;
   themeName?: string;
 };
-type TwitterSnapRenderResponse = (props: {
-  name: string;
-  ext: string;
-}) => Promise<void>;
+type TwitterSnapRenderResponse = (props: { output: string }) => Promise<void>;
 
 export class TwitterSnap {
   static themes: { [key: string]: ThemeComponent } = {
@@ -74,13 +67,14 @@ export class TwitterSnap {
       fonts: this.param.fonts,
       emoji: this.param.emoji,
     });
-    const res: TwitterSnapRenderResponse = ({ name, ext }) => {
+    const res: TwitterSnapRenderResponse = ({ output }) => {
       if (this.param.autoFormat && video) {
-        return write({ name, ext, data });
+        return write({ output, data });
       } else if (this.param.autoFormat && !video) {
-        return write({ name, ext: "png", data });
+        const o = path.parse(output);
+        return write({ output: path.join(o.dir, `${o.name}.png`), data });
       } else {
-        return write({ name, ext, data });
+        return write({ output, data });
       }
     };
     return res;

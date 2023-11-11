@@ -17,11 +17,10 @@ const TweetComponent: Component = ({ data, param }) => {
 
   const inlineMedia = note?.media?.inlineMedia ?? [];
   const richtextTags = note?.richtext?.richtextTags ?? [];
-  const margin = param.margin ?? 20;
 
-  const isVideo = !param.autoFormat;
+  const isVideo = param.autoFormat;
 
-  const biggerMedia = getBiggerMedia(extEntities?.media ?? [], margin);
+  const biggerMedia = getBiggerMedia(extEntities?.media ?? [], 20);
 
   const normalizeMap: {
     array: number;
@@ -312,7 +311,7 @@ const NormalComponent: Component = ({ data, param }) => {
         alignItems: "center",
         width: "100%",
         height: "100%",
-        padding: param.margin ?? 20,
+        padding: 20,
         background:
           "linear-gradient(-45deg, #0077F2ee 0%, #1DA1F2ee 50%,#4CFFE2ee 100%)",
       }}
