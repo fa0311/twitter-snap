@@ -28,11 +28,12 @@ export type Component = (props: {
 export type TwitterSnapParams = {
   width: number;
   height?: number;
-  format?: string;
   margin?: number;
   client?: TwitterOpenApiClient;
   fonts?: ImageResponseOptions["fonts"];
   emoji?: ImageResponseOptions["emoji"];
+  autoFormat: boolean;
+  noRemoveCache: boolean;
 };
 
 type TwitterSnapRenderParams = {
@@ -45,8 +46,6 @@ type TwitterSnapRenderResponse = (props: {
 }) => Promise<void>;
 
 export class TwitterSnap {
-  client: TwitterOpenApiClient | undefined;
-
   static themes: { [key: string]: ThemeComponent } = {
     normal: Normal,
   };
@@ -54,7 +53,7 @@ export class TwitterSnap {
   constructor(private param: TwitterSnapParams) {}
 
   getClient = async () => {
-    if (this.client) return this.client;
+    if (this.param.client) return this.param.client;
     return await new TwitterOpenApi().getGuestClient();
   };
 
@@ -63,6 +62,10 @@ export class TwitterSnap {
     const tweet = await api.getTweetResultByRestId({
       tweetId: id,
     });
+
+    const extEntities = tweet.data!.tweet.legacy!.extendedEntities;
+    const extMedia = extEntities?.media ?? [];
+    const video = !!extMedia.find((e) => e.type !== "photo");
     const theme = TwitterSnap.themes[themeName || "normal"];
     const { element, write } = theme({ data: tweet.data!, param: this.param });
     const data = new ImageResponse(element, {
@@ -72,7 +75,13 @@ export class TwitterSnap {
       emoji: this.param.emoji,
     });
     const res: TwitterSnapRenderResponse = ({ name, ext }) => {
-      return write({ name, ext, data });
+      if (this.param.autoFormat && video) {
+        return write({ name, ext, data });
+      } else if (this.param.autoFormat && !video) {
+        return write({ name, ext: "png", data });
+      } else {
+        return write({ name, ext, data });
+      }
     };
     return res;
   };

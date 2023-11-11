@@ -19,7 +19,7 @@ const TweetComponent: Component = ({ data, param }) => {
   const richtextTags = note?.richtext?.richtextTags ?? [];
   const margin = param.margin ?? 20;
 
-  const isVideo = param.format == "video";
+  const isVideo = !param.autoFormat;
 
   const biggerMedia = getBiggerMedia(extEntities?.media ?? [], margin);
 
