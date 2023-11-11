@@ -5,7 +5,7 @@ import { NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum } from
 import split from "graphemesplit";
 import { getBiggerMedia } from "./normalUtils.js";
 
-const TweetComponent: Component = ({ data, video }) => {
+const TweetComponent: Component = ({ data, video, width }) => {
   const note = data.tweet.noteTweet?.noteTweetResults.result;
   const legacy = data.tweet.legacy!;
 
@@ -18,7 +18,7 @@ const TweetComponent: Component = ({ data, video }) => {
   const inlineMedia = note?.media?.inlineMedia ?? [];
   const richtextTags = note?.richtext?.richtextTags ?? [];
 
-  const biggerMedia = getBiggerMedia(extEntities?.media ?? [], 20);
+  const biggerMedia = getBiggerMedia(extEntities?.media ?? [], 20, width);
 
   const normalizeMap: {
     array: number;
@@ -320,7 +320,7 @@ const TweetComponent: Component = ({ data, video }) => {
   );
 };
 
-const NormalComponent: Component = ({ data, video }) => {
+const NormalComponent: Component = ({ data, video, width }) => {
   const icon = data.user.legacy.profileImageUrlHttps;
   const name = data.user.legacy.name;
   const id = data.user.legacy.screenName;
@@ -391,7 +391,7 @@ const NormalComponent: Component = ({ data, video }) => {
             </p>
           </div>
         </div>
-        <TweetComponent data={data} video={video} />
+        <TweetComponent data={data} video={video} width={width} />
       </div>
     </div>
   );

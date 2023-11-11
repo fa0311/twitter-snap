@@ -22,6 +22,7 @@ export type ThemeComponent = (props: {
 export type Component = (props: {
   data: TweetApiUtilsData;
   video: boolean;
+  width: number;
 }) => ReactElement;
 
 export type TwitterSnapParams = {

@@ -6,24 +6,32 @@ import {
 import ffmpeg from "fluent-ffmpeg";
 import ffprobe from "fluent-ffmpeg";
 import path from "path";
+import log4js from "log4js";
 
-export const getBiggerMedia = (extMedia: MediaExtended[], margin: number) => {
+const logger = log4js.getLogger();
+
+export const getBiggerMedia = (
+  extMedia: MediaExtended[],
+  margin: number,
+  width: number
+) => {
   const video = extMedia.filter((e) => e.type !== "photo");
   const sorted = [...video].sort(
     (a, b) =>
       b.videoInfo!.aspectRatio[1] / b.videoInfo!.aspectRatio[0] -
       a.videoInfo!.aspectRatio[1] / a.videoInfo!.aspectRatio[0]
   );
-  if (sorted.length === 0) return { width: 0, height: 0 };
+  if (sorted.length === 0) return { width: 0, height: 0, index: 0 };
 
   const [aspectWidth, aspectHeight] = sorted[0].videoInfo!.aspectRatio;
-  const width = 600 - margin * 2;
-  const height = (width / aspectWidth) * aspectHeight;
-  return { width, height };
+  const w = width - margin * 2;
+  const h = (w / aspectWidth) * aspectHeight;
+  return { width: w, height: h, index: extMedia.indexOf(sorted[0]) };
 };
 
 type VideoConverterParam = {
   video: MediaVideoInfoVariant[];
+  index: number;
   title: string;
   output: string;
   width: number;
@@ -64,6 +72,7 @@ const runProbe = async (
 
 export const videoConverter = async ({
   video,
+  index,
   title,
   output,
   width,
@@ -124,11 +133,15 @@ export const videoConverter = async ({
 
   const tempVideo = await Promise.all(res);
 
-  const [pw, ph] = [width, height].map(Math.ceil);
   const all = (e: string) => {
     return `${video.map((_, i) => `[${e}${i}]`).join("")}`;
   };
   const png = copyName(`temp-${o.name}.png`);
+
+  const pad = (i: number): string => {
+    if (i === index) return `[v${i}]`;
+    return `:force_original_aspect_ratio=1,pad=${width}:${height}:-1:(oh-ih)/2:color=white[v${i}]`;
+  };
 
   const command = ffmpeg();
   command.input(png);
@@ -137,12 +150,7 @@ export const videoConverter = async ({
     [
       `[0]scale=trunc(iw/2)*2:trunc(ih/2)*2[i]`,
       video.map((_, i) => `[${i + 1}]anull[a${i}]`),
-      video.map(
-        (_, i) =>
-          `[${
-            i + 1
-          }]scale=${width}:${height}:force_original_aspect_ratio=1,pad=${pw}:${ph}:-1:(oh-ih)/2:color=white[v${i}]`
-      ),
+      video.map((_, i) => `[${i + 1}]scale=${width}:${height}${pad(i)}`),
       `${all("v")}concat=n=${video.length}:v=1:a=0[video]`,
       `${all("a")}concat=n=${video.length}:v=0:a=1[audio]`,
       `[i][video]overlay=30:H-${height + margin}[marge]`,

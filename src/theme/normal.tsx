@@ -18,7 +18,7 @@ const Normal: ThemeComponent = ({ data, param, video }) => {
   const title = `https://twitter.com/${screenName}/status/${id}`;
 
   return {
-    element: <NormalComponent data={data} video={video} />,
+    element: <NormalComponent data={data} video={video} width={param.width} />,
 
     writePhoto: async ({ output, data }) => {
       const png = Buffer.from(await data.arrayBuffer());
@@ -28,9 +28,10 @@ const Normal: ThemeComponent = ({ data, param, video }) => {
     writeVideo: async ({ output, data }) => {
       const o = path.parse(output);
       const margin = 20 + 12;
-      const { width, height } = getBiggerMedia(
+      const { width, height, index } = getBiggerMedia(
         extEntities?.media ?? [],
-        margin
+        margin,
+        param.width
       );
 
       const video = v.map((e) => {
@@ -47,6 +48,7 @@ const Normal: ThemeComponent = ({ data, param, video }) => {
       const removeTemp = param.removeTemp;
       const args = {
         video,
+        index,
         title,
         output,
         width,
