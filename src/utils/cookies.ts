@@ -9,10 +9,7 @@ export const getClient = async (path: string) => {
   const cookies = row
     .filter(([domain]) => domain.endsWith("twitter.com"))
     .reduce(
-      (acc, [, , , , , name, value]) => ({
-        ...acc,
-        [name]: value,
-      }),
+      (acc, [, , , , , name, value]) => ({ ...acc, [name]: value }),
       {} as { [key: string]: string }
     );
 

@@ -1,8 +1,7 @@
 "use client";
-import React, { use, useEffect } from "react";
-import { useState } from "react";
-import NormalComponent from "./../theme/normalComponent";
+import { useEffect, useState } from "react";
 import { TweetApiUtilsData } from "twitter-openapi-typescript";
+import NormalComponent from "./../theme/normalComponent";
 
 export default function Home() {
   const toAPi = (e: string) => `/api/twitter?id=${e}`;

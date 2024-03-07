@@ -1,5 +1,5 @@
-import { promises as fs } from "fs";
 import { ImageResponseOptions } from "@vercel/og/dist/types";
+import { promises as fs } from "fs";
 
 type Weight = 100 | 200 | 300 | 400 | 500 | 600 | 700 | 800 | 900;
 type Fonttheme = "normal" | "italic";

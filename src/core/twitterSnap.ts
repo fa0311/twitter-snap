@@ -1,13 +1,13 @@
-import { ReactElement } from "react";
-import Normal from "./../theme/normal.js";
 import { ImageResponse } from "@vercel/og";
 import { ImageResponseOptions } from "@vercel/og/dist/types";
+import path from "path";
+import { ReactElement } from "react";
 import {
+  TweetApiUtilsData,
   TwitterOpenApi,
   TwitterOpenApiClient,
-  TweetApiUtilsData,
 } from "twitter-openapi-typescript";
-import path from "path";
+import Normal from "./../theme/normal.js";
 
 export type ThemeComponent = (props: {
   data: TweetApiUtilsData;

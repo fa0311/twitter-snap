@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-import { TwitterSnap, TwitterSnapParams } from "./core/twitterSnap.js";
 import { Command } from "commander";
+import { TwitterSnap, TwitterSnapParams } from "./core/twitterSnap.js";
 import { getClient } from "./utils/cookies.js";
 import { getFonts } from "./utils/fonts.js";
 

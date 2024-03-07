@@ -1,11 +1,10 @@
+import { default as ffmpeg, default as ffprobe } from "fluent-ffmpeg";
 import { promises as fs } from "fs";
+import path from "path";
 import {
   MediaExtended,
   MediaVideoInfoVariant,
 } from "twitter-openapi-typescript-generated";
-import ffmpeg from "fluent-ffmpeg";
-import ffprobe from "fluent-ffmpeg";
-import path from "path";
 
 export const getBiggerMedia = (
   extMedia: MediaExtended[],

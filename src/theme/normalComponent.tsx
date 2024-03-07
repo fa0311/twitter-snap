@@ -1,8 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
-import React from "react";
-import { Component } from "./../core/twitterSnap.js";
-import { NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum } from "twitter-openapi-typescript-generated";
 import split from "graphemesplit";
+import React from "react";
+import { NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum } from "twitter-openapi-typescript-generated";
+import { Component } from "./../core/twitterSnap.js";
 import { getBiggerMedia } from "./normalUtils.js";
 
 const TweetComponent: Component = ({ data, video, width }) => {

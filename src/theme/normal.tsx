@@ -1,5 +1,3 @@
-import React from "react";
-
 import { ThemeComponent } from "./../core/twitterSnap.js";
 import NormalComponent from "./normalComponent.js";
 import { getBiggerMedia, videoConverter } from "./normalUtils.js";
