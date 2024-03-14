@@ -1,29 +1,14 @@
 import { ImageResponse } from "@vercel/og";
 import { ImageResponseOptions } from "@vercel/og/dist/types";
 import path from "path";
-import { ReactElement } from "react";
 import {
-  TweetApiUtilsData,
+  DefaultApiUtils,
+  TweetApiUtils,
   TwitterOpenApi,
   TwitterOpenApiClient,
 } from "twitter-openapi-typescript";
-import Normal from "./../theme/normal.js";
 
-export type ThemeComponent = (props: {
-  data: TweetApiUtilsData;
-  param: TwitterSnapParams;
-  video: boolean;
-}) => {
-  writePhoto: (props: { output: string; data: ImageResponse }) => Promise<void>;
-  writeVideo: (props: { output: string; data: ImageResponse }) => Promise<void>;
-  element: ReactElement;
-};
-
-export type Component = (props: {
-  data: TweetApiUtilsData;
-  video: boolean;
-  width: number;
-}) => ReactElement;
+import { RenderBasic } from "twitter-snap-core";
 
 export type TwitterSnapParams = {
   width: number;
@@ -41,11 +26,46 @@ type TwitterSnapRenderParams = {
   id: string;
 };
 
-export class TwitterSnap {
-  static themes: { [key: string]: ThemeComponent } = {
-    normal: Normal,
+const getSnapClient = async (client?: TwitterOpenApiClient) => {
+  const api = client ? client : await new TwitterOpenApi().getGuestClient();
+  return {
+    defaultApi: defaultApiSnap(api),
+    tweetApi: tweetApiSnap(api),
   };
+};
 
+// or でマージする
+
+export type TweetApiMerge<T> = {
+  [K in keyof T]: T[K];
+};
+type TweetApi = TweetApiMerge<DefaultApiUtils & TweetApiUtils>;
+type TweetApiKeyOf = keyof TweetApi;
+type TweetApiSnapApi = {
+  [K in TweetApiKeyOf as K extends `get${infer Rest}` ? K : never]: TweetApi[K];
+};
+type TweetApiSnapApiType = keyof TweetApiSnapApi;
+
+const tweetApiSnap = async (client: TwitterOpenApiClient) => {
+  return async function* (id: string, type: TweetApiSnapApiType, max: number) {
+    const api = client.getTweetApi();
+    const data = [];
+    while (data.length < max) {
+      const res = await api[type]({
+        focalTweetId: id,
+        rawQuery: id,
+        listId: id,
+        userId: id,
+        cursor: undefined,
+      });
+      res.data.data.forEach((e) => data.push(e));
+    }
+    res = res.data.cursor.bottom?.value;
+    return res;
+  };
+};
+
+export class TwitterSnap {
   constructor(private param: TwitterSnapParams) {}
 
   getClient = async () => {
@@ -76,7 +96,10 @@ export class TwitterSnap {
       }
     })();
 
-    const theme = TwitterSnap.themes[this.param.themeName || "normal"];
+    const render = new RenderBasic({
+      width: 600,
+    });
+
     const { element, writePhoto, writeVideo } = theme({
       data: tweet.data!,
       param: this.param,
