@@ -1,10 +1,6 @@
-/.next
-/assets
-/node_modules
-/public
-/src
-/dist/index.*
-/output.png
-/public/sample
-temp
-cookies.txt
+*
+
+!/dist/**/**
+!/README.md
+!/LICENSE
+!/package.json

@@ -1,26 +1,81 @@
 {
   "name": "twitter-snap",
   "version": "0.0.15",
+  "description": "Create beautiful Tweet images fast",
+  "keywords": [
+    "oclif"
+  ],
+  "homepage": "https://github.com/fa0311/twitter-snap",
+  "bugs": "https://github.com/fa0311/twitter-snap/issues",
+  "repository": "fa0311/twitter-snap",
+  "license": "MIT",
+  "author": "ふぁ @fa0311",
   "type": "module",
-  "scripts": {
-    "dev:cli": "npx tsx src/cli.ts",
-    "dev:style": "next dev",
-    "start": "node dist/cli.js",
-    "build": "npx tsc -p tsconfig.build.json"
-  },
+  "exports": "./lib/index.js",
+  "main": "",
+  "types": "dist/index.d.ts",
   "bin": {
-    "twitter-snap": "dist/cli.js"
+    "twitter-snap": "./bin/run.js"
+  },
+  "files": [
+    "/bin",
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "shx rm -rf dist && tsc -p tsconfig.build.json",
+    "lint": "eslint . --ext .ts",
+    "prepack": "npm run build && oclif manifest && oclif readme",
+    "postpack": "shx rm -f oclif.manifest.json",
+    "prepare": "npm run build",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "posttest": "npm run lint",
+    "version": "oclif readme && git add README.md"
+  },
+  "oclif": {
+    "bin": "twitter-snap",
+    "commands": "./dist/commands",
+    "dirname": "twitter-snap",
+    "default": ".",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-plugins"
+    ],
+    "topicSeparator": " ",
+    "topics": {
+      "hello": {
+        "description": "Say hello to the world and others"
+      }
+    }
   },
   "dependencies": {
+    "@oclif/core": "^3",
+    "@oclif/plugin-help": "^6",
+    "@oclif/plugin-plugins": "^4",
     "@vercel/og": "^0.6.2",
-    "commander": "^12.0.0",
     "twitter-openapi-typescript": "<2.0.0",
-    "twitter-snap-core": "^0.0.5"
+    "twitter-snap-core": "^0.0.9"
   },
   "devDependencies": {
-    "@types/node": "^20.11.25",
+    "@oclif/prettier-config": "^0.2.1",
+    "@oclif/test": "^3",
+    "@types/chai": "^4",
+    "@types/fluent-ffmpeg": "^2.1.24",
+    "@types/mocha": "^10",
+    "@types/node": "^18",
+    "@types/react": "^18.2.65",
+    "chai": "^4",
     "eslint": "^8",
-    "prettier": "^3.2.5",
-    "typescript": "^5.4.2"
+    "eslint-config-oclif": "^5",
+    "eslint-config-oclif-typescript": "^3",
+    "eslint-config-prettier": "^9.1.0",
+    "mocha": "^10",
+    "oclif": "^4.4.19",
+    "shx": "^0.3.4",
+    "ts-node": "^10.9.2",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

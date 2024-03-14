@@ -1,123 +1,123 @@
-import { ImageResponse } from "@vercel/og";
-import { ImageResponseOptions } from "@vercel/og/dist/types";
-import path from "path";
-import {
-  DefaultApiUtils,
-  TweetApiUtils,
-  TwitterOpenApi,
-  TwitterOpenApiClient,
-} from "twitter-openapi-typescript";
+import {ImageResponse} from '@vercel/og'
+import {promises as fs} from 'fs'
+import {TweetApiUtilsData, TwitterOpenApi, TwitterOpenApiClient} from 'twitter-openapi-typescript'
 
-import { RenderBasic } from "twitter-snap-core";
+import {GetTweetApi, ThemeNameType, ThemeParamType, getTweetList, themeList} from '../utils/types.js'
 
-export type TwitterSnapParams = {
-  width: number;
-  height?: number;
-  client?: TwitterOpenApiClient;
-  themeName?: string;
-  fonts?: ImageResponseOptions["fonts"];
-  emoji?: ImageResponseOptions["emoji"];
-  autoPhoto: boolean;
-  removeTemp: boolean;
-};
+type twitterClientParam = {
+  cookies?: {[key: string]: string}
+}
 
-type TwitterSnapRenderParams = {
-  output: string;
-  id: string;
-};
+export const twitterSnap = async ({cookies}: twitterClientParam) => {
+  const twitter = new TwitterOpenApi()
+  const api = cookies ? await twitter.getClientFromCookies(cookies) : await twitter.getGuestClient()
+  return tweetApiSnap(api)
+}
 
-const getSnapClient = async (client?: TwitterOpenApiClient) => {
-  const api = client ? client : await new TwitterOpenApi().getGuestClient();
-  return {
-    defaultApi: defaultApiSnap(api),
-    tweetApi: tweetApiSnap(api),
-  };
-};
+type tweetApiSnapParam = {
+  id: string
+  type?: 'getTweetResultByRestId' | keyof GetTweetApi
+  max: number
+}
 
-// or でマージする
-
-export type TweetApiMerge<T> = {
-  [K in keyof T]: T[K];
-};
-type TweetApi = TweetApiMerge<DefaultApiUtils & TweetApiUtils>;
-type TweetApiKeyOf = keyof TweetApi;
-type TweetApiSnapApi = {
-  [K in TweetApiKeyOf as K extends `get${infer Rest}` ? K : never]: TweetApi[K];
-};
-type TweetApiSnapApiType = keyof TweetApiSnapApi;
-
-const tweetApiSnap = async (client: TwitterOpenApiClient) => {
-  return async function* (id: string, type: TweetApiSnapApiType, max: number) {
-    const api = client.getTweetApi();
-    const data = [];
-    while (data.length < max) {
-      const res = await api[type]({
-        focalTweetId: id,
-        rawQuery: id,
-        listId: id,
-        userId: id,
-        cursor: undefined,
-      });
-      res.data.data.forEach((e) => data.push(e));
-    }
-    res = res.data.cursor.bottom?.value;
-    return res;
-  };
-};
-
-export class TwitterSnap {
-  constructor(private param: TwitterSnapParams) {}
-
-  getClient = async () => {
-    if (this.param.client) return this.param.client;
-    return await new TwitterOpenApi().getGuestClient();
-  };
-
-  render = async ({ output, id }: TwitterSnapRenderParams) => {
-    const api = (await this.getClient()).getDefaultApi();
-    const tweet = await api.getTweetResultByRestId({
-      tweetId: id,
-    });
-
-    const extEntities = tweet.data!.tweet.legacy!.extendedEntities;
-    const extMedia = extEntities?.media ?? [];
-    const videoInfo = !!extMedia.find((e) => e.type !== "photo");
-    const o = path.parse(output);
-
-    const video = (() => {
-      if (this.param.autoPhoto) {
-        if (videoInfo) {
-          return o.ext !== ".png";
-        } else {
-          return false;
+const tweetApiSnap = (client: TwitterOpenApiClient) => {
+  return async (
+    {id, type, max}: tweetApiSnapParam,
+    handler: (e: ReturnType<typeof twitterRender>) => Promise<void>,
+  ) => {
+    const key = getTweetList.find((k) => k == type)
+    if (key) {
+      const that = client.getTweetApi()
+      const api = that[key].bind(that)
+      let count = 0
+      const cursor: string[] = []
+      while (count < max) {
+        const res = await api({
+          focalTweetId: id,
+          rawQuery: id,
+          listId: id,
+          userId: id,
+          cursor: cursor.length ? cursor.pop() : undefined,
+        })
+        while (count < max) {
+          await handler(twitterRender(res.data.data[count]))
+          count++
         }
-      } else {
-        return o.ext !== ".png";
+        if (res.data.cursor.bottom) {
+          cursor.push(res.data.cursor.bottom?.value)
+        } else {
+          return
+        }
       }
-    })();
+    } else {
+      const res = await client.getDefaultApi().getTweetResultByRestId({
+        tweetId: id,
+      })
+      if (res.data) await handler(twitterRender(res.data))
+    }
+  }
+}
 
-    const render = new RenderBasic({
-      width: 600,
-    });
+type twitterRenderParam = {
+  themeName: ThemeNameType
+  themeParam: ThemeParamType
+  output: string
+}
 
-    const { element, writePhoto, writeVideo } = theme({
-      data: tweet.data!,
-      param: this.param,
+const twitterRender = (data: TweetApiUtilsData) => {
+  const extEntities = data.tweet.legacy?.extendedEntities
+  const extMedia = extEntities?.media ?? []
+  const isVideoData = !!extMedia.find((e) => e.type !== 'photo')
+
+  return async ({themeName, themeParam, output}: twitterRenderParam) => {
+    const theme = Object.entries(themeList).find(([k, _]) => k == themeName)?.[1]!
+
+    const replacData = [
+      ['{id}', data.tweet.restId],
+      ['{if-photo:(?<true>.+?):(?<false>.+?)}', isVideoData ? '$2' : '$1'],
+    ] as [string, string][]
+
+    const repOutput = replacData.reduce((acc, [k, v]) => acc.replace(new RegExp(k, 'g'), v), output)
+    const video = repOutput.split('.').pop() != 'png'
+    const pngOutput = video ? repOutput.replace(/\.\w+$/, '.png') : repOutput
+
+    const render = new theme({
+      ...themeParam,
       video: video,
-    });
-    const data = new ImageResponse(element, {
-      width: this.param.width,
-      height: this.param.height,
-      fonts: this.param.fonts,
-      emoji: this.param.emoji,
-    });
+    })
+    const element = render.imageRender({
+      data: data,
+    })
+
+    const img = new ImageResponse(element, {
+      width: themeParam.width,
+      height: undefined,
+      emoji: 'twemoji',
+    })
+
+    const png = Buffer.from(await img.arrayBuffer())
+    await fs.writeFile(pngOutput, png)
 
     if (video) {
-      return writeVideo({ output, data });
-    } else if (o.ext !== ".png") {
-      return writePhoto({ output: path.join(o.dir, `${o.name}.png`), data });
+      const res = await render.videoRender({
+        data: data,
+        image: pngOutput,
+        output: repOutput,
+      })
+      return finalize(res.temp)
     } else {
-      return writePhoto({ output, data });
+      return finalize([])
     }
-  };
+  }
+}
+
+type FinalizeParam = {
+  cleanup: boolean
+}
+const finalize = async (temp: string[]) => {
+  return async ({cleanup}: FinalizeParam) => {
+    if (cleanup) {
+      temp.forEach(async (e) => await fs.unlink(e))
+    }
+  }
 }
