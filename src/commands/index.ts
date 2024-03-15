@@ -2,7 +2,9 @@ import {Args, Command, Flags} from '@oclif/core'
 
 import os from 'os'
 import {twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/twitterSnap.js'
+import {Logger} from '../utils/logger.js'
 import {GetTweetApi, ThemeNameType, getTweetList, themeList} from './../utils/types.js'
+
 const apiFlag = Flags.custom<'getTweetResultByRestId' | keyof GetTweetApi>({
   description: 'API type',
   options: ['getTweetResultByRestId', ...getTweetList],
@@ -35,6 +37,7 @@ export default class Default extends Command {
     output: Flags.string({char: 'o', description: 'Output file name', default: '{id}.{if-photo:png:mp4}'}),
     cleanup: Flags.boolean({description: 'Cleanup', default: true}),
     max: Flags.integer({description: 'Max count', default: 30}),
+    debug: Flags.boolean({description: 'Debug', default: false}),
     session_type: sessionType(),
     cookies_file: Flags.file({description: 'Cookies file', default: 'cookies.json'}),
     browser_profile: Flags.string({description: 'Browser profile', default: this.browser_profile}),
@@ -44,7 +47,11 @@ export default class Default extends Command {
   async run(): Promise<void> {
     const {args, flags} = await this.parse(Default)
 
-    const snap = await (() => {
+    const logger = new Logger()
+
+    console.log = flags.debug ? logger.log : (_) => {}
+
+    const getClient = (() => {
       switch (flags.session_type) {
         case 'guest':
           return twitterSnapGuest()
@@ -55,17 +62,22 @@ export default class Default extends Command {
       }
     })()
 
-    await snap({id: args.id, type: flags.api, max: flags.max}, async (render) => {
-      const finalize = await render({
+    const client = await logger.wrap('Loading Client', getClient)
+
+    await client({id: args.id, type: flags.api, max: flags.max}, async (render) => {
+      const startFinalize = render({
         themeName: flags.theme,
         themeParam: {
           width: 600,
         },
         output: flags.output,
       })
-      await finalize({
+
+      const finalize = await logger.wrap('Loading Snap', startFinalize)
+      const success = finalize({
         cleanup: true,
       })
+      await logger.wrap('Finalize', success)
     })
   }
 }
