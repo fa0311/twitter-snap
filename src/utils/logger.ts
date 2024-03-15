@@ -1,5 +1,5 @@
 import clc from 'cli-color'
-import ora from 'ora'
+import ora, {Ora} from 'ora'
 
 class Progress {
   max: number
@@ -54,7 +54,7 @@ class Progress {
 }
 
 export class Logger {
-  private ora: ora.Ora | undefined
+  private ora: Ora | undefined
   private progress: Progress | undefined
   private text: string | undefined
 
