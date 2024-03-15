@@ -16,59 +16,48 @@ npx twitter-snap 1518623997054918657
 ## Arguments
 
 ```shell
-Usage: twitter-snap [options] <string>
+$ bin/run --help
+Create beautiful Tweet images fast
 
-Arguments:
-  string                   tweet url or tweet id
+USAGE
+  $ twitter-snap  ID [--api
+    getTweetResultByRestId|getTweetDetail|getSearchTimeline|getHomeTimeline|getHomeLatestTimeline|getListLatestTweetsTimeline|getUserTweets|getUserTweetsAndReplies|getUserMedia|getLikes|ge
+    tBookmarks] [--theme RenderBasic] [-o <value>] [--cleanup] [--max <value>] [--debug] [--sleep <value>] [--session_type <value>] [--cookies_file <value>] [--browser_profile <value>]
+    [--browser_headless]
 
-Options:
-  -V, --version            output the version number
-  -o, --output <path>      output file path (default: "output.png")
-  -w, --width <number>     image width (default: "600")
-  -h, --height <number>    image height
-  -t, --theme <string>     normal
-  --margin <number>        margin
-  --fonts <path>           font config file path .json
-  --emoji <string>         emoji type (twemoji, openmoji, blobmoji, noto, fluent, fluentFlat) (default: "twemoji")
-  --cookies <path>         net escape cookie file path .txt
-  --auto-photo             if the tweet is not a video, save it as an image
-  --no-remove-temp         no remove temp file
-  --help                   display help for command
-```
+ARGUMENTS
+  ID  Twitter status id
 
-## Output file type
+FLAGS
+  -o, --output=<value>           [default: {id}.{if-photo:png:mp4}] Output file name
+      --api=<option>             [default: getTweetResultByRestId] API type
+                                 <options: getTweetResultByRestId|getTweetDetail|getSearchTimeline|getHomeTimeline|getHomeLatestTimeline|getListLatestTweetsTimeline|getUserTweets|getUserTw
+                                 eetsAndReplies|getUserMedia|getLikes|getBookmarks>
+      --browser_headless         Browser headless
+      --browser_profile=<value>  [default: C:\Users\yuki/.cache/twitter-snap/profiles] Browser profile
+      --cleanup                  Cleanup
+      --cookies_file=<value>     [default: cookies.json] Cookies file
+      --debug                    Debug
+      --max=<value>              [default: 30] Max count
+      --session_type=<value>     [default: guest] Session type
+      --sleep=<value>            Sleep (ms)
+      --theme=<option>           [default: RenderBasic] Theme type
+                                 <options: RenderBasic>
 
-```shell
-npx twitter-snap 1518623997054918657 -o output.png # output.png
-npx twitter-snap 1518623997054918657 -o output.mp4 # Error
-npx twitter-snap 1518623997054918657 -o output.mp4 --auto-photo # output.png
+DESCRIPTION
+  Create beautiful Tweet images fast
+  https://github.com/fa0311/twitter-snap
 
-npx twitter-snap 1585341984679469056 -o output.png # output.png
-npx twitter-snap 1585341984679469056 -o output.mp4 # output.mp4
-npx twitter-snap 1585341984679469056 -o output.mp4 --auto-photo # output.mp4
-```
+EXAMPLES
+  $ twitter-snap 1765415187161464972
 
-## Fonts
+  $ twitter-snap 1765415187161464972 --session_type browser
 
-You can specify the font by creating a font config file. (path: `--fonts`)
+  $ twitter-snap 1765415187161464972 --session_type file --cookies_file cookies.json
 
-```json
-[
-    {
-        "data": "NotoSansJP-Regular.ttf",
-        "name": "Noto Sans JP",
-        "weight": 400,
-        "theme": "normal",
-        "lang": "ja-JP"
-    },
-    {
-        "data": "NotoSansJP-Bold.ttf",
-        "name": "Noto Sans JP",
-        "weight": 700,
-        "theme": "normal",
-        "lang": "ja-JP"
-    }
-]
+  $ twitter-snap 44196397 --api getUserTweets --max 10
+
+  $ twitter-snap 44196397 --api getUserTweets --output "data/{user-screen-name}/{id}.{if-photo:png:mp4}"
 ```
 
 ## Dependence
