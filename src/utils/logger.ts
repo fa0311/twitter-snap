@@ -67,7 +67,7 @@ export class Logger {
     this.text = undefined
   }
 
-  terminal(e: any, type: 'log' | 'warn' | 'error' | 'debug') {
+  terminal(e: string, type: 'log' | 'warn' | 'error' | 'debug') {
     const prefix = {
       log: clc.blackBright,
       warn: clc.yellowBright,
@@ -84,19 +84,19 @@ export class Logger {
   }
 
   log(e: any) {
-    this.terminal(e, 'log')
+    this.terminal(this.toString(e), 'log')
   }
 
   warn(e: any) {
-    this.terminal(e, 'warn')
+    this.terminal(this.toString(e), 'warn')
   }
 
   error(e: any) {
-    this.terminal(e, 'error')
+    this.terminal(this.toString(e), 'error')
   }
 
   debug(e: any) {
-    this.terminal(e, 'debug')
+    this.terminal(this.toString(e), 'debug')
   }
 
   private format(text?: string) {
@@ -124,18 +124,23 @@ export class Logger {
   fail(text?: string) {
     if (this.progress) {
       this.progress.fail()
-      this.update(text)
+      this.error(text)
+      this.update()
     } else {
       this.ora!.fail(this.format(text))
     }
   }
 
-  catch(e: any) {
+  toString(e: any) {
     if (e instanceof Error) {
-      this.fail(e.message)
+      return e.message
     } else {
-      this.fail('Unknown Error')
+      return `${e}`
     }
+  }
+
+  catch(e: any) {
+    this.fail(this.toString(e))
   }
 
   async guard<T>({text}: {text: string}, fn: Promise<T>) {
