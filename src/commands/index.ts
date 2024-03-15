@@ -1,5 +1,4 @@
 import {Args, Command, Flags} from '@oclif/core'
-
 import os from 'os'
 import {ThemeNameType, themeList} from 'twitter-snap-core'
 import {HandlerType, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
@@ -28,10 +27,13 @@ export default class Default extends Command {
     id: Args.string({description: 'Twitter status id', required: true}),
   }
 
-  static description = 'Twitter Snap'
+  static description = ['Create beautiful Tweet images fast', 'https://github.com/fa0311/twitter-snap'].join('\n')
   static examples = [
     'twitter-snap 1765415187161464972',
-    'twitter-snap 1765415187161464972 --api getTweetResultByRestId',
+    'twitter-snap 1765415187161464972 --session_type browser',
+    'twitter-snap 1765415187161464972 --session_type file --cookies_file cookies.json',
+    'twitter-snap 44196397 --api getUserTweets --max 10',
+    'twitter-snap 44196397 --api getUserTweets --output "data/{user-screen-name}/{id}.{if-photo:png:mp4}"',
   ]
 
   static browser_profile = `${os.homedir()}/.cache/twitter-snap/profiles`
@@ -104,6 +106,6 @@ export default class Default extends Command {
       await sleep(flags.sleep)
     })
 
-    await logger.guard({text: 'Rendering tweet', max: flags.max}, render)
+    await logger.guardProgress({text: 'Rendering tweet', max: flags.max}, render)
   }
 }

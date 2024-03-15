@@ -1,6 +1,6 @@
+import clc from 'cli-color'
 import ora from 'ora'
 
-import clc from 'cli-color'
 class Progress {
   max: number
   index: number
@@ -116,22 +116,30 @@ export class Logger {
     }
   }
 
-  async guard<T>({text, max}: {text: string; max?: number}, fn: Promise<T>) {
+  async guard<T>({text}: {text: string}, fn: Promise<T>) {
     try {
       this.ora = ora(text).start()
-      if (max) {
-        this.progress = new Progress(max)
-        this.update(text)
-      }
       const res = await fn
-      if (max) {
-        this.progress = undefined
-      }
       this.succeed(text)
       return res
     } catch (e) {
       this.error(e)
       throw e
+    }
+  }
+
+  async guardProgress<T>({text, max}: {text: string; max: number}, fn: Promise<T>) {
+    try {
+      this.ora = ora(text).start()
+      this.progress = new Progress(max)
+      this.update(text)
+      const res = await fn
+      this.progress = undefined
+      this.succeed(text)
+      return res
+    } catch (e) {
+      this.progress = undefined
+      this.error(e)
     }
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "description": "Create beautiful Tweet images fast",
   "keywords": [
     "twitter",
@@ -51,8 +51,6 @@
     "@oclif/plugin-plugins": "^4",
     "@vercel/og": "^0.6.2",
     "cli-color": "^2.0.4",
-    "clui": "^0.3.6",
-    "listr": "^0.14.3",
     "puppeteer": "^22.4.1",
     "twitter-openapi-typescript": "<2.0.0",
     "twitter-snap-core": "^0.0.10"
