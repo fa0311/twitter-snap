@@ -3,7 +3,8 @@ import {promises as fs} from 'fs'
 import {TweetApiUtilsData, TwitterOpenApi, TwitterOpenApiClient} from 'twitter-openapi-typescript'
 
 import puppeteer, {Cookie} from 'puppeteer'
-import {GetTweetApi, ThemeNameType, ThemeParamType, getTweetList, themeList} from '../utils/types.js'
+import {ThemeNameType, themeList} from 'twitter-snap-core'
+import {GetTweetApi, ThemeParamType, getTweetList} from '../utils/types.js'
 
 export const twitterSnapGuest = async () => {
   const twitter = new TwitterOpenApi()
@@ -68,6 +69,7 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
         })
 
         for (const e of res.data.data) {
+          if (e.promotedMetadata) continue
           if (count >= max) return
           await handler(twitterRender(e))
           count++
@@ -88,10 +90,14 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
   }
 }
 
+type HandlerTypeLiteral = 'start' | 'image' | 'video'
+export type HandlerType = {type: HandlerTypeLiteral; user: string; id: string}
+
 type twitterRenderParam = {
   themeName: ThemeNameType
   themeParam: ThemeParamType
   output: string
+  handler?: (e: HandlerType) => void
 }
 
 const twitterRender = (data: TweetApiUtilsData) => {
@@ -99,11 +105,13 @@ const twitterRender = (data: TweetApiUtilsData) => {
   const extMedia = extEntities?.media ?? []
   const isVideoData = !!extMedia.find((e) => e.type !== 'photo')
 
-  return async ({themeName, themeParam, output}: twitterRenderParam) => {
+  return async ({themeName, themeParam, output, handler}: twitterRenderParam) => {
+    handler && handler({type: 'start', user: data.user.legacy.screenName, id: data.tweet.restId})
     const theme = Object.entries(themeList).find(([k, _]) => k == themeName)?.[1]!
 
     const replacData = [
       ['{id}', data.tweet.restId],
+      ['{user-screen-name}', data.user.legacy.screenName],
       ['{if-photo:(?<true>.+?):(?<false>.+?)}', isVideoData ? '$2' : '$1'],
     ] as [string, string][]
 
@@ -115,6 +123,8 @@ const twitterRender = (data: TweetApiUtilsData) => {
       ...themeParam,
       video: video,
     })
+
+    handler && handler({type: 'image', user: data.user.legacy.screenName, id: data.tweet.restId})
     const element = render.imageRender({
       data: data,
     })
@@ -126,9 +136,13 @@ const twitterRender = (data: TweetApiUtilsData) => {
     })
 
     const png = Buffer.from(await img.arrayBuffer())
+    if (pngOutput.split('/').length > 1) {
+      await fs.mkdir(pngOutput.split('/').slice(0, -1).join('/'), {recursive: true})
+    }
     await fs.writeFile(pngOutput, png)
 
     if (video) {
+      handler && handler({type: 'video', user: data.user.legacy.screenName, id: data.tweet.restId})
       const res = await render.videoRender({
         data: data,
         image: pngOutput,

@@ -1,6 +1,6 @@
 // #!/usr/bin/env node
 
-import {twitterSnapPuppeteer} from './core/twitterSnap'
+import {twitterSnapPuppeteer} from './core/core'
 
 const snap = await twitterSnapPuppeteer()
 await snap({id: '900282258736545792', type: 'getLikes', max: 100}, async (render) => {

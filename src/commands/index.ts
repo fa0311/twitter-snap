@@ -1,9 +1,10 @@
 import {Args, Command, Flags} from '@oclif/core'
 
 import os from 'os'
-import {twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/twitterSnap.js'
+import {ThemeNameType, themeList} from 'twitter-snap-core'
+import {HandlerType, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
 import {Logger} from '../utils/logger.js'
-import {GetTweetApi, ThemeNameType, getTweetList, themeList} from './../utils/types.js'
+import {GetTweetApi, getTweetList} from './../utils/types.js'
 
 const apiFlag = Flags.custom<'getTweetResultByRestId' | keyof GetTweetApi>({
   description: 'API type',
@@ -28,7 +29,11 @@ export default class Default extends Command {
   }
 
   static description = 'Twitter Snap'
-  static examples = ['twitter-snap 1765415187161464972']
+  static examples = [
+    'twitter-snap 1765415187161464972',
+    'twitter-snap 1765415187161464972 --api getTweetResultByRestId',
+  ]
+
   static browser_profile = `${os.homedir()}/.cache/twitter-snap/profiles`
 
   static flags = {
@@ -38,6 +43,7 @@ export default class Default extends Command {
     cleanup: Flags.boolean({description: 'Cleanup', default: true}),
     max: Flags.integer({description: 'Max count', default: 30}),
     debug: Flags.boolean({description: 'Debug', default: false}),
+    sleep: Flags.integer({description: 'Sleep (ms)', default: 0}),
     session_type: sessionType(),
     cookies_file: Flags.file({description: 'Cookies file', default: 'cookies.json'}),
     browser_profile: Flags.string({description: 'Browser profile', default: this.browser_profile}),
@@ -49,7 +55,7 @@ export default class Default extends Command {
 
     const logger = new Logger()
 
-    console.log = flags.debug ? logger.log : (_) => {}
+    console.log = flags.debug ? logger.log.bind(logger) : (_) => {}
 
     const getClient = (() => {
       switch (flags.session_type) {
@@ -62,22 +68,42 @@ export default class Default extends Command {
       }
     })()
 
-    const client = await logger.wrap('Loading Client', getClient)
+    const client = await logger.guard({text: 'Loading Client'}, getClient)
 
-    await client({id: args.id, type: flags.api, max: flags.max}, async (render) => {
-      const startFinalize = render({
-        themeName: flags.theme,
-        themeParam: {
-          width: 600,
-        },
-        output: flags.output,
-      })
+    const logHandler = async ({type, user, id}: HandlerType) => {
+      switch (type) {
+        case 'start':
+          return logger.update(`Rendering tweet ${user}/${id}`)
+        case 'image':
+          return logger.update(`Rendering image ${user}/${id}`)
+        case 'video':
+          return logger.update(`Rendering video ${user}/${id}`)
+      }
+    }
 
-      const finalize = await logger.wrap('Loading Snap', startFinalize)
-      const success = finalize({
-        cleanup: true,
-      })
-      await logger.wrap('Finalize', success)
+    const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
+    const render = client({id: args.id, type: flags.api, max: flags.max}, async (render) => {
+      try {
+        const finalize = await render({
+          themeName: flags.theme,
+          themeParam: {
+            width: 600,
+          },
+          output: flags.output,
+          handler: logHandler,
+        })
+
+        await finalize({
+          cleanup: true,
+        })
+        logger.succeed()
+      } catch (e) {
+        logger.error(e)
+      }
+      await sleep(flags.sleep)
     })
+
+    await logger.guard({text: 'Rendering tweet', max: flags.max}, render)
   }
 }
