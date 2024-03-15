@@ -58,6 +58,9 @@ export default class Default extends Command {
     const logger = new Logger()
 
     console.log = flags.debug ? logger.log.bind(logger) : (_) => {}
+    console.debug = flags.debug ? logger.debug.bind(logger) : (_) => {}
+    console.warn = logger.warn.bind(logger)
+    console.error = logger.error.bind(logger)
 
     const getClient = (() => {
       switch (flags.session_type) {
@@ -101,7 +104,7 @@ export default class Default extends Command {
         })
         logger.succeed()
       } catch (e) {
-        logger.error(e)
+        logger.catch(e)
       }
       await sleep(flags.sleep)
     })

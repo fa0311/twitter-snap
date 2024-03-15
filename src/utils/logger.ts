@@ -67,14 +67,36 @@ export class Logger {
     this.text = undefined
   }
 
-  log(e: any) {
+  terminal(e: any, type: 'log' | 'warn' | 'error' | 'debug') {
+    const prefix = {
+      log: clc.blackBright,
+      warn: clc.yellowBright,
+      error: clc.redBright,
+      debug: clc.black,
+    }
     if (this.ora?.isSpinning) {
       this.ora!.clear()
     }
-    this.raw(clc.blackBright(`[LOG] ${e}`))
+    this.raw(prefix[type](`[${type.toUpperCase()}] ${e}`))
     if (this.ora?.isSpinning) {
       this.ora!.start()
     }
+  }
+
+  log(e: any) {
+    this.terminal(e, 'log')
+  }
+
+  warn(e: any) {
+    this.terminal(e, 'warn')
+  }
+
+  error(e: any) {
+    this.terminal(e, 'error')
+  }
+
+  debug(e: any) {
+    this.terminal(e, 'debug')
   }
 
   private format(text?: string) {
@@ -108,7 +130,7 @@ export class Logger {
     }
   }
 
-  error(e: any) {
+  catch(e: any) {
     if (e instanceof Error) {
       this.fail(e.message)
     } else {
@@ -123,7 +145,7 @@ export class Logger {
       this.succeed(text)
       return res
     } catch (e) {
-      this.error(e)
+      this.catch(e)
       throw e
     }
   }
@@ -139,7 +161,7 @@ export class Logger {
       return res
     } catch (e) {
       this.progress = undefined
-      this.error(e)
+      this.catch(e)
     }
   }
 }
