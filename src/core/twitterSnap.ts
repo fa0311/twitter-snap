@@ -2,15 +2,42 @@ import {ImageResponse} from '@vercel/og'
 import {promises as fs} from 'fs'
 import {TweetApiUtilsData, TwitterOpenApi, TwitterOpenApiClient} from 'twitter-openapi-typescript'
 
+import puppeteer, {Cookie} from 'puppeteer'
 import {GetTweetApi, ThemeNameType, ThemeParamType, getTweetList, themeList} from '../utils/types.js'
 
-type twitterClientParam = {
-  cookies?: {[key: string]: string}
+export const twitterSnapGuest = async () => {
+  const twitter = new TwitterOpenApi()
+  const api = await twitter.getGuestClient()
+  return tweetApiSnap(api)
 }
 
-export const twitterSnap = async ({cookies}: twitterClientParam) => {
+export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: string) => {
+  const browser = await puppeteer.launch({
+    headless: headless,
+    timeout: 0,
+    userDataDir: userDataDir,
+  })
+  const [page] = await browser.pages()
+  await page.goto('https://twitter.com/login')
+
+  page.setDefaultNavigationTimeout(0)
+  page.setDefaultTimeout(0)
+
+  await page.waitForResponse((res) => {
+    return RegExp('https://twitter.com/i/api/graphql/[a-zA-Z0-9_-]+/HomeTimeline?.*').test(res.url())
+  })
+  const cookies = await page.cookies()
+  await browser.close()
   const twitter = new TwitterOpenApi()
-  const api = cookies ? await twitter.getClientFromCookies(cookies) : await twitter.getGuestClient()
+  const api = await twitter.getClientFromCookies(cookies.reduce((acc, e) => ({...acc, [e.name]: e.value}), {}))
+  return tweetApiSnap(api)
+}
+
+export const twitterSnapCookies = async (path: string) => {
+  const data = await fs.readFile(path, 'utf-8')
+  const cookies = JSON.parse(data) as Cookie[]
+  const twitter = new TwitterOpenApi()
+  const api = await twitter.getClientFromCookies(cookies.reduce((acc, e) => ({...acc, [e.name]: e.value}), {}))
   return tweetApiSnap(api)
 }
 
@@ -39,10 +66,13 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
           userId: id,
           cursor: cursor.length ? cursor.pop() : undefined,
         })
-        while (count < max) {
-          await handler(twitterRender(res.data.data[count]))
+
+        for (const e of res.data.data) {
+          if (count >= max) return
+          await handler(twitterRender(e))
           count++
         }
+
         if (res.data.cursor.bottom) {
           cursor.push(res.data.cursor.bottom?.value)
         } else {

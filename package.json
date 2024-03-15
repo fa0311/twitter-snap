@@ -39,20 +39,19 @@
     "default": ".",
     "plugins": [
       "@oclif/plugin-help",
-      "@oclif/plugin-plugins"
+      "@oclif/plugin-plugins",
+      "@oclif/plugin-update",
+      "@oclif/plugin-warn-if-update-available",
+      "@oclif/plugin-autocomplete"
     ],
-    "topicSeparator": " ",
-    "topics": {
-      "hello": {
-        "description": "Say hello to the world and others"
-      }
-    }
+    "topicSeparator": " "
   },
   "dependencies": {
     "@oclif/core": "^3",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^4",
     "@vercel/og": "^0.6.2",
+    "puppeteer": "^22.4.1",
     "twitter-openapi-typescript": "<2.0.0",
     "twitter-snap-core": "^0.0.9"
   },

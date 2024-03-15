@@ -18,5 +18,5 @@ node_modules
 oclif.lock
 oclif.manifest.json
 
-cookies.txt
+cookies.*
 temp/*
