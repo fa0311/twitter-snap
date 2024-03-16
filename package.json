@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.22",
+  "version": "0.0.23",
   "description": "Create beautiful Tweet images fast",
   "keywords": [
     "twitter",
@@ -28,7 +28,6 @@
     "lint": "eslint . --ext .ts",
     "prepack": "npm run build && oclif manifest && oclif readme",
     "postpack": "shx rm -f oclif.manifest.json",
-    "prepare": "npm run build",
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
     "posttest": "npm run lint",
     "version": "oclif readme && git add README.md"
@@ -59,7 +58,7 @@
     "ora": "^8.0.1",
     "puppeteer": "^22.4.1",
     "twitter-openapi-typescript": "<2.0.0",
-    "twitter-snap-core": "^0.0.11"
+    "twitter-snap-core": "^0.0.12"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
