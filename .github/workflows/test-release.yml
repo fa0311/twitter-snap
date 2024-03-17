@@ -1,4 +1,4 @@
-name: tests-matrixrelease
+name: tests-release
 on:
   workflow_dispatch:
 
