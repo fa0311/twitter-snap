@@ -77,4 +77,11 @@ describe('Command test', () => {
       await fs.access('temp/2021/01/13/08-02-33.png')
       expect(ctx.stdout).to.contain('✔ Rendering tweet')
     })
+
+  test
+    .stdout({print: true})
+    .command([...command, '-o', 'temp/{id}.png', 'https://twitter.com/faa0311'])
+    .it('input user url', async (ctx) => {
+      expect(ctx.stdout).to.contain('✔ Rendering tweet')
+    })
 })

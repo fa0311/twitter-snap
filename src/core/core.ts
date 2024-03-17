@@ -9,7 +9,7 @@ import {GetTweetApi, ThemeParamType, getTweetList} from '../utils/types.js'
 export const twitterSnapGuest = async () => {
   const twitter = new TwitterOpenApi()
   const api = await twitter.getGuestClient()
-  return tweetApiSnap(api)
+  return [tweetApiSnap(api), api] as const
 }
 
 export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: string) => {
@@ -31,7 +31,7 @@ export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: str
   await browser.close()
   const twitter = new TwitterOpenApi()
   const api = await twitter.getClientFromCookies(Object.fromEntries(cookies.map((e) => [e.name, e.value])))
-  return tweetApiSnap(api)
+  return [tweetApiSnap(api), api] as const
 }
 
 export const twitterSnapCookies = async (path: string) => {
@@ -39,7 +39,7 @@ export const twitterSnapCookies = async (path: string) => {
   const cookies = JSON.parse(data) as Cookie[]
   const twitter = new TwitterOpenApi()
   const api = await twitter.getClientFromCookies(Object.fromEntries(cookies.map((e) => [e.name, e.value])))
-  return tweetApiSnap(api)
+  return [tweetApiSnap(api), api] as const
 }
 
 type tweetApiSnapParam = {
@@ -109,7 +109,7 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
     handler && handler({id: data.tweet.restId, type: 'start', user: data.user.legacy.screenName})
     const Theme = Object.entries(themeList).find(([k, _]) => k === themeName)![1]
 
-    const replacData = [
+    const replaceData = [
       ['{id}', data.tweet.restId],
       ['{user-screen-name}', data.user.legacy.screenName],
       ['{if-photo:(?<true>.+?):(?<false>.+?)}', isVideoData ? '$2' : '$1'],
@@ -128,9 +128,9 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
       ['{time-tweet-ss}', new Date(legacy.createdAt).getSeconds().toString().padStart(2, '0')],
     ] as [string, string][]
 
-    const repOutput = replacData.reduce((acc, [k, v]) => acc.replaceAll(new RegExp(k, 'g'), v), output)
+    const repOutput = replaceData.reduce((acc, [k, v]) => acc.replaceAll(new RegExp(k, 'g'), v), output)
     const video = repOutput.split('.').pop() !== 'png'
-    const pngOutput = video ? repOutput.replace(/\.\w+$/, '.png') : repOutput
+    const pngOutput = video ? repOutput.split('.').slice(0, -1).join('.') + '.png' : repOutput
 
     const render = new Theme({
       ...themeParam,

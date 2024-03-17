@@ -4,6 +4,7 @@ import {FFmpegInfrastructure, ThemeNameType, themeList} from 'twitter-snap-core'
 
 import {HandlerType, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
+import {twitterUrlConvert} from '../utils/url.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
 
 export default class Default extends Command {
@@ -15,11 +16,15 @@ export default class Default extends Command {
   static description = ['Create beautiful Tweet images fast', 'https://github.com/fa0311/twitter-snap'].join('\n')
 
   static examples = [
-    'twitter-snap 1765415187161464972',
-    'twitter-snap 1765415187161464972 --session_type browser',
-    'twitter-snap 1765415187161464972 --session_type file --cookies_file cookies.json',
+    'twitter-snap 1349129669258448897',
+    'twitter-snap 1349129669258448897 --session-type browser',
+    'twitter-snap 1349129669258448897 --session-type file --cookies-file cookies.json',
     'twitter-snap 44196397 --api getUserTweets --limit 10',
-    'twitter-snap 44196397 --api getUserTweets --output "data/{user-screen-name}/{id}.{if-photo:png:mp4}"',
+    'twitter-snap 44196397 --api getUserTweets -o "data/{user-screen-name}/{id}.{if-photo:png:mp4}"',
+    'twitter-snap https://twitter.com/elonmusk',
+    'twitter-snap https://twitter.com/elonmusk/status/1349129669258448897',
+    'twitter-snap 44196397 --api getUserTweets -o "{user-screen-name}/{count}.png"',
+    'twitter-snap 44196397 --api getUserTweets -o "{time-tweet-yyyy}-{time-tweet-mm}-{time-tweet-dd}/{id}.png"',
   ]
 
   static flags = {
@@ -46,6 +51,20 @@ export default class Default extends Command {
     debug: Flags.boolean({
       default: false,
       description: 'Debug',
+    }),
+    ffmpegAdditonalOption: Flags.string({
+      aliases: ['ffmpeg-additonal-option'],
+      description: 'FFmpeg additonal option',
+    }),
+    ffmpegPath: Flags.string({
+      aliases: ['ffmpeg-path'],
+      default: 'ffmpeg',
+      description: 'FFmpeg path',
+    }),
+    ffprobePath: Flags.string({
+      aliases: ['ffprobe-path'],
+      default: 'ffprobe',
+      description: 'FFprobe path',
     }),
     limit: Flags.integer({
       default: 30,
@@ -80,20 +99,6 @@ export default class Default extends Command {
       description: 'Theme type',
       options: Object.keys(themeList),
     })(),
-    ffmpegAdditonalOption: Flags.string({
-      aliases: ['ffmpeg-additonal-option'],
-      description: 'FFmpeg additonal option',
-    }),
-    ffmpegPath: Flags.string({
-      aliases: ['ffmpeg-path'],
-      default: 'ffmpeg',
-      description: 'FFmpeg path',
-    }),
-    ffprobePath: Flags.string({
-      aliases: ['ffprobe-path'],
-      default: 'ffprobe',
-      description: 'FFprobe path',
-    }),
   }
 
   async main(): Promise<void> {
@@ -116,7 +121,19 @@ export default class Default extends Command {
       }
     })()
 
-    const client = await logger.guard({text: 'Loading Client'}, getClient)
+    const [client, api] = await logger.guard({text: 'Loading client'}, getClient)
+
+    const [id, type] = await (async () => {
+      if (args.id.startsWith('http')) {
+        const convert = twitterUrlConvert({url: args.id})
+        if (typeof convert === 'function') {
+          return await logger.guard({text: 'Get user id'}, convert(api))
+        } else if (typeof convert === 'object') {
+          return convert
+        }
+      }
+      return [args.id, flags.api] as const
+    })()
 
     const logHandler = async ({id, type, user}: HandlerType) => {
       switch (type) {
@@ -131,7 +148,7 @@ export default class Default extends Command {
 
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-    const render = client({id: args.id, limit: flags.limit, type: flags.api}, async (render) => {
+    const render = client({id, limit: flags.limit, type}, async (render) => {
       try {
         const finalize = await render({
           handler: logHandler,
@@ -164,6 +181,8 @@ export default class Default extends Command {
   async run(): Promise<void> {
     try {
       await this.main()
-    } catch {}
+    } catch (error) {
+      console.error(error)
+    }
   }
 }
