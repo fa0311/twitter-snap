@@ -26,6 +26,7 @@
   "scripts": {
     "build": "shx rm -rf dist && tsc -p tsconfig.build.json",
     "lint": "eslint . --ext .ts",
+    "fix": "eslint . --ext .ts --fix",
     "prepack": "npm run build && oclif manifest && oclif readme",
     "postpack": "shx rm -f oclif.manifest.json",
     "test": "mocha --forbid-only \"test/**/*.test.ts\"",
@@ -55,6 +56,7 @@
     "@oclif/plugin-warn-if-update-available": "^3",
     "@vercel/og": "^0.6.2",
     "cli-color": "^2.0.4",
+    "log-symbols": "^6.0.0",
     "ora": "^8.0.1",
     "puppeteer": "^22.4.1",
     "twitter-openapi-typescript": "<2.0.0",

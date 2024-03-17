@@ -1,3 +1,13 @@
 {
-  "extends": ["oclif", "oclif-typescript", "prettier"]
+  "extends": ["oclif", "oclif-typescript", "prettier"],
+  "rules": {
+    "@typescript-eslint/no-unused-vars": "off",
+    "@typescript-eslint/no-explicit-any": "off",
+    "unicorn/no-array-reduce": "off",
+    "prefer-regex-literals": "off",
+    "no-promise-executor-return": "off",
+    "no-await-in-loop": "off",
+    "unicorn/switch-case-braces": "off",
+    "arrow-body-style": "off"
+  }
 }

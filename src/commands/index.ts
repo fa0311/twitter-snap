@@ -1,25 +1,26 @@
 import {Args, Command, Flags} from '@oclif/core'
-import os from 'os'
+import os from 'node:os'
 import {ThemeNameType, themeList} from 'twitter-snap-core'
+
 import {HandlerType, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
-import {Logger} from '../utils/logger.js'
+import {Logger, LoggerSimple} from '../utils/logger.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
 
 const apiFlag = Flags.custom<'getTweetResultByRestId' | keyof GetTweetApi>({
+  default: 'getTweetResultByRestId',
   description: 'API type',
   options: ['getTweetResultByRestId', ...getTweetList],
-  default: 'getTweetResultByRestId',
 })
 
 const themeNameFlag = Flags.custom<ThemeNameType>({
+  default: 'RenderBasic',
   description: 'Theme type',
   options: Object.keys(themeList),
-  default: 'RenderBasic',
 })
 
-const sessionType = Flags.custom<'guest' | 'browser' | 'file'>({
-  description: 'Session type',
+const sessionType = Flags.custom<'browser' | 'file' | 'guest'>({
   default: 'guest',
+  description: 'Session type',
 })
 
 export default class Default extends Command {
@@ -27,7 +28,9 @@ export default class Default extends Command {
     id: Args.string({description: 'Twitter status id', required: true}),
   }
 
+  static browserProfile = `${os.homedir()}/.cache/twitter-snap/profiles`
   static description = ['Create beautiful Tweet images fast', 'https://github.com/fa0311/twitter-snap'].join('\n')
+
   static examples = [
     'twitter-snap 1765415187161464972',
     'twitter-snap 1765415187161464972 --session_type browser',
@@ -36,46 +39,46 @@ export default class Default extends Command {
     'twitter-snap 44196397 --api getUserTweets --output "data/{user-screen-name}/{id}.{if-photo:png:mp4}"',
   ]
 
-  static browser_profile = `${os.homedir()}/.cache/twitter-snap/profiles`
-
   static flags = {
     api: apiFlag(),
+    browserHeadless: Flags.boolean({default: false, description: 'Browser headless'}),
+    browserProfile: Flags.string({default: this.browserProfile, description: 'Browser profile'}),
+    cleanup: Flags.boolean({default: true, description: 'Cleanup'}),
+    cookiesFile: Flags.file({default: 'cookies.json', description: 'Cookies file'}),
+    debug: Flags.boolean({default: false, description: 'Debug'}),
+    limit: Flags.integer({default: 30, description: 'Limit count'}),
+    output: Flags.string({char: 'o', default: '{id}.{if-photo:png:mp4}', description: 'Output file name'}),
+    sessionType: sessionType(),
+    simpleLog: Flags.boolean({default: false, description: 'Simple log'}),
+    sleep: Flags.integer({default: 0, description: 'Sleep (ms)'}),
     theme: themeNameFlag(),
-    output: Flags.string({char: 'o', description: 'Output file name', default: '{id}.{if-photo:png:mp4}'}),
-    cleanup: Flags.boolean({description: 'Cleanup', default: true}),
-    limit: Flags.integer({description: 'Limit count', default: 30}),
-    debug: Flags.boolean({description: 'Debug', default: false}),
-    sleep: Flags.integer({description: 'Sleep (ms)', default: 0}),
-    session_type: sessionType(),
-    cookies_file: Flags.file({description: 'Cookies file', default: 'cookies.json'}),
-    browser_profile: Flags.string({description: 'Browser profile', default: this.browser_profile}),
-    browser_headless: Flags.boolean({description: 'Browser headless', default: false}),
   }
 
-  async run(): Promise<void> {
-    const {args, flags} = await this.parse(Default)
+  static jsonEnabled = true
 
-    const logger = new Logger()
+  async main(): Promise<void> {
+    const {args, flags} = await this.parse(Default)
+    const logger = flags.simpleLog ? new LoggerSimple(this.log.bind(this)) : new Logger()
 
     console.log = flags.debug ? logger.log.bind(logger) : (_) => {}
-    console.debug = flags.debug ? logger.debug.bind(logger) : (_) => {}
+    console.debug = flags.debug ? logger.log.bind(logger) : (_) => {}
     console.warn = logger.warn.bind(logger)
     console.error = logger.error.bind(logger)
 
     const getClient = (() => {
-      switch (flags.session_type) {
+      switch (flags.sessionType) {
         case 'guest':
           return twitterSnapGuest()
         case 'browser':
-          return twitterSnapPuppeteer(flags.browser_headless, flags.browser_profile)
+          return twitterSnapPuppeteer(flags.browserHeadless, flags.browserProfile)
         case 'file':
-          return twitterSnapCookies(flags.cookies_file)
+          return twitterSnapCookies(flags.cookiesFile)
       }
     })()
 
     const client = await logger.guard({text: 'Loading Client'}, getClient)
 
-    const logHandler = async ({type, user, id}: HandlerType) => {
+    const logHandler = async ({id, type, user}: HandlerType) => {
       switch (type) {
         case 'start':
           return logger.update(`Rendering tweet ${user}/${id}`)
@@ -88,27 +91,34 @@ export default class Default extends Command {
 
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-    const render = client({id: args.id, type: flags.api, limit: flags.limit}, async (render) => {
+    const render = client({id: args.id, limit: flags.limit, type: flags.api}, async (render) => {
       try {
         const finalize = await render({
+          handler: logHandler,
+          output: flags.output,
           themeName: flags.theme,
           themeParam: {
             width: 600,
           },
-          output: flags.output,
-          handler: logHandler,
         })
 
         await finalize({
           cleanup: true,
         })
         logger.succeed()
-      } catch (e) {
-        logger.catch(e)
+      } catch (error) {
+        logger.catchFail(error)
       }
+
       await sleep(flags.sleep)
     })
 
-    await logger.guardProgress({text: 'Rendering tweet', max: flags.limit}, render)
+    await logger.guardProgress({max: flags.limit, text: 'Rendering tweet'}, render)
+  }
+
+  async run(): Promise<void> {
+    try {
+      await this.main()
+    } catch {}
   }
 }
