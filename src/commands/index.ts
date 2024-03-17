@@ -182,7 +182,13 @@ export default class Default extends Command {
     try {
       await this.main()
     } catch (error) {
-      console.error(error)
+      if (typeof error === 'string') {
+        this.error(error)
+      } else if (error instanceof Error) {
+        this.error(error.message)
+      } else {
+        this.error('Unknown error')
+      }
     }
   }
 }
