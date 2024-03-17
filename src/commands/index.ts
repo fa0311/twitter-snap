@@ -1,27 +1,10 @@
 import {Args, Command, Flags} from '@oclif/core'
 import os from 'node:os'
-import {ThemeNameType, themeList} from 'twitter-snap-core'
+import {FFmpegInfrastructure, ThemeNameType, themeList} from 'twitter-snap-core'
 
 import {HandlerType, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
-
-const apiFlag = Flags.custom<'getTweetResultByRestId' | keyof GetTweetApi>({
-  default: 'getTweetResultByRestId',
-  description: 'API type',
-  options: ['getTweetResultByRestId', ...getTweetList],
-})
-
-const themeNameFlag = Flags.custom<ThemeNameType>({
-  default: 'RenderBasic',
-  description: 'Theme type',
-  options: Object.keys(themeList),
-})
-
-const sessionType = Flags.custom<'browser' | 'file' | 'guest'>({
-  default: 'guest',
-  description: 'Session type',
-})
 
 export default class Default extends Command {
   static args = {
@@ -40,21 +23,78 @@ export default class Default extends Command {
   ]
 
   static flags = {
-    api: apiFlag(),
-    browserHeadless: Flags.boolean({default: false, description: 'Browser headless'}),
-    browserProfile: Flags.string({default: this.browserProfile, description: 'Browser profile'}),
-    cleanup: Flags.boolean({default: true, description: 'Cleanup'}),
-    cookiesFile: Flags.file({default: 'cookies.json', description: 'Cookies file'}),
-    debug: Flags.boolean({default: false, description: 'Debug'}),
-    limit: Flags.integer({default: 30, description: 'Limit count'}),
-    output: Flags.string({char: 'o', default: '{id}.{if-photo:png:mp4}', description: 'Output file name'}),
-    sessionType: sessionType(),
-    simpleLog: Flags.boolean({default: false, description: 'Simple log'}),
-    sleep: Flags.integer({default: 0, description: 'Sleep (ms)'}),
-    theme: themeNameFlag(),
+    api: Flags.custom<'getTweetResultByRestId' | keyof GetTweetApi>({
+      default: 'getTweetResultByRestId',
+      description: 'API type',
+      options: ['getTweetResultByRestId', ...getTweetList],
+    })(),
+    browserHeadless: Flags.boolean({
+      aliases: ['browser-headless'],
+      default: false,
+      description: 'Browser headless',
+    }),
+    browserProfile: Flags.string({
+      aliases: ['browser-profile'],
+      default: this.browserProfile,
+      description: 'Browser profile',
+    }),
+    cookiesFile: Flags.file({
+      aliases: ['cookies-file'],
+      default: 'cookies.json',
+      description: 'Cookies file',
+    }),
+    debug: Flags.boolean({
+      default: false,
+      description: 'Debug',
+    }),
+    limit: Flags.integer({
+      default: 30,
+      description: 'Limit count',
+    }),
+    noCleanup: Flags.boolean({
+      aliases: ['no-cleanup'],
+      default: false,
+      description: 'Cleanup',
+    }),
+    output: Flags.string({
+      char: 'o',
+      default: '{id}.{if-photo:png:mp4}',
+      description: 'Output file name',
+    }),
+    sessionType: Flags.custom<'browser' | 'file' | 'guest'>({
+      aliases: ['session-type'],
+      default: 'guest',
+      description: 'Session type',
+    })(),
+    simpleLog: Flags.boolean({
+      aliases: ['simple-log'],
+      default: false,
+      description: 'Simple log',
+    }),
+    sleep: Flags.integer({
+      default: 0,
+      description: 'Sleep (ms)',
+    }),
+    theme: Flags.custom<ThemeNameType>({
+      default: 'RenderBasic',
+      description: 'Theme type',
+      options: Object.keys(themeList),
+    })(),
+    ffmpegAdditonalOption: Flags.string({
+      aliases: ['ffmpeg-additonal-option'],
+      description: 'FFmpeg additonal option',
+    }),
+    ffmpegPath: Flags.string({
+      aliases: ['ffmpeg-path'],
+      default: 'ffmpeg',
+      description: 'FFmpeg path',
+    }),
+    ffprobePath: Flags.string({
+      aliases: ['ffprobe-path'],
+      default: 'ffprobe',
+      description: 'FFprobe path',
+    }),
   }
-
-  static jsonEnabled = true
 
   async main(): Promise<void> {
     const {args, flags} = await this.parse(Default)
@@ -98,12 +138,17 @@ export default class Default extends Command {
           output: flags.output,
           themeName: flags.theme,
           themeParam: {
+            ffmpeg: new FFmpegInfrastructure({
+              ffmpegPath: flags.ffmpegPath,
+              ffprobePath: flags.ffprobePath,
+            }),
+            ffmpegAdditonalOption: flags.ffmpegAdditonalOption?.split(' ') ?? [],
             width: 600,
           },
         })
 
         await finalize({
-          cleanup: true,
+          cleanup: !flags.noCleanup,
         })
         logger.succeed()
       } catch (error) {

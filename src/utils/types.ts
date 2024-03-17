@@ -9,4 +9,4 @@ const getTweetApi = Object.keys(TweetApiUtils.prototype).filter((k) => k.startsW
 
 export const getTweetList = getTweetApi as (keyof GetTweetApi)[]
 
-export type ThemeParamType = Omit<ThemeParam, 'ffmpeg' | 'video'>
+export type ThemeParamType = Omit<ThemeParam, 'video'>

@@ -20,3 +20,6 @@ oclif.manifest.json
 
 cookies.*
 temp/*
+ffmpeg.*
+ffplay.*
+ffprobe.*
