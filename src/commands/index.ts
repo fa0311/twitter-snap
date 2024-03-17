@@ -32,7 +32,7 @@ export default class Default extends Command {
     'twitter-snap 1765415187161464972',
     'twitter-snap 1765415187161464972 --session_type browser',
     'twitter-snap 1765415187161464972 --session_type file --cookies_file cookies.json',
-    'twitter-snap 44196397 --api getUserTweets --max 10',
+    'twitter-snap 44196397 --api getUserTweets --limit 10',
     'twitter-snap 44196397 --api getUserTweets --output "data/{user-screen-name}/{id}.{if-photo:png:mp4}"',
   ]
 
@@ -43,7 +43,7 @@ export default class Default extends Command {
     theme: themeNameFlag(),
     output: Flags.string({char: 'o', description: 'Output file name', default: '{id}.{if-photo:png:mp4}'}),
     cleanup: Flags.boolean({description: 'Cleanup', default: true}),
-    max: Flags.integer({description: 'Max count', default: 30}),
+    limit: Flags.integer({description: 'Limit count', default: 30}),
     debug: Flags.boolean({description: 'Debug', default: false}),
     sleep: Flags.integer({description: 'Sleep (ms)', default: 0}),
     session_type: sessionType(),
@@ -88,7 +88,7 @@ export default class Default extends Command {
 
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-    const render = client({id: args.id, type: flags.api, max: flags.max}, async (render) => {
+    const render = client({id: args.id, type: flags.api, limit: flags.limit}, async (render) => {
       try {
         const finalize = await render({
           themeName: flags.theme,
@@ -109,6 +109,6 @@ export default class Default extends Command {
       await sleep(flags.sleep)
     })
 
-    await logger.guardProgress({text: 'Rendering tweet', max: flags.max}, render)
+    await logger.guardProgress({text: 'Rendering tweet', max: flags.limit}, render)
   }
 }

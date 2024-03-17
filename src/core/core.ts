@@ -45,12 +45,12 @@ export const twitterSnapCookies = async (path: string) => {
 type tweetApiSnapParam = {
   id: string
   type?: 'getTweetResultByRestId' | keyof GetTweetApi
-  max: number
+  limit: number
 }
 
 const tweetApiSnap = (client: TwitterOpenApiClient) => {
   return async (
-    {id, type, max}: tweetApiSnapParam,
+    {id, type, limit}: tweetApiSnapParam,
     handler: (e: ReturnType<typeof twitterRender>) => Promise<void>,
   ) => {
     const key = getTweetList.find((k) => k == type)
@@ -59,7 +59,7 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
       const api = that[key].bind(that)
       let count = 0
       const cursor: string[] = []
-      while (count < max) {
+      while (count < limit) {
         const res = await api({
           focalTweetId: id,
           rawQuery: id,
@@ -70,7 +70,7 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
 
         for (const e of res.data.data) {
           if (e.promotedMetadata) continue
-          if (count >= max) return
+          if (count >= limit) return
           await handler(twitterRender(e))
           count++
         }
