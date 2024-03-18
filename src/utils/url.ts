@@ -5,10 +5,10 @@ const urlList = [
   ['https://twitter.com/search?q=(?<id>[^&]+)', 'getSearchTimeline'] as const,
   ['https://twitter.com/home', 'getHomeTimeline'] as const,
   ['https://twitter.com/i/lists/(?<id>[0-9]+)', 'getListLatestTweetsTimeline'] as const,
-  ['https://twitter.com/(?<user>[a-zA-Z0-9_]+)', 'getUserTweets'] as const,
   ['https://twitter.com/(?<user>[a-zA-Z0-9_]+)/with_replies', 'getUserTweetsAndReplies'] as const,
   ['https://twitter.com/(?<user>[a-zA-Z0-9_]+)/media', 'getUserMedia'] as const,
   ['https://twitter.com/(?<user>[a-zA-Z0-9_]+)/likes', 'getLikes'] as const,
+  ['https://twitter.com/(?<user>[a-zA-Z0-9_]+)', 'getUserTweets'] as const,
   ['https://twitter.com/i/bookmarks', 'getBookmarks'] as const,
 ]
 
