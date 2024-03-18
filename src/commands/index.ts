@@ -123,15 +123,18 @@ export default class Default extends Command {
 
     const [client, api] = await logger.guard({text: 'Loading client'}, getClient)
 
-    const [id, type] = await (async () => {
+    const [id, type] = await (() => {
       if (args.id.startsWith('http')) {
         const convert = twitterUrlConvert({url: args.id})
         if (typeof convert === 'function') {
-          return await logger.guard({text: 'Get user id'}, convert(api))
-        } else if (typeof convert === 'object') {
+          return logger.guard({text: 'Get user id'}, convert(api))
+        }
+
+        if (typeof convert === 'object') {
           return convert
         }
       }
+
       return [args.id, flags.api] as const
     })()
 
