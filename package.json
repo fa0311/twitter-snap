@@ -8,7 +8,10 @@
   ],
   "homepage": "https://github.com/fa0311/twitter-snap",
   "bugs": "https://github.com/fa0311/twitter-snap/issues",
-  "repository": "fa0311/twitter-snap",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fa0311/twitter-snap.git"
+  },
   "license": "MIT",
   "author": "ふぁ @fa0311",
   "type": "module",
@@ -16,7 +19,7 @@
   "main": "",
   "types": "dist/index.d.ts",
   "bin": {
-    "twitter-snap": "./bin/run.js"
+    "twitter-snap": "bin/run.js"
   },
   "files": [
     "/bin",
