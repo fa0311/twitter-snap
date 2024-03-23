@@ -73,7 +73,7 @@
     "@types/fluent-ffmpeg": "^2.1.24",
     "@types/mocha": "^10",
     "@types/node": "^18.19.24",
-    "@types/react": "^18.2.65",
+    "@types/react": "^18.2.69",
     "chai": "^4",
     "eslint": "^8",
     "eslint-config-oclif": "^5",
