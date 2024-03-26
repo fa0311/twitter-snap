@@ -4,7 +4,7 @@ Create beautiful Tweet images fast.
 Fast, good design, Browser is not a dependency.
 
 ```shell
-npx twitter-snap@latest https://twitter.com/elonmusk/status/15186239970549186570
+npx twitter-snap@latest https://twitter.com/elonmusk/status/1770222178279252062
 ```
 
 <p float="left">
