@@ -8,9 +8,10 @@ npx twitter-snap@latest https://twitter.com/elonmusk/status/15186239970549186570
 ```
 
 <p float="left">
-  <img src="./docs/img/output-1.png" width="33%" />
-  <img src="./docs/img/output-2.png" width="33%" /> 
-  <img src="./docs/img/output-3.png" width="33%" />
+  <img src="./docs/img/output-1.png" width="49%" />
+  <img src="./docs/img/output-2.png" width="49%" /> 
+  <img src="./docs/img/output-3.png" width="49%" />
+  <img src="./docs/img/output-4.png" width="49%" />
 </p>
 
 ## Install
