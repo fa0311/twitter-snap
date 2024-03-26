@@ -42,6 +42,37 @@ export const twitterSnapCookies = async (path: string) => {
   return [tweetApiSnap(api), api] as const
 }
 
+type Fonts = NonNullable<NonNullable<ConstructorParameters<typeof ImageResponse>[1]>['fonts']>[0]
+
+export const getFonts: (fontPath: string) => Promise<Fonts[]> = async (fontPath) => {
+  const base = 'https://github.com/fa0311/twitter-snap-core/releases/download/assets-fonts/'
+
+  const list = [
+    ['SEGOEUISL.TTF', 'segoeui', 500, 'normal'] as const,
+    ['SEGOEUIB.TTF', 'segoeui', 700, 'normal'] as const,
+    ['SEGUISLI.TTF', 'segoeui', 500, 'italic'] as const,
+    ['SEGOEUIZ.TTF', 'segoeui', 700, 'italic'] as const,
+  ]
+
+  fs.mkdir(fontPath, {recursive: true})
+
+  const fonts = list.map(async ([file, name, weight, style]) => {
+    const path = `${fontPath}/${file}`
+    try {
+      const data = await fs.readFile(path)
+      return {data, name, style, weight}
+    } catch {
+      const url = `${base}${file}`
+      const res = await fetch(url)
+      const data = await res.arrayBuffer()
+      await fs.writeFile(path, Buffer.from(data))
+      return {data, name, style, weight}
+    }
+  })
+
+  return Promise.all(fonts)
+}
+
 type tweetApiSnapParam = {
   id: string
   limit: number
@@ -96,7 +127,7 @@ type twitterRenderParam = {
   handler?: (e: HandlerType) => void
   output: string
   themeName: ThemeNameType
-  themeParam: ThemeParamType
+  themeParam: ThemeParamType & {fonts: Fonts[]}
 }
 
 const twitterRender = (data: TweetApiUtilsData, count: number) => {
@@ -149,6 +180,7 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
 
     const img = new ImageResponse(element, {
       emoji: 'twemoji',
+      fonts: themeParam.fonts,
       height: undefined,
       width: themeParam.width,
     })

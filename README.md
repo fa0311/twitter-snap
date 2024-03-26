@@ -7,11 +7,11 @@ Fast, good design, Browser is not a dependency.
 npx twitter-snap@latest https://twitter.com/elonmusk/status/15186239970549186570
 ```
 
-```shell
-npx twitter-snap 1518623997054918657
-```
-
-![image](./docs/img/output.png)
+<p float="left">
+  <img src="./docs/img/output-1.png" width="33%" />
+  <img src="./docs/img/output-2.png" width="33%" /> 
+  <img src="./docs/img/output-3.png" width="33%" />
+</p>
 
 ## Install
 
@@ -24,8 +24,10 @@ $ bin/run --help
 Create beautiful Tweet images fast
 
 USAGE
-  $ twitter-snap  ID [--api getTweetResultByRestId|getTweetDetail|getSearchTimeline|getHomeTimeline|getHomeLatestTimeline|getListLatestTweetsTimeline|getUserTweets|getUserTweetsAndReplies|getUserMedia|getLikes|getBookmarks] [--browserHeadless] [--browserProfile <value>] [--cookiesFile
-    <value>] [--debug] [--limit <value>] [--noCleanup] [-o <value>] [--sessionType <value>] [--simpleLog] [--sleep <value>] [--theme RenderBasic] [--ffmpegAdditonalOption <value>] [--ffmpegPath <value>] [--ffprobePath <value>]
+  $ twitter-snap  ID [--api getTweetResultByRestId|getTweetDetail|getSearchTimeline|getHomeTimeline|getHomeLatestTimeline|getListLatestTweetsTimeline|getUserTweets|getUserTweetsAndReplies|getUserMedia|getLikes|getBookmarks] [--browserHeadless] [--browserProfile <value>]
+    [--cookiesFile <value>] [--debug] [--ffmpegAdditonalOption <value>] [--ffmpegPath <value>] [--ffprobePath <value>] [--fontPath <value>] [--limit <value>] [--noCleanup] [-o <value>] [--sessionType <value>] [--simpleLog] [--sleep <value>] [--theme
+    RenderOceanBlueColor|RenderOceanBlueDarkColor|RenderSunsetGardenColor|RenderSunsetGardenDarkColor|RenderDawnBlossomColor|RenderDawnBlossomDarkColor|RenderFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyColor|RenderTwilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransp
+    arent|RenderTransparentDark|RenderTransparentShadow|RenderTransparentDarkShadow|RenderMakeItAQuote]
 
 ARGUMENTS
   ID  Twitter status id
@@ -41,13 +43,15 @@ FLAGS
       --ffmpegAdditonalOption=<value>  FFmpeg additonal option
       --ffmpegPath=<value>             [default: ffmpeg] FFmpeg path
       --ffprobePath=<value>            [default: ffprobe] FFprobe path
+      --fontPath=<value>               [default: C:\Users\yuki/.cache/twitter-snap/fonts] Font path
       --limit=<value>                  [default: 30] Limit count
       --noCleanup                      Cleanup
       --sessionType=<value>            [default: guest] Session type
       --simpleLog                      Simple log
       --sleep=<value>                  Sleep (ms)
-      --theme=<option>                 [default: RenderBasic] Theme type
-                                       <options: RenderBasic>
+      --theme=<option>                 [default: RenderOceanBlueColor] Theme type
+                                       <options: RenderOceanBlueColor|RenderOceanBlueDarkColor|RenderSunsetGardenColor|RenderSunsetGardenDarkColor|RenderDawnBlossomColor|RenderDawnBlossomDarkColor|RenderFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyColor|RenderTwilightSkyDarkColor|Rende
+                                       rPlainColor|RenderPlainDarkColor|RenderTransparent|RenderTransparentDark|RenderTransparentShadow|RenderTransparentDarkShadow|RenderMakeItAQuote>
 
 DESCRIPTION
   Create beautiful Tweet images fast
@@ -55,6 +59,8 @@ DESCRIPTION
 
 EXAMPLES
   $ twitter-snap 1349129669258448897
+
+  $ twitter-snap 1349129669258448897 --theme RenderMakeItAQuote
 
   $ twitter-snap 1349129669258448897 --session-type browser
 
