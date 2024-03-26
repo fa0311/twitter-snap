@@ -1,5 +1,6 @@
 import {Args, Command, Flags} from '@oclif/core'
 import os from 'node:os'
+import {TwitterOpenApi} from 'twitter-openapi-typescript'
 import {FFmpegInfrastructure, ThemeNameType, themeList} from 'twitter-snap-core'
 
 import {HandlerType, getFonts, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
@@ -109,6 +110,10 @@ export default class Default extends Command {
       description: 'Theme type',
       options: Object.keys(themeList),
     })(),
+    width: Flags.integer({
+      default: 600,
+      description: 'Width',
+    }),
   }
 
   async main(): Promise<void> {
@@ -119,6 +124,17 @@ export default class Default extends Command {
     console.debug = flags.debug ? logger.log.bind(logger) : (_) => {}
     console.warn = logger.warn.bind(logger)
     console.error = logger.error.bind(logger)
+
+    TwitterOpenApi.fetchApi = async (...args) => {
+      console.debug(`http request: ${args[0]}`)
+      const res = await fetch(...args)
+      console.debug(`http response: ${res.status}`)
+      if (!res.ok) {
+        console.error(`Return http status: ${res.status}`)
+      }
+
+      return res
+    }
 
     const getClient = (() => {
       switch (flags.sessionType) {
@@ -159,11 +175,26 @@ export default class Default extends Command {
       }
     }
 
-    const fonts = await logger.guard({text: 'Loading fonts'}, getFonts(flags.fontPath))
+    const fonts = await getFonts(flags.fontPath)
 
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
-    const render = client({id, limit: flags.limit, type}, async (render) => {
+    const sleepLoop = async (ms: number, hook: (count: number) => void) => {
+      for (let i = 0; i < ms / 1000; i++) {
+        hook(ms / 1000 - i)
+        await sleep(1000)
+      }
+
+      await sleep(ms % 1000)
+    }
+
+    const sleepHook = async (count: number) => {
+      await sleepLoop(count, async (count) => {
+        logger.update(`API limit reached! Sleeping ${count} seconds`)
+      })
+    }
+
+    const render = client({id, limit: flags.limit, type}, sleepHook, async (render) => {
       try {
         const finalize = await render({
           handler: logHandler,
@@ -176,7 +207,7 @@ export default class Default extends Command {
             }),
             ffmpegAdditonalOption: flags.ffmpegAdditonalOption?.split(' ') ?? [],
             fonts,
-            width: 600,
+            width: flags.width,
           },
         })
 
@@ -188,7 +219,9 @@ export default class Default extends Command {
         logger.catchFail(error)
       }
 
-      await sleep(flags.sleep)
+      await sleepLoop(flags.sleep, async (count) => {
+        logger.update(`Sleeping ${count} seconds`)
+      })
     })
 
     await logger.guardProgress({max: flags.limit, text: 'Rendering tweet'}, render)

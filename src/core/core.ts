@@ -80,23 +80,32 @@ type tweetApiSnapParam = {
 }
 
 type handlerType = (e: ReturnType<typeof twitterRender>) => Promise<void>
+type sleepType = (ms: number) => Promise<void>
 
 const tweetApiSnap = (client: TwitterOpenApiClient) => {
-  return async ({id, limit, type}: tweetApiSnapParam, handler: handlerType) => {
+  return async ({id, limit, type}: tweetApiSnapParam, sleep: sleepType, handler: handlerType) => {
     const key = getTweetList.find((k) => k === type)
+
     if (key) {
       const that = client.getTweetApi()
       const api = that[key].bind(that)
       let count = 0
-      const cursor: string[] = []
+      let wait = 0
+      let cursor: string | undefined
       while (count < limit) {
+        await sleep(wait)
+
         const res = await api({
-          cursor: cursor.length > 0 ? cursor.pop() : undefined,
+          cursor,
           focalTweetId: id,
           listId: id,
           rawQuery: id,
           userId: id,
         })
+
+        if (res.header.rateLimitRemaining < 5) {
+          wait = res.header.rateLimitReset * 1000 - Date.now()
+        }
 
         for (const e of res.data.data) {
           if (e.promotedMetadata) continue
@@ -105,8 +114,12 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
           count++
         }
 
+        if (res.data.data.length === 0) {
+          return
+        }
+
         if (res.data.cursor.bottom) {
-          cursor.push(res.data.cursor.bottom?.value)
+          cursor = res.data.cursor.bottom.value
         } else {
           return
         }
@@ -115,7 +128,9 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
       const res = await client.getDefaultApi().getTweetResultByRestId({
         tweetId: id,
       })
-      if (res.data) await handler(twitterRender(res.data, 0))
+      if (res.data) {
+        await handler(twitterRender(res.data, 0))
+      }
     }
   }
 }
