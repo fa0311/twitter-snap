@@ -95,7 +95,7 @@ export default class Default extends Command {
       description: 'Sleep (ms)',
     }),
     theme: Flags.custom<ThemeNameType>({
-      default: 'RenderBasic',
+      default: 'RenderOceanBlueColor',
       description: 'Theme type',
       options: Object.keys(themeList),
     })(),
