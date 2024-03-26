@@ -2,7 +2,7 @@ import {Args, Command, Flags} from '@oclif/core'
 import os from 'node:os'
 import {FFmpegInfrastructure, ThemeNameType, themeList} from 'twitter-snap-core'
 
-import {HandlerType, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
+import {HandlerType, getFonts, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
 import {twitterUrlConvert} from '../utils/url.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
@@ -13,10 +13,12 @@ export default class Default extends Command {
   }
 
   static browserProfile = `${os.homedir()}/.cache/twitter-snap/profiles`
+
   static description = ['Create beautiful Tweet images fast', 'https://github.com/fa0311/twitter-snap'].join('\n')
 
   static examples = [
     'twitter-snap 1349129669258448897',
+    'twitter-snap 1349129669258448897 --theme RenderMakeItAQuote',
     'twitter-snap 1349129669258448897 --session-type browser',
     'twitter-snap 1349129669258448897 --session-type file --cookies-file cookies.json',
     'twitter-snap 44196397 --api getUserTweets --limit 10',
@@ -27,6 +29,9 @@ export default class Default extends Command {
     'twitter-snap 44196397 --api getUserTweets -o "{time-tweet-yyyy}-{time-tweet-mm}-{time-tweet-dd}/{id}.png"',
   ]
 
+  static fontPath = `${os.homedir()}/.cache/twitter-snap/fonts`
+
+  // eslint-disable-next-line perfectionist/sort-classes
   static flags = {
     api: Flags.custom<'getTweetResultByRestId' | keyof GetTweetApi>({
       default: 'getTweetResultByRestId',
@@ -66,6 +71,11 @@ export default class Default extends Command {
       default: 'ffprobe',
       description: 'FFprobe path',
     }),
+    fontPath: Flags.string({
+      aliases: ['font-path'],
+      default: this.fontPath,
+      description: 'Font path',
+    }),
     limit: Flags.integer({
       default: 30,
       description: 'Limit count',
@@ -95,7 +105,7 @@ export default class Default extends Command {
       description: 'Sleep (ms)',
     }),
     theme: Flags.custom<ThemeNameType>({
-      default: 'RenderBasic',
+      default: 'RenderOceanBlueColor',
       description: 'Theme type',
       options: Object.keys(themeList),
     })(),
@@ -149,6 +159,8 @@ export default class Default extends Command {
       }
     }
 
+    const fonts = await logger.guard({text: 'Loading fonts'}, getFonts(flags.fontPath))
+
     const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
     const render = client({id, limit: flags.limit, type}, async (render) => {
@@ -163,6 +175,7 @@ export default class Default extends Command {
               ffprobePath: flags.ffprobePath,
             }),
             ffmpegAdditonalOption: flags.ffmpegAdditonalOption?.split(' ') ?? [],
+            fonts,
             width: 600,
           },
         })

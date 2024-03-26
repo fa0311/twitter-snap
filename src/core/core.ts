@@ -42,6 +42,37 @@ export const twitterSnapCookies = async (path: string) => {
   return [tweetApiSnap(api), api] as const
 }
 
+type Fonts = NonNullable<NonNullable<ConstructorParameters<typeof ImageResponse>[1]>['fonts']>[0]
+
+export const getFonts: (fontPath: string) => Promise<Fonts[]> = async (fontPath) => {
+  const base = 'https://github.com/fa0311/twitter-snap-core/releases/download/assets-fonts/'
+
+  const list = [
+    ['SEGOEUISL.TTF', 'segoeui', 500, 'normal'] as const,
+    ['SEGOEUIB.TTF', 'segoeui', 700, 'normal'] as const,
+    ['SEGUISLI.TTF', 'segoeui', 500, 'italic'] as const,
+    ['SEGOEUIZ.TTF', 'segoeui', 700, 'italic'] as const,
+  ]
+
+  fs.mkdir(fontPath, {recursive: true})
+
+  const fonts = list.map(async ([file, name, weight, style]) => {
+    const path = `${fontPath}/${file}`
+    try {
+      const data = await fs.readFile(path)
+      return {data, name, style, weight}
+    } catch {
+      const url = `${base}${file}`
+      const res = await fetch(url)
+      const data = await res.arrayBuffer()
+      await fs.writeFile(path, Buffer.from(data))
+      return {data, name, style, weight}
+    }
+  })
+
+  return Promise.all(fonts)
+}
+
 type tweetApiSnapParam = {
   id: string
   limit: number
@@ -96,46 +127,51 @@ type twitterRenderParam = {
   handler?: (e: HandlerType) => void
   output: string
   themeName: ThemeNameType
-  themeParam: ThemeParamType
+  themeParam: ThemeParamType & {fonts: Fonts[]}
 }
 
 const twitterRender = (data: TweetApiUtilsData, count: number) => {
   const legacy = data.tweet.legacy!
   const extEntities = data.tweet.legacy?.extendedEntities
   const extMedia = extEntities?.media ?? []
-  const isVideoData = extMedia.some((e) => e.type !== 'photo')
+  const isVideo = extMedia.some((e) => e.type !== 'photo')
 
   return async ({handler, output, themeName, themeParam}: twitterRenderParam) => {
     handler && handler({id: data.tweet.restId, type: 'start', user: data.user.legacy.screenName})
     const Theme = Object.entries(themeList).find(([k, _]) => k === themeName)![1]
 
-    const replaceData = [
-      ['{id}', data.tweet.restId],
-      ['{user-screen-name}', data.user.legacy.screenName],
-      ['{if-photo:(?<true>.+?):(?<false>.+?)}', isVideoData ? '$2' : '$1'],
-      ['{count}', count.toString()],
-      ['{time-now-yyyy}', new Date().getFullYear().toString().padStart(4, '0')],
-      ['{time-now-mm}', (new Date().getMonth() + 1).toString().padStart(2, '0')],
-      ['{time-now-dd}', new Date().getDate().toString().padStart(2, '0')],
-      ['{time-now-hh}', new Date().getHours().toString().padStart(2, '0')],
-      ['{time-now-mi}', new Date().getMinutes().toString().padStart(2, '0')],
-      ['{time-now-ss}', new Date().getSeconds().toString().padStart(2, '0')],
-      ['{time-tweet-yyyy}', new Date(legacy.createdAt).getFullYear().toString().padStart(4, '0')],
-      ['{time-tweet-mm}', (new Date(legacy.createdAt).getMonth() + 1).toString().padStart(2, '0')],
-      ['{time-tweet-dd}', new Date(legacy.createdAt).getDate().toString().padStart(2, '0')],
-      ['{time-tweet-hh}', new Date(legacy.createdAt).getHours().toString().padStart(2, '0')],
-      ['{time-tweet-mi}', new Date(legacy.createdAt).getMinutes().toString().padStart(2, '0')],
-      ['{time-tweet-ss}', new Date(legacy.createdAt).getSeconds().toString().padStart(2, '0')],
-    ] as [string, string][]
+    const getFileName = (isVideo: boolean) => {
+      const replaceData = [
+        ['{id}', data.tweet.restId],
+        ['{user-screen-name}', data.user.legacy.screenName],
+        ['{if-photo:(?<true>.+?):(?<false>.+?)}', isVideo ? '$2' : '$1'],
+        ['{count}', count.toString()],
+        ['{time-now-yyyy}', new Date().getFullYear().toString().padStart(4, '0')],
+        ['{time-now-mm}', (new Date().getMonth() + 1).toString().padStart(2, '0')],
+        ['{time-now-dd}', new Date().getDate().toString().padStart(2, '0')],
+        ['{time-now-hh}', new Date().getHours().toString().padStart(2, '0')],
+        ['{time-now-mi}', new Date().getMinutes().toString().padStart(2, '0')],
+        ['{time-now-ss}', new Date().getSeconds().toString().padStart(2, '0')],
+        ['{time-tweet-yyyy}', new Date(legacy.createdAt).getFullYear().toString().padStart(4, '0')],
+        ['{time-tweet-mm}', (new Date(legacy.createdAt).getMonth() + 1).toString().padStart(2, '0')],
+        ['{time-tweet-dd}', new Date(legacy.createdAt).getDate().toString().padStart(2, '0')],
+        ['{time-tweet-hh}', new Date(legacy.createdAt).getHours().toString().padStart(2, '0')],
+        ['{time-tweet-mi}', new Date(legacy.createdAt).getMinutes().toString().padStart(2, '0')],
+        ['{time-tweet-ss}', new Date(legacy.createdAt).getSeconds().toString().padStart(2, '0')],
+      ] as [string, string][]
 
-    const repOutput = replaceData.reduce((acc, [k, v]) => acc.replaceAll(new RegExp(k, 'g'), v), output)
-    const video = repOutput.split('.').pop() !== 'png'
-    const pngOutput = video ? repOutput.split('.').slice(0, -1).join('.') + '.png' : repOutput
+      const repOutput = replaceData.reduce((acc, [k, v]) => acc.replaceAll(new RegExp(k, 'g'), v), output)
+      const video = repOutput.split('.').pop() !== 'png'
+      const pngOutput = video ? repOutput.split('.').slice(0, -1).join('.') + '.png' : repOutput
+      return {pngOutput, repOutput, video}
+    }
 
     const render = new Theme({
       ...themeParam,
-      video,
+      video: getFileName(isVideo).video,
     })
+
+    const {pngOutput, repOutput, video} = getFileName(isVideo && render.videoRender !== undefined)
 
     handler && handler({id: data.tweet.restId, type: 'image', user: data.user.legacy.screenName})
     const element = render.imageRender({
@@ -144,6 +180,7 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
 
     const img = new ImageResponse(element, {
       emoji: 'twemoji',
+      fonts: themeParam.fonts,
       height: undefined,
       width: themeParam.width,
     })
@@ -157,7 +194,7 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
 
     if (video) {
       handler && handler({id: data.tweet.restId, type: 'video', user: data.user.legacy.screenName})
-      const res = await render.videoRender({
+      const res = await render.videoRender!({
         data,
         image: pngOutput,
         output: repOutput,
