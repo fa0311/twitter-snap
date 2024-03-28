@@ -132,7 +132,8 @@ export class Logger {
 
   protected stackLogDump() {
     for (const e of this.stackLog) {
-      this.terminal(e.split('\n').slice(1).join('\n').slice(1))
+      const line = e.split('\n').filter((e) => e.startsWith('    at'))
+      this.terminal(line.join('\n').slice(1))
     }
 
     this.stackLog = []
@@ -151,6 +152,7 @@ export class Logger {
     if (Array.isArray(e)) {
       if (e.length === 0) return 'no message'
       if (e.length === 1) return this._toString(e[0])
+      return e.map((e) => this._toString(e)).join('\n')
     }
 
     return this._toString(e)
@@ -274,7 +276,8 @@ export class LoggerSimple extends Logger {
 
   stackLogDump() {
     for (const e of this.stackLog) {
-      this.handler(e.split('\n').slice(1).join('\n').slice(1))
+      const line = e.split('\n').filter((e) => e.startsWith('    at'))
+      this.handler(line.join('\n').slice(1))
     }
 
     this.stackLog = []

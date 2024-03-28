@@ -80,21 +80,17 @@ type tweetApiSnapParam = {
 }
 
 type handlerType = (e: ReturnType<typeof twitterRender>) => Promise<void>
-type sleepType = (ms: number) => Promise<void>
 
 const tweetApiSnap = (client: TwitterOpenApiClient) => {
-  return async ({id, limit, type}: tweetApiSnapParam, sleep: sleepType, handler: handlerType) => {
+  return async ({id, limit, type}: tweetApiSnapParam, handler: handlerType) => {
     const key = getTweetList.find((k) => k === type)
 
     if (key) {
       const that = client.getTweetApi()
       const api = that[key].bind(that)
       let count = 0
-      let wait = 0
       let cursor: string | undefined
       while (count < limit) {
-        await sleep(wait)
-
         const res = await api({
           cursor,
           focalTweetId: id,
@@ -102,10 +98,6 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
           rawQuery: id,
           userId: id,
         })
-
-        if (res.header.rateLimitRemaining < 5) {
-          wait = res.header.rateLimitReset * 1000 - Date.now()
-        }
 
         for (const e of res.data.data) {
           if (e.promotedMetadata) continue
@@ -214,7 +206,7 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
         image: pngOutput,
         output: repOutput,
       })
-      return finalize(res.temp)
+      return finalize([pngOutput, ...res.temp])
     }
 
     return finalize([])
@@ -224,10 +216,10 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
 type FinalizeParam = {
   cleanup: boolean
 }
-const finalize =
-  async (temp: string[]) =>
-  async ({cleanup}: FinalizeParam) => {
+const finalize = async (temp: string[]) => {
+  return async ({cleanup}: FinalizeParam) => {
     if (cleanup) {
       await Promise.all(temp.map((e) => fs.rm(e)))
     }
   }
+}

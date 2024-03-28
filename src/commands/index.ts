@@ -5,6 +5,7 @@ import {FFmpegInfrastructure, ThemeNameType, themeList} from 'twitter-snap-core'
 
 import {HandlerType, getFonts, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
+import {sleepLoop} from '../utils/sleep.js'
 import {twitterUrlConvert} from '../utils/url.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
 
@@ -111,7 +112,7 @@ export default class Default extends Command {
       options: Object.keys(themeList),
     })(),
     width: Flags.integer({
-      default: 600,
+      default: 650,
       description: 'Width',
     }),
   }
@@ -126,11 +127,21 @@ export default class Default extends Command {
     console.error = logger.error.bind(logger)
 
     TwitterOpenApi.fetchApi = async (...args) => {
-      console.debug(`http request: ${args[0]}`)
-      const res = await fetch(...args)
-      console.debug(`http response: ${res.status}`)
-      if (!res.ok) {
-        console.error(`Return http status: ${res.status}`)
+      let res: Response | undefined
+      while (res === undefined || res.status === 429) {
+        if (res?.status === 429) {
+          const wait = Number(res.headers.get('X-Rate-Limit-Reset')) * 1000 - Date.now()
+          await sleepLoop(wait, async (count) => {
+            logger.update(`Rate limit exceeded, wait ${count} seconds`)
+          })
+        }
+
+        console.debug(`http request: ${args[0]}`)
+        res = await fetch(...args)
+        console.debug(`http response: ${res.status}`)
+        if (!res.ok) {
+          console.error(`Return http status: ${res.status}`)
+        }
       }
 
       return res
@@ -177,24 +188,7 @@ export default class Default extends Command {
 
     const fonts = await getFonts(flags.fontPath)
 
-    const sleep = async (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-
-    const sleepLoop = async (ms: number, hook: (count: number) => void) => {
-      for (let i = 0; i < ms / 1000; i++) {
-        hook(ms / 1000 - i)
-        await sleep(1000)
-      }
-
-      await sleep(ms % 1000)
-    }
-
-    const sleepHook = async (count: number) => {
-      await sleepLoop(count, async (count) => {
-        logger.update(`API limit reached! Sleeping ${count} seconds`)
-      })
-    }
-
-    const render = client({id, limit: flags.limit, type}, sleepHook, async (render) => {
+    const render = client({id, limit: flags.limit, type}, async (render) => {
       try {
         const finalize = await render({
           handler: logHandler,
