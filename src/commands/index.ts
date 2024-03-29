@@ -126,22 +126,27 @@ export default class Default extends Command {
     console.warn = logger.warn.bind(logger)
     console.error = logger.error.bind(logger)
 
-    TwitterOpenApi.fetchApi = async (...args) => {
-      let res: Response | undefined
-      while (res === undefined || res.status === 429) {
-        if (res?.status === 429) {
-          const wait = Number(res.headers.get('X-Rate-Limit-Reset')) * 1000 - Date.now()
-          await sleepLoop(wait, async (count) => {
-            logger.update(`Rate limit exceeded, wait ${count} seconds`)
-          })
-        }
+    const req = async (...args: Parameters<typeof fetch>) => {
+      console.debug(`http request: ${args[0]}`)
+      const res = await fetch(...args)
 
-        console.debug(`http request: ${args[0]}`)
-        res = await fetch(...args)
-        console.debug(`http response: ${res.status}`)
-        if (!res.ok) {
-          console.error(`Return http status: ${res.status}`)
-        }
+      if (!res.ok && args[0].toString().startsWith('https://twitter.com/i/api/graphql')) {
+        console.error(`Return http status: ${res.status}`)
+      } else {
+        console.log(`Return http status: ${res.status}`)
+      }
+
+      return res
+    }
+
+    TwitterOpenApi.fetchApi = async (...args) => {
+      const res = await req(...args)
+      if (res.status === 429) {
+        const wait = Number(res.headers.get('X-Rate-Limit-Reset')) * 1000 - Date.now()
+        await sleepLoop(wait + 1, async (count) => {
+          logger.update(`Rate limit exceeded, wait ${count} seconds`)
+        })
+        return req(...args)
       }
 
       return res

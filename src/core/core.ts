@@ -36,9 +36,23 @@ export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: str
 
 export const twitterSnapCookies = async (path: string) => {
   const data = await fs.readFile(path, 'utf8')
-  const cookies = JSON.parse(data) as Cookie[]
   const twitter = new TwitterOpenApi()
-  const api = await twitter.getClientFromCookies(Object.fromEntries(cookies.map((e) => [e.name, e.value])))
+
+  const cookies = await (async () => {
+    const parsed = JSON.parse(data)
+    if (Array.isArray(parsed)) {
+      const cookies = parsed as Cookie[]
+      return Object.fromEntries(cookies.map((e) => [e.name, e.value]))
+    }
+
+    if (typeof parsed === 'object') {
+      return parsed as {[key: string]: string}
+    }
+
+    throw new Error('Invalid cookies')
+  })()
+
+  const api = await twitter.getClientFromCookies(cookies)
   return [tweetApiSnap(api), api] as const
 }
 
