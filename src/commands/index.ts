@@ -1,10 +1,10 @@
 import {Args, Command, Flags} from '@oclif/core'
-import os from 'node:os'
 import {TwitterOpenApi} from 'twitter-openapi-typescript'
 import {FFmpegInfrastructure, ThemeNameType, themeList} from 'twitter-snap-core'
 
 import {HandlerType, getFonts, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
+import {normalizePath} from '../utils/path.js'
 import {sleepLoop} from '../utils/sleep.js'
 import {twitterUrlConvert} from '../utils/url.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
@@ -165,14 +165,6 @@ export default class Default extends Command {
       return res
     }
 
-    const homeDir = (path: string) => {
-      if (path.startsWith('~')) {
-        return path.replace('~', os.homedir())
-      }
-
-      return path
-    }
-
     TwitterOpenApi.fetchApi = async (...args) => {
       const res = await req(...args)
       if (res.status === 429) {
@@ -191,7 +183,7 @@ export default class Default extends Command {
         case 'guest':
           return twitterSnapGuest()
         case 'browser':
-          return twitterSnapPuppeteer(flags.browserHeadless, homeDir(flags.browserProfile))
+          return twitterSnapPuppeteer(flags.browserHeadless, normalizePath(flags.browserProfile))
         case 'file':
           return twitterSnapCookies(flags.cookiesFile)
       }
@@ -225,7 +217,7 @@ export default class Default extends Command {
       }
     }
 
-    const fonts = await getFonts(homeDir(flags.fontPath))
+    const fonts = await getFonts(normalizePath(flags.fontPath))
 
     const render = client({id, limit: flags.limit, type}, async (render) => {
       try {
@@ -235,8 +227,8 @@ export default class Default extends Command {
           themeName: flags.theme,
           themeParam: {
             ffmpeg: new FFmpegInfrastructure({
-              ffmpegPath: homeDir(flags.ffmpegPath),
-              ffprobePath: homeDir(flags.ffprobePath),
+              ffmpegPath: normalizePath(flags.ffmpegPath),
+              ffprobePath: normalizePath(flags.ffprobePath),
             }),
             ffmpegAdditonalOption: flags.ffmpegAdditonalOption?.split(' ') ?? [],
             fonts,
