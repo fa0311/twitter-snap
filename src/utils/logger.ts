@@ -52,6 +52,7 @@ class Progress {
 }
 
 export class Logger {
+  protected stackHint: string[] = []
   protected stackLog: string[] = []
   private ora: Ora | undefined
 
@@ -63,6 +64,7 @@ export class Logger {
     this.progress = undefined
     this.text = undefined
     this.stackLog = []
+    this.stackHint = []
   }
 
   catchError(e: any) {
@@ -137,6 +139,12 @@ export class Logger {
     }
 
     this.stackLog = []
+
+    for (const e of this.stackHint) {
+      this.terminal(e, 'hint')
+    }
+
+    this.stackHint = []
   }
 
   succeed(text?: string) {
@@ -171,6 +179,10 @@ export class Logger {
     if (e instanceof Error) {
       if (e.stack) {
         this.stackLog.push(e.stack)
+      }
+
+      if (e.message === "No variant of TweetUnion exists with 'typename=undefined'") {
+        this.stackHint.push('This tweet contains sensitive content. Please login.')
       }
 
       return `${e.name}: ${e.message}`
@@ -209,9 +221,10 @@ export class Logger {
     return this.text
   }
 
-  private terminal(e: string, type?: 'error' | 'log' | 'warn') {
+  private terminal(e: string, type?: 'error' | 'hint' | 'log' | 'warn') {
     const pattern = {
       error: [clc.redBright, (e: Ora) => e.fail()] as const,
+      hint: [clc.cyanBright, (e: Ora) => e.stopAndPersist({symbol: '💡'})] as const,
       log: [clc.blackBright, (e: Ora) => e.info()] as const,
       undefined: [clc.blackBright, (e: Ora) => e.stopAndPersist({symbol: ''})] as const,
       warn: [clc.yellowBright, (e: Ora) => e.warn()] as const,

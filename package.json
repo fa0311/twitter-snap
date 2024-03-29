@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "description": "Create beautiful Tweet images fast",
   "keywords": [
     "twitter",
@@ -44,18 +44,18 @@
     "plugins": [
       "@oclif/plugin-help",
       "@oclif/plugin-plugins",
-      "@oclif/plugin-update",
-      "@oclif/plugin-warn-if-update-available",
-      "@oclif/plugin-autocomplete"
+      "@oclif/plugin-warn-if-update-available"
     ],
-    "topicSeparator": " "
+    "topicSeparator": " ",
+    "topics": {},
+    "warn-if-update-available": {
+      "message": "Update available! Run npm i -g twitter-snap to update"
+    }
   },
   "dependencies": {
     "@oclif/core": "^3",
-    "@oclif/plugin-autocomplete": "^3",
     "@oclif/plugin-help": "^6",
     "@oclif/plugin-plugins": "^4",
-    "@oclif/plugin-update": "^4",
     "@oclif/plugin-warn-if-update-available": "^3",
     "@vercel/og": "^0.6.2",
     "cli-color": "^2.0.4",

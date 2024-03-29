@@ -14,26 +14,52 @@ export default class Default extends Command {
     id: Args.string({description: 'Twitter status id', required: true}),
   }
 
-  static browserProfile = `${os.homedir()}/.cache/twitter-snap/profiles`
-
   static description = ['Create beautiful Tweet images fast', 'https://github.com/fa0311/twitter-snap'].join('\n')
 
   static examples = [
-    'twitter-snap 1349129669258448897',
-    'twitter-snap 1349129669258448897 --theme RenderMakeItAQuote',
-    'twitter-snap 1349129669258448897 --session-type browser',
-    'twitter-snap 1349129669258448897 --session-type file --cookies-file cookies.json',
-    'twitter-snap 44196397 --api getUserTweets --limit 10',
-    'twitter-snap 44196397 --api getUserTweets -o "data/{user-screen-name}/{id}.{if-photo:png:mp4}"',
-    'twitter-snap https://twitter.com/elonmusk',
-    'twitter-snap https://twitter.com/elonmusk/status/1349129669258448897',
-    'twitter-snap 44196397 --api getUserTweets -o "{user-screen-name}/{count}.png"',
-    'twitter-snap 44196397 --api getUserTweets -o "{time-tweet-yyyy}-{time-tweet-mm}-{time-tweet-dd}/{id}.png"',
+    {
+      command: 'twitter-snap 1349129669258448897',
+      description: 'Create a snap from tweet id with minimal commands.',
+    },
+    {
+      command: 'twitter-snap 1349129669258448897 --theme RenderMakeItAQuote',
+      description: 'Create a snap using the RenderMakeItAQuote theme.',
+    },
+    {
+      command: 'twitter-snap 1349129669258448897 --session-type browser',
+      description: 'Create a snap using the browser session.',
+    },
+    {
+      command: 'twitter-snap 1349129669258448897 --session-type file --cookies-file cookies.json',
+      description: 'Create a snap using the file session.',
+    },
+    {
+      command: 'twitter-snap 44196397 --api getUserTweets --limit 10',
+      description: 'Create snaps of 10 tweets from a user ID for that user.',
+    },
+    {
+      command: 'twitter-snap https://twitter.com/elonmusk',
+      description: 'Create snaps from a user profile URL.',
+    },
+    {
+      command: 'twitter-snap https://twitter.com/elonmusk/status/1349129669258448897',
+      description: 'Create a snap from a tweet URL.',
+    },
+    {
+      command: 'twitter-snap 44196397 --api getUserTweets -o "{user-screen-name}/{count}.png"',
+      description: 'Create snaps from a user ID and save them with the count number.',
+    },
+    {
+      command: 'twitter-snap 44196397 --api getUserTweets -o "data/{user-screen-name}/{id}.{if-photo:png:mp4}"',
+      description: 'Create snaps from a user ID and save them in a data folder.',
+    },
+    {
+      command:
+        'twitter-snap 44196397 --api getUserTweets -o "{time-tweet-yyyy}-{time-tweet-mm}-{time-tweet-dd}/{id}.png"',
+      description: 'Create snaps from a user ID and save them with the tweet date.',
+    },
   ]
 
-  static fontPath = `${os.homedir()}/.cache/twitter-snap/fonts`
-
-  // eslint-disable-next-line perfectionist/sort-classes
   static flags = {
     api: Flags.custom<'getTweetResultByRestId' | keyof GetTweetApi>({
       default: 'getTweetResultByRestId',
@@ -47,7 +73,7 @@ export default class Default extends Command {
     }),
     browserProfile: Flags.string({
       aliases: ['browser-profile'],
-      default: this.browserProfile,
+      default: `${os.homedir()}/.cache/twitter-snap/profiles`,
       description: 'Browser profile',
     }),
     cookiesFile: Flags.file({
@@ -75,7 +101,7 @@ export default class Default extends Command {
     }),
     fontPath: Flags.string({
       aliases: ['font-path'],
-      default: this.fontPath,
+      default: async () => `${os.homedir()}/.cache/twitter-snap/fonts`,
       description: 'Font path',
     }),
     limit: Flags.integer({
