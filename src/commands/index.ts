@@ -1,10 +1,10 @@
 import {Args, Command, Flags} from '@oclif/core'
-import os from 'node:os'
 import {TwitterOpenApi} from 'twitter-openapi-typescript'
 import {FFmpegInfrastructure, ThemeNameType, themeList} from 'twitter-snap-core'
 
 import {HandlerType, getFonts, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
+import {normalizePath} from '../utils/path.js'
 import {sleepLoop} from '../utils/sleep.js'
 import {twitterUrlConvert} from '../utils/url.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
@@ -73,7 +73,7 @@ export default class Default extends Command {
     }),
     browserProfile: Flags.string({
       aliases: ['browser-profile'],
-      default: `${os.homedir()}/.cache/twitter-snap/profiles`,
+      default: `~/.cache/twitter-snap/profiles`,
       description: 'Browser profile',
     }),
     cookiesFile: Flags.file({
@@ -101,7 +101,7 @@ export default class Default extends Command {
     }),
     fontPath: Flags.string({
       aliases: ['font-path'],
-      default: async () => `${os.homedir()}/.cache/twitter-snap/fonts`,
+      default: '~/.cache/twitter-snap/fonts',
       description: 'Font path',
     }),
     limit: Flags.integer({
@@ -183,7 +183,7 @@ export default class Default extends Command {
         case 'guest':
           return twitterSnapGuest()
         case 'browser':
-          return twitterSnapPuppeteer(flags.browserHeadless, flags.browserProfile)
+          return twitterSnapPuppeteer(flags.browserHeadless, normalizePath(flags.browserProfile))
         case 'file':
           return twitterSnapCookies(flags.cookiesFile)
       }
@@ -217,7 +217,7 @@ export default class Default extends Command {
       }
     }
 
-    const fonts = await getFonts(flags.fontPath)
+    const fonts = await getFonts(normalizePath(flags.fontPath))
 
     const render = client({id, limit: flags.limit, type}, async (render) => {
       try {
@@ -227,8 +227,8 @@ export default class Default extends Command {
           themeName: flags.theme,
           themeParam: {
             ffmpeg: new FFmpegInfrastructure({
-              ffmpegPath: flags.ffmpegPath,
-              ffprobePath: flags.ffprobePath,
+              ffmpegPath: normalizePath(flags.ffmpegPath),
+              ffprobePath: normalizePath(flags.ffprobePath),
             }),
             ffmpegAdditonalOption: flags.ffmpegAdditonalOption?.split(' ') ?? [],
             fonts,
