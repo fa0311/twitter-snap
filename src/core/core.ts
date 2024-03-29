@@ -36,9 +36,23 @@ export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: str
 
 export const twitterSnapCookies = async (path: string) => {
   const data = await fs.readFile(path, 'utf8')
-  const cookies = JSON.parse(data) as Cookie[]
   const twitter = new TwitterOpenApi()
-  const api = await twitter.getClientFromCookies(Object.fromEntries(cookies.map((e) => [e.name, e.value])))
+
+  const cookies = await (async () => {
+    const parsed = JSON.parse(data)
+    if (Array.isArray(parsed)) {
+      const cookies = parsed as Cookie[]
+      return Object.fromEntries(cookies.map((e) => [e.name, e.value]))
+    }
+
+    if (typeof parsed === 'object') {
+      return parsed as {[key: string]: string}
+    }
+
+    throw new Error('Invalid cookies')
+  })()
+
+  const api = await twitter.getClientFromCookies(cookies)
   return [tweetApiSnap(api), api] as const
 }
 
@@ -84,14 +98,15 @@ type handlerType = (e: ReturnType<typeof twitterRender>) => Promise<void>
 const tweetApiSnap = (client: TwitterOpenApiClient) => {
   return async ({id, limit, type}: tweetApiSnapParam, handler: handlerType) => {
     const key = getTweetList.find((k) => k === type)
+
     if (key) {
       const that = client.getTweetApi()
       const api = that[key].bind(that)
       let count = 0
-      const cursor: string[] = []
+      let cursor: string | undefined
       while (count < limit) {
         const res = await api({
-          cursor: cursor.length > 0 ? cursor.pop() : undefined,
+          cursor,
           focalTweetId: id,
           listId: id,
           rawQuery: id,
@@ -105,8 +120,12 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
           count++
         }
 
+        if (res.data.data.length === 0) {
+          return
+        }
+
         if (res.data.cursor.bottom) {
-          cursor.push(res.data.cursor.bottom?.value)
+          cursor = res.data.cursor.bottom.value
         } else {
           return
         }
@@ -115,7 +134,9 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
       const res = await client.getDefaultApi().getTweetResultByRestId({
         tweetId: id,
       })
-      if (res.data) await handler(twitterRender(res.data, 0))
+      if (res.data) {
+        await handler(twitterRender(res.data, 0))
+      }
     }
   }
 }
@@ -199,7 +220,7 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
         image: pngOutput,
         output: repOutput,
       })
-      return finalize(res.temp)
+      return finalize([pngOutput, ...res.temp])
     }
 
     return finalize([])
@@ -209,10 +230,10 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
 type FinalizeParam = {
   cleanup: boolean
 }
-const finalize =
-  async (temp: string[]) =>
-  async ({cleanup}: FinalizeParam) => {
+const finalize = async (temp: string[]) => {
+  return async ({cleanup}: FinalizeParam) => {
     if (cleanup) {
       await Promise.all(temp.map((e) => fs.rm(e)))
     }
   }
+}
