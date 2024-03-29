@@ -38,13 +38,13 @@ FLAGS
       --api=<option>                   [default: getTweetResultByRestId] API type
                                        <options: getTweetResultByRestId|getTweetDetail|getSearchTimeline|getHomeTimeline|getHomeLatestTimeline|getListLatestTweetsTimeline|getUserTweets|getUserTweetsAndReplies|getUserMedia|getLikes|getBookmarks>
       --browserHeadless                Browser headless
-      --browserProfile=<value>         [default: /workspaces/twitter-snap/.cache/twitter-snap/profiles] Browser profile
+      --browserProfile=<value>         [default: ~/.cache/twitter-snap/profiles] Browser profile
       --cookiesFile=<value>            [default: cookies.json] Cookies file
       --debug                          Debug
       --ffmpegAdditonalOption=<value>  FFmpeg additonal option
       --ffmpegPath=<value>             [default: ffmpeg] FFmpeg path
       --ffprobePath=<value>            [default: ffprobe] FFprobe path
-      --fontPath=<value>               [default: /workspaces/twitter-snap/.cache/twitter-snap/fonts] Font path
+      --fontPath=<value>               [default: ~/.cache/twitter-snap/fonts] Font path
       --limit=<value>                  [default: 30] Limit count
       --noCleanup                      Cleanup
       --sessionType=<value>            [default: guest] Session type

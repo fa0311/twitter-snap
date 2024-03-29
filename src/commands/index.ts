@@ -73,7 +73,7 @@ export default class Default extends Command {
     }),
     browserProfile: Flags.string({
       aliases: ['browser-profile'],
-      default: `${os.homedir()}/.cache/twitter-snap/profiles`,
+      default: `~/.cache/twitter-snap/profiles`,
       description: 'Browser profile',
     }),
     cookiesFile: Flags.file({
@@ -101,7 +101,7 @@ export default class Default extends Command {
     }),
     fontPath: Flags.string({
       aliases: ['font-path'],
-      default: async () => `${os.homedir()}/.cache/twitter-snap/fonts`,
+      default: '~/.cache/twitter-snap/fonts',
       description: 'Font path',
     }),
     limit: Flags.integer({
@@ -165,6 +165,14 @@ export default class Default extends Command {
       return res
     }
 
+    const homeDir = (path: string) => {
+      if (path.startsWith('~')) {
+        return path.replace('~', os.homedir())
+      }
+
+      return path
+    }
+
     TwitterOpenApi.fetchApi = async (...args) => {
       const res = await req(...args)
       if (res.status === 429) {
@@ -183,7 +191,7 @@ export default class Default extends Command {
         case 'guest':
           return twitterSnapGuest()
         case 'browser':
-          return twitterSnapPuppeteer(flags.browserHeadless, flags.browserProfile)
+          return twitterSnapPuppeteer(flags.browserHeadless, homeDir(flags.browserProfile))
         case 'file':
           return twitterSnapCookies(flags.cookiesFile)
       }
@@ -217,7 +225,7 @@ export default class Default extends Command {
       }
     }
 
-    const fonts = await getFonts(flags.fontPath)
+    const fonts = await getFonts(homeDir(flags.fontPath))
 
     const render = client({id, limit: flags.limit, type}, async (render) => {
       try {
@@ -227,8 +235,8 @@ export default class Default extends Command {
           themeName: flags.theme,
           themeParam: {
             ffmpeg: new FFmpegInfrastructure({
-              ffmpegPath: flags.ffmpegPath,
-              ffprobePath: flags.ffprobePath,
+              ffmpegPath: homeDir(flags.ffmpegPath),
+              ffprobePath: homeDir(flags.ffprobePath),
             }),
             ffmpegAdditonalOption: flags.ffmpegAdditonalOption?.split(' ') ?? [],
             fonts,
