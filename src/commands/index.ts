@@ -1,7 +1,7 @@
 import {Args, Command, Flags} from '@oclif/core'
 import {ThemeNameType, themeList} from 'twitter-snap-core'
 
-import {TwitterSnap} from '../main.js'
+import {TwitterSnap} from '../core/main.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
 
@@ -137,6 +137,11 @@ export default class Default extends Command {
       default: 650,
       description: 'Width',
     }),
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(argv: string[], config: any) {
+    super(argv, config)
   }
 
   async run(): Promise<void> {
