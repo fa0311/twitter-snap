@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.33",
+  "version": "0.0.35",
   "description": "Create beautiful Tweet images fast",
   "keywords": [
     "twitter",
@@ -15,9 +15,9 @@
   "license": "MIT",
   "author": "ふぁ @fa0311",
   "type": "module",
-  "exports": "./lib/index.js",
-  "main": "",
-  "types": "dist/index.d.ts",
+  "exports": "./dist/main.js",
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
   "bin": {
     "twitter-snap": "bin/run.js"
   },

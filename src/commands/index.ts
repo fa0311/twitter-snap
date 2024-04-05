@@ -1,12 +1,8 @@
 import {Args, Command, Flags} from '@oclif/core'
-import {TwitterOpenApi} from 'twitter-openapi-typescript'
-import {FFmpegInfrastructure, ThemeNameType, themeList} from 'twitter-snap-core'
+import {ThemeNameType, themeList} from 'twitter-snap-core'
 
-import {HandlerType, getFonts, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from '../core/core.js'
+import {TwitterSnap} from '../core/main.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
-import {normalizePath} from '../utils/path.js'
-import {sleepLoop} from '../utils/sleep.js'
-import {twitterUrlConvert} from '../utils/url.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
 
 export default class Default extends Command {
@@ -143,118 +139,23 @@ export default class Default extends Command {
     }),
   }
 
-  async main(): Promise<void> {
-    const {args, flags} = await this.parse(Default)
-    const logger = flags.simpleLog ? new LoggerSimple(this.log.bind(this)) : new Logger()
-
-    console.log = flags.debug ? logger.log.bind(logger) : (_) => {}
-    console.debug = flags.debug ? logger.log.bind(logger) : (_) => {}
-    console.warn = logger.warn.bind(logger)
-    console.error = logger.error.bind(logger)
-
-    const req = async (...args: Parameters<typeof fetch>) => {
-      console.debug(`http request: ${args[0]}`)
-      const res = await fetch(...args)
-
-      if (!res.ok && args[0].toString().startsWith('https://twitter.com/i/api/graphql')) {
-        console.error(`Return http status: ${res.status}`)
-      } else {
-        console.log(`Return http status: ${res.status}`)
-      }
-
-      return res
-    }
-
-    TwitterOpenApi.fetchApi = async (...args) => {
-      const res = await req(...args)
-      if (res.status === 429) {
-        const wait = Number(res.headers.get('X-Rate-Limit-Reset')) * 1000 - Date.now()
-        await sleepLoop(wait + 1, async (count) => {
-          logger.update(`Rate limit exceeded, wait ${count} seconds`)
-        })
-        return req(...args)
-      }
-
-      return res
-    }
-
-    const getClient = (() => {
-      switch (flags.sessionType) {
-        case 'guest':
-          return twitterSnapGuest()
-        case 'browser':
-          return twitterSnapPuppeteer(flags.browserHeadless, normalizePath(flags.browserProfile))
-        case 'file':
-          return twitterSnapCookies(flags.cookiesFile)
-      }
-    })()
-
-    const [client, api] = await logger.guard({text: 'Loading client'}, getClient)
-
-    const [id, type] = await (() => {
-      if (args.id.startsWith('http')) {
-        const convert = twitterUrlConvert({url: args.id})
-        if (typeof convert === 'function') {
-          return logger.guard({text: 'Get user id'}, convert(api))
-        }
-
-        if (typeof convert === 'object') {
-          return convert
-        }
-      }
-
-      return [args.id, flags.api] as const
-    })()
-
-    const logHandler = async ({id, type, user}: HandlerType) => {
-      switch (type) {
-        case 'start':
-          return logger.update(`Rendering tweet ${user}/${id}`)
-        case 'image':
-          return logger.update(`Rendering image ${user}/${id}`)
-        case 'video':
-          return logger.update(`Rendering video ${user}/${id}`)
-      }
-    }
-
-    const fonts = await getFonts(normalizePath(flags.fontPath))
-
-    const render = client({id, limit: flags.limit, type}, async (render) => {
-      try {
-        const finalize = await render({
-          handler: logHandler,
-          output: flags.output,
-          themeName: flags.theme,
-          themeParam: {
-            ffmpeg: new FFmpegInfrastructure({
-              ffmpegPath: normalizePath(flags.ffmpegPath),
-              ffprobePath: normalizePath(flags.ffprobePath),
-            }),
-            ffmpegAdditonalOption: flags.ffmpegAdditonalOption?.split(' ') ?? [],
-            fonts,
-            width: flags.width,
-          },
-        })
-
-        await finalize({
-          cleanup: !flags.noCleanup,
-        })
-        logger.succeed()
-      } catch (error) {
-        logger.catchFail(error)
-      }
-
-      await sleepLoop(flags.sleep, async (count) => {
-        logger.update(`Sleeping ${count} seconds`)
-      })
-    })
-
-    await logger.guardProgress({max: flags.limit, text: 'Rendering tweet'}, render)
+  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
+  constructor(argv: string[], config: any) {
+    super(argv, config)
   }
 
   async run(): Promise<void> {
     try {
-      await this.main()
+      const param = await this.parse(Default)
+      const logger = param.flags.simpleLog ? new LoggerSimple(this.log.bind(this)) : new Logger()
+
+      console.log = param.flags.debug ? logger.log.bind(logger) : (_) => {}
+      console.debug = param.flags.debug ? logger.log.bind(logger) : (_) => {}
+      console.warn = logger.warn.bind(logger)
+      console.error = logger.error.bind(logger)
+
+      const snap = new TwitterSnap({logger})
+      await snap.run(param)
     } catch (error) {
       if (typeof error === 'string') {
         this.error(error)
