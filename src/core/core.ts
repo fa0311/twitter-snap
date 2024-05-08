@@ -30,7 +30,9 @@ export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: str
   const cookies = await page.cookies()
   await browser.close()
   const twitter = new TwitterOpenApi()
-  const api = await twitter.getClientFromCookies(Object.fromEntries(cookies.map((e) => [e.name, e.value])))
+  const api = await twitter.getClientFromCookies(
+    Object.fromEntries(cookies.filter((e) => e.domain === '.twitter.com').map((e) => [e.name, e.value])),
+  )
   return [tweetApiSnap(api), api] as const
 }
 
