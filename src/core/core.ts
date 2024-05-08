@@ -44,7 +44,7 @@ export const twitterSnapCookies = async (path: string) => {
     const parsed = JSON.parse(data)
     if (Array.isArray(parsed)) {
       const cookies = parsed as Cookie[]
-      return Object.fromEntries(cookies.map((e) => [e.name, e.value]))
+      return Object.fromEntries(cookies.filter((e) => e.domain === '.twitter.com').map((e) => [e.name, e.value]))
     }
 
     if (typeof parsed === 'object') {
