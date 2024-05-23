@@ -19,7 +19,7 @@ export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: str
     userDataDir,
   })
   const [page] = await browser.pages()
-  await page.goto('https://twitter.com/login')
+  await page.goto('https://x.com/login')
 
   page.setDefaultNavigationTimeout(0)
   page.setDefaultTimeout(0)
@@ -30,8 +30,9 @@ export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: str
   const cookies = await page.cookies()
   await browser.close()
   const twitter = new TwitterOpenApi()
+  const allowDomains = ['.twitter.com', '.x.com']
   const api = await twitter.getClientFromCookies(
-    Object.fromEntries(cookies.filter((e) => e.domain === '.twitter.com').map((e) => [e.name, e.value])),
+    Object.fromEntries(cookies.filter((e) => allowDomains.includes(e.domain)).map((e) => [e.name, e.value])),
   )
   return [tweetApiSnap(api), api] as const
 }

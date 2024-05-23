@@ -10,6 +10,16 @@ const urlList = [
   ['https://twitter.com/(?<user>[a-zA-Z0-9_]+)/likes', 'getLikes'] as const,
   ['https://twitter.com/(?<user>[a-zA-Z0-9_]+)', 'getUserTweets'] as const,
   ['https://twitter.com/i/bookmarks', 'getBookmarks'] as const,
+
+  ['https://x.com/(?<user>[a-zA-Z0-9_]+)/status/(?<id>[0-9]+)', 'getTweetResultByRestId'] as const,
+  ['https://x.com/search?q=(?<id>[^&]+)', 'getSearchTimeline'] as const,
+  ['https://x.com/home', 'getHomeTimeline'] as const,
+  ['https://x.com/i/lists/(?<id>[0-9]+)', 'getListLatestTweetsTimeline'] as const,
+  ['https://x.com/(?<user>[a-zA-Z0-9_]+)/with_replies', 'getUserTweetsAndReplies'] as const,
+  ['https://x.com/(?<user>[a-zA-Z0-9_]+)/media', 'getUserMedia'] as const,
+  ['https://x.com/(?<user>[a-zA-Z0-9_]+)/likes', 'getLikes'] as const,
+  ['https://x.com/(?<user>[a-zA-Z0-9_]+)', 'getUserTweets'] as const,
+  ['https://x.com/i/bookmarks', 'getBookmarks'] as const,
 ]
 
 export const twitterUrlConvert = (arg: {url: string}) => {
