@@ -12,6 +12,10 @@ export const twitterSnapGuest = async () => {
   return [tweetApiSnap(api), api] as const
 }
 
+export const twitterDomains = ['twitter.com', 'x.com']
+const twitterDomainsPattern = new RegExp(twitterDomains.join('|'))
+const allowDomains = twitterDomains.map((e) => `.${e}`)
+
 export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: string) => {
   const browser = await launch({
     headless,
@@ -24,13 +28,12 @@ export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: str
   page.setDefaultNavigationTimeout(0)
   page.setDefaultTimeout(0)
 
-  const pattern = 'https://twitter.com/i/api/graphql/[a-zA-Z0-9_-]+/HomeTimeline?.*'
+  const pattern = `https://${twitterDomainsPattern.source}/i/api/graphql/[a-zA-Z0-9_-]+/HomeTimeline?.*`
 
   await page.waitForResponse((res) => new RegExp(pattern).test(res.url()))
   const cookies = await page.cookies()
   await browser.close()
   const twitter = new TwitterOpenApi()
-  const allowDomains = ['.twitter.com', '.x.com']
   const api = await twitter.getClientFromCookies(
     Object.fromEntries(cookies.filter((e) => allowDomains.includes(e.domain)).map((e) => [e.name, e.value])),
   )
@@ -45,7 +48,7 @@ export const twitterSnapCookies = async (path: string) => {
     const parsed = JSON.parse(data)
     if (Array.isArray(parsed)) {
       const cookies = parsed as Cookie[]
-      return Object.fromEntries(cookies.filter((e) => e.domain === '.twitter.com').map((e) => [e.name, e.value]))
+      return Object.fromEntries(cookies.filter((e) => allowDomains.includes(e.domain)).map((e) => [e.name, e.value]))
     }
 
     if (typeof parsed === 'object') {

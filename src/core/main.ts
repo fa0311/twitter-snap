@@ -7,7 +7,14 @@ import {Logger, LoggerSimple} from '../utils/logger.js'
 import {normalizePath} from '../utils/path.js'
 import {sleepLoop} from '../utils/sleep.js'
 import {twitterUrlConvert} from '../utils/url.js'
-import {HandlerType, getFonts, twitterSnapCookies, twitterSnapGuest, twitterSnapPuppeteer} from './core.js'
+import {
+  HandlerType,
+  getFonts,
+  twitterDomains,
+  twitterSnapCookies,
+  twitterSnapGuest,
+  twitterSnapPuppeteer,
+} from './core.js'
 
 abstract class CommandType extends Command {
   public getDefault() {
@@ -43,8 +50,9 @@ export class TwitterSnap {
   async req(...args: Parameters<typeof fetch>) {
     console.debug(`http request: ${args[0]}`)
     const res = await fetch(...args)
+    const some = (e: string) => twitterDomains.some((d) => e.startsWith(`https://${d}/i/api/graphql`))
 
-    if (!res.ok && args[0].toString().startsWith('https://twitter.com/i/api/graphql')) {
+    if (!res.ok && some(args[0].toString())) {
       console.error(`Return http status: ${res.status}`)
     } else {
       console.log(`Return http status: ${res.status}`)
