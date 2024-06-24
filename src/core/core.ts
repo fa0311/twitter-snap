@@ -68,10 +68,14 @@ export const getFonts: (fontPath: string) => Promise<Fonts[]> = async (fontPath)
   const base = 'https://github.com/fa0311/twitter-snap-core/releases/download/assets-fonts/'
 
   const list = [
-    ['SEGOEUISL.TTF', 'segoeui', 500, 'normal'] as const,
-    ['SEGOEUIB.TTF', 'segoeui', 700, 'normal'] as const,
-    ['SEGUISLI.TTF', 'segoeui', 500, 'italic'] as const,
-    ['SEGOEUIZ.TTF', 'segoeui', 700, 'italic'] as const,
+    ['SEGOEUISL.TTF', 'Segoe UI', 500, 'normal'] as const,
+    ['SEGOEUIB.TTF', 'Segoe UI', 700, 'normal'] as const,
+    ['SEGUISLI.TTF', 'Segoe UI', 500, 'italic'] as const,
+    ['SEGOEUIZ.TTF', 'Segoe UI', 700, 'italic'] as const,
+    ['Meiryo.ttf', 'Meiryo', 500, 'normal'] as const,
+    ['Meiryo-Bold.ttf', 'Meiryo', 700, 'normal'] as const,
+    ['Meiryo-Italic.ttf', 'Meiryo', 500, 'italic'] as const,
+    ['Meiryo-BoldItalic.ttf', 'Meiryo', 700, 'italic'] as const,
   ]
 
   fs.mkdir(fontPath, {recursive: true})
@@ -95,6 +99,7 @@ export const getFonts: (fontPath: string) => Promise<Fonts[]> = async (fontPath)
 
 type tweetApiSnapParam = {
   id: string
+  startId?: string
   limit: number
   type?: 'getTweetResultByRestId' | keyof GetTweetApi
 }
@@ -102,7 +107,7 @@ type tweetApiSnapParam = {
 type handlerType = (e: ReturnType<typeof twitterRender>) => Promise<void>
 
 const tweetApiSnap = (client: TwitterOpenApiClient) => {
-  return async ({id, limit, type}: tweetApiSnapParam, handler: handlerType) => {
+  return async ({id, limit, type, startId}: tweetApiSnapParam, handler: handlerType) => {
     const key = getTweetList.find((k) => k === type)
 
     if (key) {
@@ -120,6 +125,7 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
         })
 
         for (const e of res.data.data) {
+          if (count == 0 && e.tweet.restId !== startId) continue
           if (e.promotedMetadata) continue
           if (count >= limit) return
           await handler(twitterRender(e, count))
