@@ -6,7 +6,7 @@ import Default from '../commands/index.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
 import {normalizePath} from '../utils/path.js'
 import {sleepLoop} from '../utils/sleep.js'
-import {twitterUrlConvert} from '../utils/url.js'
+import {getForceStartIdList, twitterUrlConvert} from '../utils/url.js'
 import {
   HandlerType,
   getFonts,
@@ -88,11 +88,11 @@ export class TwitterSnap {
 
     const [client, api] = await this.logger.guard({text: 'Loading client'}, getClient)
 
-    const [id, type] = await (() => {
+    const [id, type] = await (async () => {
       if (args.id.startsWith('http')) {
-        const convert = twitterUrlConvert({url: args.id})
+        const convert = twitterUrlConvert({url: args.id, guest: flags.sessionType === 'guest'})
         if (typeof convert === 'function') {
-          return this.logger.guard({text: 'Get user id'}, convert(api))
+          return await this.logger.guard({text: 'Get user id'}, convert(api))
         }
 
         if (typeof convert === 'object') {
@@ -103,9 +103,12 @@ export class TwitterSnap {
       return [args.id, flags.api] as const
     })()
 
-    const fonts = await getFonts(normalizePath(flags.fontPath))
+    const startId = getForceStartIdList(type) ? id : undefined
 
-    const render = client({id, limit: flags.limit, type}, async (render) => {
+    const fontClient = getFonts(normalizePath(flags.fontPath))
+    const fonts = await this.logger.guard({text: 'Loading Font'}, fontClient)
+
+    const render = client({id, limit: flags.limit, type, startId}, async (render) => {
       try {
         const finalize = await render({
           handler: this.logHandler.bind(this),

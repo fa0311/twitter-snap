@@ -63,7 +63,7 @@
     "ora": "^8.0.1",
     "puppeteer": "^22.4.1",
     "twitter-openapi-typescript": "^0.0.33",
-    "twitter-snap-core": "^0.0.32"
+    "twitter-snap-core": "^0.0.34"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
