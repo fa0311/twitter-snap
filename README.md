@@ -14,7 +14,7 @@ npx twitter-snap@latest https://twitter.com/elonmusk/status/1770222178279252062
   <img src="./docs/img/output-4.png" width="49%" />
 </p>
 
-[Other Samples](https://github.com/fa0311/twitter-snap/issues/47)
+[More Samples](https://github.com/fa0311/twitter-snap/issues/47)
 
 ## Install
 
