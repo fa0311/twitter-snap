@@ -122,6 +122,7 @@ export class TwitterSnap {
             ffmpegAdditonalOption: flags.ffmpegAdditonalOption?.split(' ') ?? [],
             fonts,
             width: flags.width,
+            scale: flags.scale,
           },
         })
 
