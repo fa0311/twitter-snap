@@ -54,6 +54,10 @@ export default class Default extends Command {
         'twitter-snap 44196397 --api getUserTweets -o "{time-tweet-yyyy}-{time-tweet-mm}-{time-tweet-dd}/{id}.png"',
       description: 'Create snaps from a user ID and save them with the tweet date.',
     },
+    {
+      command: 'twitter-snap 1349129669258448897 --width 1280 --scale 2',
+      description: 'Create snaps from a tweet id with a width of 1280 and a scale of 2.',
+    },
   ]
 
   static flags = {
@@ -137,6 +141,10 @@ export default class Default extends Command {
       default: 650,
       description: 'Width',
     }),
+    scale: Flags.custom<number>({
+      default: 1,
+      description: 'Scale',
+    })(),
   }
 
   // eslint-disable-next-line @typescript-eslint/no-useless-constructor
