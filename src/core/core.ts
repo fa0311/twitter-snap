@@ -125,7 +125,7 @@ const tweetApiSnap = (client: TwitterOpenApiClient) => {
         })
 
         for (const e of res.data.data) {
-          if (count == 0 && e.tweet.restId !== startId) continue
+          if (count == 0 && e.tweet.restId !== startId && startId) continue
           if (e.promotedMetadata) continue
           if (count >= limit) return
           await handler(twitterRender(e, count))
