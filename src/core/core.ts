@@ -13,7 +13,7 @@ export const twitterSnapGuest = async () => {
 }
 
 export const twitterDomains = ['twitter.com', 'x.com']
-const twitterDomainsPattern = new RegExp(twitterDomains.join('|'))
+const twitterDomainsPattern = new RegExp(`(${twitterDomains.join('|')})`)
 const allowDomains = twitterDomains.map((e) => `.${e}`)
 
 export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: string) => {
@@ -207,9 +207,7 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
     const {pngOutput, repOutput, video} = getFileName(isVideo && render.videoRender !== undefined)
 
     handler && handler({id: data.tweet.restId, type: 'image', user: data.user.legacy.screenName})
-    const element = render.imageRender({
-      data,
-    })
+    const element = render.imageRender({data})
 
     const img = new ImageResponse(element, {
       emoji: 'twemoji',
