@@ -4,6 +4,7 @@ import {FFmpegInfrastructure} from 'twitter-snap-core'
 
 import Default from '../commands/index.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
+import {isDefaultOption} from '../utils/oclif.js'
 import {normalizePath} from '../utils/path.js'
 import {sleepLoop} from '../utils/sleep.js'
 import {getForceStartIdList, twitterUrlConvert} from '../utils/url.js'
@@ -75,6 +76,30 @@ export class TwitterSnap {
       return res
     }
 
+    if (flags.sessionType !== 'guest' && flags.api === 'getTweetResultByRestId') {
+      this.logger.hint('API is not supported, use getTweetDetail instead of getTweetResultByRestId')
+    }
+    if (flags.theme === 'Json' || flags.theme === 'MediaOnly') {
+      if (isDefaultOption(Default, flags, 'width')) {
+        this.logger.hint('Width is not supported in Json theme')
+      }
+      if (isDefaultOption(Default, flags, 'scale')) {
+        this.logger.hint('Scale is not supported in Json theme')
+      }
+      if (isDefaultOption(Default, flags, 'fontPath')) {
+        this.logger.hint('Font is not supported in Json theme')
+      }
+      if (isDefaultOption(Default, flags, 'ffmpegPath')) {
+        this.logger.hint('FFmpeg options is not supported in Json theme')
+      }
+      if (isDefaultOption(Default, flags, 'ffprobePath')) {
+        this.logger.hint('FFmpeg options is not supported in Json theme')
+      }
+      if (isDefaultOption(Default, flags, 'ffmpegAdditonalOption')) {
+        this.logger.hint('FFmpeg options is not supported in Json theme')
+      }
+    }
+
     const getClient = (() => {
       switch (flags.sessionType) {
         case 'guest':
@@ -106,7 +131,7 @@ export class TwitterSnap {
     const startId = getForceStartIdList(type) ? id : undefined
 
     const fontClient = getFonts(normalizePath(flags.fontPath))
-    const fonts = await this.logger.guard({text: 'Loading Font'}, fontClient)
+    const fonts = await this.logger.guard({text: 'Loading font'}, fontClient)
 
     const render = client({id, limit: flags.limit, type, startId}, async (render) => {
       try {

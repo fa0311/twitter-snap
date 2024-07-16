@@ -175,6 +175,11 @@ export class Logger {
     this.stackLogDump()
   }
 
+  hint(...args: any[]) {
+    this.terminal(this.toString(this.logNormalizer(args)), 'hint')
+    this.stackLogDump()
+  }
+
   private _toString(e: any): string {
     if (e instanceof Error) {
       if (e.stack) {
@@ -182,7 +187,7 @@ export class Logger {
       }
 
       if (e.message === "No variant of TweetUnion exists with 'typename=undefined'") {
-        this.stackHint.push('This tweet contains sensitive content. Please login.')
+        this.stackHint.push('This tweet contains sensitive content. Please login using --session-type')
       }
 
       return `${e.name}: ${e.message}`

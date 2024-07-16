@@ -1,6 +1,7 @@
 import {Args, Command, Flags} from '@oclif/core'
-import {ThemeNameType, themeList} from 'twitter-snap-core'
 
+import {themeList, ThemeNameType} from 'twitter-snap-core'
+import {additonalTheme, AdditonalThemeType} from '../core/core.js'
 import {TwitterSnap} from '../core/main.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
@@ -50,13 +51,16 @@ export default class Default extends Command {
       description: 'Create snaps from a user ID and save them in a data folder.',
     },
     {
-      command:
-        'twitter-snap 44196397 --api getUserTweets -o "{time-tweet-yyyy}-{time-tweet-mm}-{time-tweet-dd}/{id}.png"',
+      command: 'twitter-snap 44196397 --api getUserTweets -o "{time-tweet-yyyy}-{time-tweet-mm}-{time-tweet-dd}/{id}"',
       description: 'Create snaps from a user ID and save them with the tweet date.',
     },
     {
       command: 'twitter-snap 1349129669258448897 --width 1280 --scale 2',
       description: 'Create snaps from a tweet id with a width of 1280 and a scale of 2.',
+    },
+    {
+      command: 'twitter-snap 1349129669258448897 --theme=MediaOnly --output="{id}-{media-id}"',
+      description: 'Download media files only.Some arguments are not available.',
     },
   ]
 
@@ -115,7 +119,7 @@ export default class Default extends Command {
     }),
     output: Flags.string({
       char: 'o',
-      default: '{id}.{if-photo:png:mp4}',
+      default: '{if-media-only:{id}-{media-id}:{id}}.{if-photo:png:mp4}',
       description: 'Output file name',
     }),
     sessionType: Flags.custom<'browser' | 'file' | 'guest'>({
@@ -132,10 +136,10 @@ export default class Default extends Command {
       default: 0,
       description: 'Sleep (ms)',
     }),
-    theme: Flags.custom<ThemeNameType>({
+    theme: Flags.custom<ThemeNameType | AdditonalThemeType>({
       default: 'RenderOceanBlueColor',
       description: 'Theme type',
-      options: Object.keys(themeList),
+      options: [...Object.keys(themeList), ...additonalTheme],
     })(),
     width: Flags.integer({
       default: 650,
