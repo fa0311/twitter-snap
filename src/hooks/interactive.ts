@@ -94,9 +94,10 @@ const hook: Hook.Preparse = async ({argv, options, context}) => {
     }
     newArgs.push('--theme', theme)
 
+    const init = theme === 'MediaOnly' ? '{id}-{media-id}' : '{id}'
     const output = await text({
       message: 'Please enter the output destination, Do not include the extension',
-      initialValue: 'output/{id}',
+      initialValue: `output/${init}`,
       validate: nonEmptyValidation,
     })
     if (isCancel(output)) {
@@ -183,10 +184,9 @@ const hook: Hook.Preparse = async ({argv, options, context}) => {
       }
 
       newArgs.push('--scale', scale)
-
-      outro(clc.cyanBright(newArgs.join(' ')))
-      return newArgs
     }
+    outro(clc.cyanBright(newArgs.join(' ')))
+    return newArgs
   }
 
   return argv

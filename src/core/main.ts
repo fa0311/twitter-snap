@@ -66,7 +66,7 @@ export class TwitterSnap {
       return res
     }
 
-    if (flags.sessionType !== 'guest' && flags.api === 'getTweetResultByRestId') {
+    if (flags.sessionType !== 'guest' && flags.api === 'getTweetResultByRestId' && !args.id.startsWith('http')) {
       this.logger.hint('getTweetDetail is executed as getTweetResultByRestId because you are logged in')
     }
     if (flags.theme === 'Json' || flags.theme === 'MediaOnly') {
