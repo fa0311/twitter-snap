@@ -85,7 +85,6 @@ export const getFonts: (fontPath: string) => Promise<Fonts[]> = async (fontPath)
 
   const fonts = list.map(async ([file, name, weight, style]) => {
     const path = `${fontPath}/${file}`
-    await fs.mkdir(fontPath, {recursive: true})
     try {
       const data = await fs.readFile(path)
       return {data, name, style, weight}
@@ -264,12 +263,14 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
         if (url) {
           const res = await fetch(url)
           const buffer = await res.arrayBuffer()
+          await fs.mkdir(repOutput.split('/').slice(0, -1).join('/'), {recursive: true})
           await fs.writeFile(repOutput, Buffer.from(buffer))
         }
       })
       await Promise.all(downloader)
     } else if (themeName === 'Json') {
       const {nameOutput} = getFileName(undefined, 'other')
+      await fs.mkdir(nameOutput.split('/').slice(0, -1).join('/'), {recursive: true})
       await fs.writeFile(nameOutput + '.json', JSON.stringify(data, null, 2))
     } else {
       const Theme = Object.entries(themeList).find(([k, _]) => k === themeName)![1]
