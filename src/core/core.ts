@@ -85,6 +85,7 @@ export const getFonts: (fontPath: string) => Promise<Fonts[]> = async (fontPath)
 
   const fonts = list.map(async ([file, name, weight, style]) => {
     const path = `${fontPath}/${file}`
+    await fs.mkdir(fontPath, {recursive: true})
     try {
       const data = await fs.readFile(path)
       return {data, name, style, weight}
