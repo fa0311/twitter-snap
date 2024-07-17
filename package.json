@@ -42,6 +42,9 @@
       "strategy": "single",
       "target": "./dist/commands/index.js"
     },
+    "hooks": {
+      "preparse": "./dist/hooks/interactive.js"
+    },
     "dirname": "twitter-snap",
     "default": ".",
     "plugins": [
@@ -56,6 +59,7 @@
     }
   },
   "dependencies": {
+    "@clack/prompts": "^0.7.0",
     "@oclif/core": "^4.0",
     "@oclif/plugin-help": "^6.2",
     "@oclif/plugin-plugins": "^5.3",

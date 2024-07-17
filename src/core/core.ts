@@ -17,7 +17,7 @@ const twitterDomainsPattern = new RegExp(`(${twitterDomains.join('|')})`)
 const allowDomains = twitterDomains.map((e) => `.${e}`)
 
 export const additonalTheme = ['MediaOnly', 'Json'] as const
-export type AdditonalThemeType = (typeof additonalTheme)[keyof typeof additonalTheme]
+export type AdditonalThemeType = (typeof additonalTheme)[number]
 
 export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: string) => {
   const browser = await launch({

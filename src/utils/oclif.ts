@@ -1,6 +1,6 @@
-import Default from '../commands'
+import Default from '../commands/index.js'
 
-export const isDefaultOption = (cmd: typeof Default, flags: any, name: string) => {
-  const a = cmd.flags as any
+export const isDefaultOption = (flags: any, name: string) => {
+  const a = typeof Default.flags as any
   return a[name].default !== flags[name]
 }
