@@ -1,9 +1,9 @@
-import {Command} from '@oclif/core'
 import {TwitterOpenApi} from 'twitter-openapi-typescript'
 import {FFmpegInfrastructure} from 'twitter-snap-core'
 
-import Default from '../commands/index.js'
+import {DefaultCommandType} from '../commands/index.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
+import {isDefaultOption} from '../utils/oclif.js'
 import {normalizePath} from '../utils/path.js'
 import {sleepLoop} from '../utils/sleep.js'
 import {getForceStartIdList, twitterUrlConvert} from '../utils/url.js'
@@ -15,15 +15,6 @@ import {
   twitterSnapGuest,
   twitterSnapPuppeteer,
 } from './core.js'
-
-abstract class CommandType extends Command {
-  public getDefault() {
-    return this.parse(Default)
-  }
-}
-
-type PromiseType<T extends Promise<any>> = T extends Promise<infer U> ? U : never
-export type TwitterSnapRunParam = PromiseType<ReturnType<typeof CommandType.prototype.getDefault>>
 
 type TwitterSnapParam = {
   logger?: Logger
@@ -61,7 +52,7 @@ export class TwitterSnap {
     return res
   }
 
-  async run({args, flags}: TwitterSnapRunParam) {
+  async run({args, flags}: DefaultCommandType) {
     TwitterOpenApi.fetchApi = async (...args) => {
       const res = await this.req(...args)
       if (res.status === 429) {
@@ -73,6 +64,30 @@ export class TwitterSnap {
       }
 
       return res
+    }
+
+    if (flags.sessionType !== 'guest' && flags.api === 'getTweetResultByRestId' && !args.id.startsWith('http')) {
+      this.logger.hint('getTweetDetail is executed as getTweetResultByRestId because you are logged in')
+    }
+    if (flags.theme === 'Json' || flags.theme === 'MediaOnly') {
+      if (isDefaultOption(flags, 'width')) {
+        this.logger.hint('Width is not supported in Json theme')
+      }
+      if (isDefaultOption(flags, 'scale')) {
+        this.logger.hint('Scale is not supported in Json theme')
+      }
+      if (isDefaultOption(flags, 'fontPath')) {
+        this.logger.hint('Font is not supported in Json theme')
+      }
+      if (isDefaultOption(flags, 'ffmpegPath')) {
+        this.logger.hint('FFmpeg options is not supported in Json theme')
+      }
+      if (isDefaultOption(flags, 'ffprobePath')) {
+        this.logger.hint('FFmpeg options is not supported in Json theme')
+      }
+      if (isDefaultOption(flags, 'ffmpegAdditonalOption')) {
+        this.logger.hint('FFmpeg options is not supported in Json theme')
+      }
     }
 
     const getClient = (() => {
@@ -106,7 +121,7 @@ export class TwitterSnap {
     const startId = getForceStartIdList(type) ? id : undefined
 
     const fontClient = getFonts(normalizePath(flags.fontPath))
-    const fonts = await this.logger.guard({text: 'Loading Font'}, fontClient)
+    const fonts = await this.logger.guard({text: 'Loading font'}, fontClient)
 
     const render = client({id, limit: flags.limit, type, startId}, async (render) => {
       try {

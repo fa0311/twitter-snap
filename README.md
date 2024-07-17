@@ -103,51 +103,11 @@ DESCRIPTION
 EXAMPLES
   Create a snap from tweet id with minimal commands.
 
-    $ twitter-snap 1349129669258448897
+    $ twitter-snap https://twitter.com/elonmusk/status/1349129669258448897
 
   Create a snap using the RenderMakeItAQuote theme.
 
-    $ twitter-snap 1349129669258448897 --theme RenderMakeItAQuote
-
-  Create a snap using the browser session.
-
-    $ twitter-snap 1349129669258448897 --session-type browser
-
-  Create a snap using the file session.
-
-    $ twitter-snap 1349129669258448897 --session-type file --cookies-file ^
-      cookies.json
-
-  Create snaps of 10 tweets from a user ID for that user.
-
-    $ twitter-snap 44196397 --api getUserTweets --limit 10
-
-  Create snaps from a user profile URL.
-
-    $ twitter-snap https://twitter.com/elonmusk
-
-  Create a snap from a tweet URL.
-
-    $ twitter-snap https://twitter.com/elonmusk/status/1349129669258448897
-
-  Create snaps from a user ID and save them with the count number.
-
-    $ twitter-snap 44196397 --api getUserTweets -o ^
-      "{user-screen-name}/{count}.png"
-
-  Create snaps from a user ID and save them in a data folder.
-
-    $ twitter-snap 44196397 --api getUserTweets -o ^
-      "data/{user-screen-name}/{id}.{if-photo:png:mp4}"
-
-  Create snaps from a user ID and save them with the tweet date.
-
-    $ twitter-snap 44196397 --api getUserTweets -o ^
-      "{time-tweet-yyyy}-{time-tweet-mm}-{time-tweet-dd}/{id}.png"
-
-  Create snaps from a tweet id with a width of 1280 and a scale of 2.
-
-    $ twitter-snap 1349129669258448897 --width 1280 --scale 2
+    $ twitter-snap --interactive
 ```
 
 ## Dependence

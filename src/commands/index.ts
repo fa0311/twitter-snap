@@ -1,9 +1,18 @@
 import {Args, Command, Flags} from '@oclif/core'
-import {ThemeNameType, themeList} from 'twitter-snap-core'
 
+import {themeList, ThemeNameType} from 'twitter-snap-core'
+import {additonalTheme, AdditonalThemeType} from '../core/core.js'
 import {TwitterSnap} from '../core/main.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
+
+export abstract class DefaultCommand extends Command {
+  public getDefault() {
+    return this.parse(Default)
+  }
+}
+type PromiseType<T extends Promise<any>> = T extends Promise<infer U> ? U : never
+export type DefaultCommandType = PromiseType<ReturnType<typeof DefaultCommand.prototype.getDefault>>
 
 export default class Default extends Command {
   static args = {
@@ -14,49 +23,12 @@ export default class Default extends Command {
 
   static examples = [
     {
-      command: 'twitter-snap 1349129669258448897',
+      command: 'twitter-snap https://twitter.com/elonmusk/status/1349129669258448897',
       description: 'Create a snap from tweet id with minimal commands.',
     },
     {
-      command: 'twitter-snap 1349129669258448897 --theme RenderMakeItAQuote',
-      description: 'Create a snap using the RenderMakeItAQuote theme.',
-    },
-    {
-      command: 'twitter-snap 1349129669258448897 --session-type browser',
-      description: 'Create a snap using the browser session.',
-    },
-    {
-      command: 'twitter-snap 1349129669258448897 --session-type file --cookies-file cookies.json',
-      description: 'Create a snap using the file session.',
-    },
-    {
-      command: 'twitter-snap 44196397 --api getUserTweets --limit 10',
-      description: 'Create snaps of 10 tweets from a user ID for that user.',
-    },
-    {
-      command: 'twitter-snap https://twitter.com/elonmusk',
-      description: 'Create snaps from a user profile URL.',
-    },
-    {
-      command: 'twitter-snap https://twitter.com/elonmusk/status/1349129669258448897',
-      description: 'Create a snap from a tweet URL.',
-    },
-    {
-      command: 'twitter-snap 44196397 --api getUserTweets -o "{user-screen-name}/{count}.png"',
-      description: 'Create snaps from a user ID and save them with the count number.',
-    },
-    {
-      command: 'twitter-snap 44196397 --api getUserTweets -o "data/{user-screen-name}/{id}.{if-photo:png:mp4}"',
-      description: 'Create snaps from a user ID and save them in a data folder.',
-    },
-    {
-      command:
-        'twitter-snap 44196397 --api getUserTweets -o "{time-tweet-yyyy}-{time-tweet-mm}-{time-tweet-dd}/{id}.png"',
-      description: 'Create snaps from a user ID and save them with the tweet date.',
-    },
-    {
-      command: 'twitter-snap 1349129669258448897 --width 1280 --scale 2',
-      description: 'Create snaps from a tweet id with a width of 1280 and a scale of 2.',
+      command: 'twitter-snap --interactive',
+      description: 'Enable interactive mode.',
     },
   ]
 
@@ -84,6 +56,11 @@ export default class Default extends Command {
     debug: Flags.boolean({
       default: false,
       description: 'Debug',
+    }),
+    interactive: Flags.boolean({
+      default: false,
+      description: 'Enable interactive mode',
+      aliases: ['i'],
     }),
     ffmpegAdditonalOption: Flags.string({
       aliases: ['ffmpeg-additonal-option'],
@@ -115,7 +92,7 @@ export default class Default extends Command {
     }),
     output: Flags.string({
       char: 'o',
-      default: '{id}.{if-photo:png:mp4}',
+      default: '{if-media-only:{id}-{media-id}:{id}}.{if-photo:png:mp4}',
       description: 'Output file name',
     }),
     sessionType: Flags.custom<'browser' | 'file' | 'guest'>({
@@ -132,10 +109,10 @@ export default class Default extends Command {
       default: 0,
       description: 'Sleep (ms)',
     }),
-    theme: Flags.custom<ThemeNameType>({
+    theme: Flags.custom<ThemeNameType | AdditonalThemeType>({
       default: 'RenderOceanBlueColor',
       description: 'Theme type',
-      options: Object.keys(themeList),
+      options: [...Object.keys(themeList), ...additonalTheme],
     })(),
     width: Flags.integer({
       default: 650,
