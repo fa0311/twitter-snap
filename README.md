@@ -16,6 +16,20 @@ npx twitter-snap@latest https://twitter.com/elonmusk/status/1770222178279252062
 
 [More Samples](https://github.com/fa0311/twitter-snap/issues/47)
 
+```shell
+# Interactive mode
+npx twitter-snap@latest -i
+```
+
+<img src="./docs/img/input-1.png" width="49%" />
+
+```shell
+# Output the API response directly to a file in raw JSON format.
+npx twitter-snap@latest --theme Json https://x.com/elonmusk/status/1349129669258448897
+# Download the media file and save it directly to a file in its raw format.
+npx twitter-snap@latest --theme MediaOnly https://x.com/elonmusk/status/1349129669258448897
+```
+
 ## Install
 
 `npm -g i twitter-snap@latest`
@@ -27,20 +41,28 @@ $ twitter-snap --help
 Create beautiful Tweet images fast
 
 USAGE
-  $ twitter-snap  ID [--api getTweetResultByRestId|getTweetDetail|getSearchTimeline|getHomeTimeline|getHomeLatestTimeline|getListLatestTweetsTimeline|getUserTweets|getUserTweetsAndReplies|getUserMedia|getLikes|getBookmarks] [--browserHeadless] [--browserProfile <value>] [--cookiesFile <value>] [--debug] [--ffmpegAdditonalOption <value>] [--ffmpegPath <value>] [--ffprobePath <value>] [--fontPath <value>] [--limit <value>] [--noCleanup] [-o <value>] [--sessionType <value>] [--simpleLog] [--sleep <value>] [--theme RenderOceanBlueColor|RenderOceanBlueDarkColor|RenderSunsetGardenColor|RenderSunsetGardenDarkColor|RenderDawnBlossomColor|RenderDawnBlossomDarkColor|RenderFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyColor|RenderTwilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|RenderTransparentDark|RenderTransparentShadow|RenderTransparentDarkShadow|RenderMakeItAQuote] [--width <value>] [--scale <value>]
+  $ twitter-snap  ID [--api
+    getTweetResultByRestId|getTweetDetail|getSearchTimeline|getHomeTimeline|getHomeLatestTimeline|getListLatestTweetsTim
+    eline|getUserTweets|getUserTweetsAndReplies|getUserMedia|getLikes|getBookmarks] [--browserHeadless]
+    [--browserProfile <value>] [--cookiesFile <value>] [--debug] [--interactive] [--ffmpegAdditonalOption <value>]
+    [--ffmpegPath <value>] [--ffprobePath <value>] [--fontPath <value>] [--limit <value>] [--noCleanup] [-o <value>]
+    [--sessionType <value>] [--simpleLog] [--sleep <value>] [--theme
+    RenderOceanBlueColor|RenderOceanBlueDarkColor|RenderSunsetGardenColor|RenderSunsetGardenDarkColor|RenderDawnBlossomC
+    olor|RenderDawnBlossomDarkColor|RenderFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyColor|RenderTwili
+    ghtSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|RenderTransparentDark|RenderTransparentShado
+    w|RenderTransparentDarkShadow|RenderMakeItAQuote|MediaOnly|Json] [--width <value>] [--scale <value>]
 
 ARGUMENTS
   ID  Twitter status id
 
 FLAGS
   -o, --output=<value>
-      [default: {id}.{if-photo:png:mp4}] Output file name
+      [default: {if-media-only:{id}-{media-id}:{id}}.{if-photo:png:mp4}] Output file name
 
   --api=<option>
       [default: getTweetResultByRestId] API type
-      <options: getTweetResultByRestId|getTweetDetail|getSearchTimeline|getHomeTim
-      eline|getHomeLatestTimeline|getListLatestTweetsTimeline|getUserTweets|getUse
-      rTweetsAndReplies|getUserMedia|getLikes|getBookmarks>
+      <options: getTweetResultByRestId|getTweetDetail|getSearchTimeline|getHomeTimeline|getHomeLatestTimeline|getListLates
+      tTweetsTimeline|getUserTweets|getUserTweetsAndReplies|getUserMedia|getLikes|getBookmarks>
 
   --browserHeadless
       Browser headless
@@ -66,6 +88,9 @@ FLAGS
   --fontPath=<value>
       [default: ~/.cache/twitter-snap/fonts] Font path
 
+  --interactive
+      Enable interactive mode
+
   --limit=<value>
       [default: 30] Limit count
 
@@ -86,12 +111,10 @@ FLAGS
 
   --theme=<option>
       [default: RenderOceanBlueColor] Theme type
-      <options: RenderOceanBlueColor|RenderOceanBlueDarkColor|RenderSunsetGardenCo
-      lor|RenderSunsetGardenDarkColor|RenderDawnBlossomColor|RenderDawnBlossomDark
-      Color|RenderFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyCol
-      or|RenderTwilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTr
-      ansparent|RenderTransparentDark|RenderTransparentShadow|RenderTransparentDar
-      kShadow|RenderMakeItAQuote>
+      <options: RenderOceanBlueColor|RenderOceanBlueDarkColor|RenderSunsetGardenColor|RenderSunsetGardenDarkColor|RenderDa
+      wnBlossomColor|RenderDawnBlossomDarkColor|RenderFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyColor|R
+      enderTwilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|RenderTransparentDark|RenderTransp
+      arentShadow|RenderTransparentDarkShadow|RenderMakeItAQuote|MediaOnly|Json>
 
   --width=<value>
       [default: 650] Width
@@ -105,9 +128,10 @@ EXAMPLES
 
     $ twitter-snap https://twitter.com/elonmusk/status/1349129669258448897
 
-  Create a snap using the RenderMakeItAQuote theme.
+  Enable interactive mode.
 
     $ twitter-snap --interactive
+
 ```
 
 ## Dependence
