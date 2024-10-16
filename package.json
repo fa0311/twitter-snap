@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.52",
+  "version": "0.0.54",
   "description": "Create beautiful Tweet images fast",
   "keywords": [
     "twitter",
@@ -68,29 +68,29 @@
     "cli-color": "^2.0.4",
     "log-symbols": "^7.0.0",
     "ora": "^8.1.0",
-    "puppeteer": "^23.4.0",
-    "twitter-openapi-typescript": "^0.0.35",
-    "twitter-snap-core": "^0.0.37"
+    "puppeteer": "^23.5.3",
+    "twitter-openapi-typescript": "^0.0.38",
+    "twitter-snap-core": "^0.0.38"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
     "@oclif/test": "^4.0",
-    "@types/chai": "^4.3",
+    "@types/chai": "^5.0",
     "@types/cli-color": "^2.0.6",
-    "@types/fluent-ffmpeg": "^2.1.24",
-    "@types/mocha": "^10",
-    "@types/node": "^20.14",
+    "@types/fluent-ffmpeg": "^2.1.26",
+    "@types/mocha": "^10.0",
+    "@types/node": "^22.7",
     "@types/react": "^18.3",
-    "chai": "^5",
+    "chai": "^5.1",
     "eslint": "^8.56",
     "eslint-config-oclif": "^5.2",
     "eslint-config-oclif-typescript": "^3.1",
     "eslint-config-prettier": "^9.1",
-    "mocha": "^10.6",
-    "oclif": "^4.14",
+    "mocha": "^10.7",
+    "oclif": "^4.15",
     "shx": "^0.3.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.5"
+    "typescript": "^5.6"
   },
   "engines": {
     "node": ">=18.0.0"
