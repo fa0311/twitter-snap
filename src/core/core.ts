@@ -19,6 +19,9 @@ const allowDomains = twitterDomains.map((e) => `.${e}`)
 export const additonalTheme = ['MediaOnly', 'Json'] as const
 export type AdditonalThemeType = (typeof additonalTheme)[number]
 
+export const sessionType = ['browser', 'file', 'guest'] as const
+export type SessionType = (typeof sessionType)[number]
+
 export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: string) => {
   const browser = await launch({
     headless,
@@ -60,7 +63,6 @@ export const twitterSnapCookies = async (path: string) => {
 
     throw new Error('Invalid cookies')
   })()
-
   const api = await twitter.getClientFromCookies(cookies)
   return [tweetApiSnap(api), api] as const
 }
