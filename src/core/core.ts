@@ -301,20 +301,27 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
       })
 
       const png = Buffer.from(await img.arrayBuffer())
-      if (pngOutput.split('/').length > 1) {
-        await fs.mkdir(pngOutput.split('/').slice(0, -1).join('/'), {recursive: true})
+      const dirname = pngOutput.split('/').slice(0, -1).join('/')
+      const reqdirname = repOutput.split('/').slice(0, -1).join('/')
+      const filename = pngOutput.split('/').pop()!
+      if (dirname) {
+        await fs.mkdir(dirname, {recursive: true})
       }
-
-      await fs.writeFile(pngOutput, png)
-
+      if (reqdirname) {
+        await fs.mkdir(reqdirname, {recursive: true})
+      }
       if (video) {
+        const inputPng = `${dirname}/temp-${filename}`
+        await fs.writeFile(inputPng, png)
         handler && handler({id: data.tweet.restId, type: 'video', user: data.user.legacy.screenName})
         const res = await render.videoRender!({
           data,
-          image: pngOutput,
+          image: inputPng,
           output: repOutput,
         })
-        return finalize([pngOutput, ...res.temp])
+        return finalize([inputPng, ...res.temp])
+      } else {
+        await fs.writeFile(pngOutput, png)
       }
     }
     return finalize([])
