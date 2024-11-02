@@ -1,7 +1,7 @@
 import {Args, Command, Flags} from '@oclif/core'
 
 import {themeList, ThemeNameType} from 'twitter-snap-core'
-import {additonalTheme, AdditonalThemeType} from '../core/core.js'
+import {additonalTheme, AdditonalThemeType, sessionType, SessionType} from '../core/core.js'
 import {TwitterSnap} from '../core/main.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
 import {GetTweetApi, getTweetList} from './../utils/types.js'
@@ -95,10 +95,11 @@ export default class Default extends Command {
       default: '{if-media-only:{id}-{media-id}:{id}}.{if-photo:png:mp4}',
       description: 'Output file name',
     }),
-    sessionType: Flags.custom<'browser' | 'file' | 'guest'>({
+    sessionType: Flags.custom<SessionType>({
       aliases: ['session-type'],
       default: 'guest',
       description: 'Session type',
+      options: sessionType,
     })(),
     simpleLog: Flags.boolean({
       aliases: ['simple-log'],

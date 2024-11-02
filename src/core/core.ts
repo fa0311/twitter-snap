@@ -19,6 +19,9 @@ const allowDomains = twitterDomains.map((e) => `.${e}`)
 export const additonalTheme = ['MediaOnly', 'Json'] as const
 export type AdditonalThemeType = (typeof additonalTheme)[number]
 
+export const sessionType = ['browser', 'file', 'guest'] as const
+export type SessionType = (typeof sessionType)[number]
+
 export const twitterSnapPuppeteer = async (headless?: boolean, userDataDir?: string) => {
   const browser = await launch({
     headless,
@@ -60,7 +63,6 @@ export const twitterSnapCookies = async (path: string) => {
 
     throw new Error('Invalid cookies')
   })()
-
   const api = await twitter.getClientFromCookies(cookies)
   return [tweetApiSnap(api), api] as const
 }
@@ -299,20 +301,27 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
       })
 
       const png = Buffer.from(await img.arrayBuffer())
-      if (pngOutput.split('/').length > 1) {
-        await fs.mkdir(pngOutput.split('/').slice(0, -1).join('/'), {recursive: true})
+      const dirname = pngOutput.split('/').slice(0, -1).join('/')
+      const reqdirname = repOutput.split('/').slice(0, -1).join('/')
+      const filename = pngOutput.split('/').pop()!
+      if (dirname) {
+        await fs.mkdir(dirname, {recursive: true})
       }
-
-      await fs.writeFile(pngOutput, png)
-
+      if (reqdirname) {
+        await fs.mkdir(reqdirname, {recursive: true})
+      }
       if (video) {
+        const inputPng = `${dirname}/temp-${filename}`
+        await fs.writeFile(inputPng, png)
         handler && handler({id: data.tweet.restId, type: 'video', user: data.user.legacy.screenName})
         const res = await render.videoRender!({
           data,
-          image: pngOutput,
+          image: inputPng,
           output: repOutput,
         })
-        return finalize([pngOutput, ...res.temp])
+        return finalize([inputPng, ...res.temp])
+      } else {
+        await fs.writeFile(pngOutput, png)
       }
     }
     return finalize([])
