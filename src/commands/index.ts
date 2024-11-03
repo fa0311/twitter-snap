@@ -82,7 +82,7 @@ export default class Default extends Command {
       description: 'Font path',
     }),
     limit: Flags.integer({
-      default: 30,
+      default: 20,
       description: 'Limit count',
     }),
     noCleanup: Flags.boolean({

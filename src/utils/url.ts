@@ -29,20 +29,20 @@ export const twitterUrlConvert = (arg: {url: string; guest: boolean}) => {
   const pattern = urlList.find(([pattern]) => new RegExp(pattern).test(arg.url))
   if (pattern) {
     const [url, type] = pattern
-    const true_type = arg.guest ? getFallbackAPI(type) : type
+    const useType = arg.guest ? getFallbackAPI(type) : type
     const match = new RegExp(url).exec(arg.url)?.groups
     if (match === undefined) {
-      return ['_', true_type] as const
+      return ['_', useType] as const
     }
 
     if (match.id) {
-      return [match.id, true_type] as const
+      return [match.id, useType] as const
     }
 
     if (match.user) {
       return async (api: TwitterOpenApiClient) => {
         const res = await api.getUserApi().getUserByScreenName({screenName: match.user})
-        return [res.data.user!.restId!, true_type] as const
+        return [res.data.user!.restId!, useType] as const
       }
     }
   }
