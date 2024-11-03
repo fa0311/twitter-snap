@@ -1,9 +1,18 @@
 import {ImageResponse} from '@vercel/og'
 import {promises as fs} from 'node:fs'
 import {Cookie, launch} from 'puppeteer'
-import {TweetApiUtilsData, TwitterOpenApi, TwitterOpenApiClient} from 'twitter-openapi-typescript'
+import {
+  TweetApiUtilsData,
+  TwitterOpenApi,
+  TwitterOpenApiClient,
+  instructionConverter,
+  instructionToEntry,
+  tweetEntriesConverter,
+} from 'twitter-openapi-typescript'
+import {InstructionUnionFromJSON} from 'twitter-openapi-typescript-generated'
 import {ThemeNameType, themeList} from 'twitter-snap-core'
 
+import {findNodeByKey} from '../utils/node.js'
 import {GetTweetApi, ThemeParamType, getTweetList} from '../utils/types.js'
 
 export const twitterSnapGuest = async () => {
@@ -67,6 +76,22 @@ export const twitterSnapCookies = async (path: string) => {
   return [tweetApiSnap(api), api] as const
 }
 
+export const twitterSnapFromJson = (json: any) => {
+  const instructionsAny = findNodeByKey([json], 'instructions')
+  if (Array.isArray(instructionsAny)) {
+    try {
+      const instructions = instructionsAny.map((e: any) => InstructionUnionFromJSON(e))
+      const entry = instructionToEntry(instructions)
+      const data = [...tweetEntriesConverter(entry), ...instructionConverter(instructions)]
+      return tweetApiSnapOffline(data)
+    } catch (error) {
+      throw new Error('Invalid JSON')
+    }
+  } else {
+    throw new Error('Invalid JSON')
+  }
+}
+
 type Fonts = NonNullable<NonNullable<ConstructorParameters<typeof ImageResponse>[1]>['fonts']>[0]
 
 export const getFonts: (fontPath: string) => Promise<Fonts[]> = async (fontPath) => {
@@ -110,6 +135,18 @@ type tweetApiSnapParam = {
 }
 
 type handlerType = (e: ReturnType<typeof twitterRender>) => Promise<void>
+
+const tweetApiSnapOffline = (data: TweetApiUtilsData[]) => {
+  return async ({limit, startId}: tweetApiSnapParam, handler: handlerType) => {
+    let count = 0
+    for (const e of data) {
+      if (count == 0 && e.tweet.restId !== startId && startId) continue
+      if (count >= limit) return
+      await handler(twitterRender(e, count))
+      count++
+    }
+  }
+}
 
 const tweetApiSnap = (client: TwitterOpenApiClient) => {
   return async ({id, limit, type, startId}: tweetApiSnapParam, handler: handlerType) => {

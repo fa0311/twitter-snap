@@ -1,17 +1,20 @@
-import {TwitterOpenApi} from 'twitter-openapi-typescript'
+import {TwitterOpenApi, TwitterOpenApiClient} from 'twitter-openapi-typescript'
 import {FFmpegInfrastructure} from 'twitter-snap-core'
 
+import fs from 'fs/promises'
 import {DefaultCommandType} from '../commands/index.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
 import {isDefaultOption} from '../utils/oclif.js'
 import {normalizePath} from '../utils/path.js'
 import {sleepLoop} from '../utils/sleep.js'
 import {getForceStartIdList, twitterUrlConvert} from '../utils/url.js'
+
 import {
   HandlerType,
   getFonts,
   twitterDomains,
   twitterSnapCookies,
+  twitterSnapFromJson,
   twitterSnapGuest,
   twitterSnapPuppeteer,
 } from './core.js'
@@ -66,8 +69,10 @@ export class TwitterSnap {
       return res
     }
 
-    if (flags.sessionType !== 'guest' && flags.api === 'getTweetResultByRestId' && !args.id.startsWith('http')) {
-      this.logger.hint('getTweetDetail is executed as getTweetResultByRestId because you are logged in')
+    if (flags.sessionType !== 'guest' && flags.api === 'getTweetResultByRestId') {
+      if (!args.id.startsWith('http') && !args.id.endsWith('.json')) {
+        this.logger.hint('getTweetDetail is executed as getTweetResultByRestId because you are logged in')
+      }
     }
     if (flags.theme === 'Json' || flags.theme === 'MediaOnly') {
       if (isDefaultOption(flags, 'width')) {
@@ -90,7 +95,7 @@ export class TwitterSnap {
       }
     }
 
-    const getClient = (() => {
+    const getClient = () => {
       switch (flags.sessionType) {
         case 'guest':
           return twitterSnapGuest()
@@ -99,26 +104,33 @@ export class TwitterSnap {
         case 'file':
           return twitterSnapCookies(flags.cookiesFile)
       }
-    })()
+    }
 
-    const [client, api] = await this.logger.guard({text: 'Loading client'}, getClient)
-
-    const [id, type] = await (async () => {
+    const getHttpType = async (api: TwitterOpenApiClient) => {
       if (args.id.startsWith('http')) {
         const convert = twitterUrlConvert({url: args.id, guest: flags.sessionType === 'guest'})
         if (typeof convert === 'function') {
           return await this.logger.guard({text: 'Get user id'}, convert(api))
-        }
-
-        if (typeof convert === 'object') {
+        } else if (typeof convert === 'object') {
           return convert
         }
       }
-
       return [args.id, flags.api] as const
-    })()
+    }
 
-    const startId = getForceStartIdList(type) ? id : undefined
+    const [client, id, type, startId] = await (async () => {
+      if (args.id.endsWith('.json')) {
+        const json = JSON.parse(await fs.readFile(args.id, 'utf-8'))
+        const client = twitterSnapFromJson(json)
+        return [client, '_', 'getTweetDetail', undefined] as const
+      } else {
+        const promiseClient = getClient()
+        const [client, api] = await this.logger.guard({text: 'Loading client'}, promiseClient)
+        const [id, type] = await getHttpType(api)
+        const startId = getForceStartIdList(type) ? id : undefined
+        return [client, id, type, startId] as const
+      }
+    })()
 
     const fontClient = getFonts(normalizePath(flags.fontPath))
     const fonts = await this.logger.guard({text: 'Loading font'}, fontClient)

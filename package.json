@@ -60,16 +60,16 @@
   },
   "dependencies": {
     "@clack/prompts": "^0.7.0",
-    "@oclif/core": "^4.0",
-    "@oclif/plugin-help": "^6.2",
-    "@oclif/plugin-plugins": "^5.4",
-    "@oclif/plugin-warn-if-update-available": "^3.1",
+    "@oclif/core": "^4.0.31",
+    "@oclif/plugin-help": "^6.2.16",
+    "@oclif/plugin-plugins": "^5.4.15",
+    "@oclif/plugin-warn-if-update-available": "^3.1.21",
     "@vercel/og": "^0.6.3",
     "cli-color": "^2.0.4",
     "log-symbols": "^7.0.0",
     "ora": "^8.1.0",
-    "puppeteer": "^23.5.3",
-    "twitter-openapi-typescript": "^0.0.42",
+    "puppeteer": "^23.6.1",
+    "twitter-openapi-typescript": "^0.0.43",
     "twitter-snap-core": "^0.0.40"
   },
   "devDependencies": {
