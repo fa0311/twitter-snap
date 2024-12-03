@@ -40,6 +40,34 @@ npx twitter-snap@latest --theme MediaOnly https://x.com/elonmusk/status/13491296
 
 `docker run -it --rm -v $(pwd)/output:/app/output -v $(pwd)/cookies.json:/app/cookies.json twitter-snap https://x.com/elonmusk/status/1349129669258448897 --session-type file`
 
+`--session-type=browser` is not supported
+
+# Use as a package
+
+```shell
+npm i twitter-snap
+```
+
+```typescript
+import {TwitterSnap} from 'twitter-snap'
+
+const [client, api] = await twitterSnapGuest() // or twitterSnapCookies or twitterSnapPuppeteer
+const fonts = await getFonts('.cache/fonts')
+await client({id: id, limit: 1, type: 'getTweetDetail', startId: id}, async (render) => {
+  const finalize = await render({
+    output: `temp/${id}.{if-photo:png:mp4}`,
+    themeName: 'RenderOceanBlueColor',
+    themeParam: {
+      fonts: fonts,
+      width: 1440,
+    },
+  })
+  await finalize({cleanup: true})
+})
+```
+
+Also, if you use advanced customization, please use [twitter-snap-core](https://github.com/fa0311/twitter-snap-core).
+
 ## Arguments
 
 ```shell
