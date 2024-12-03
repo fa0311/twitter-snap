@@ -1,0 +1,37 @@
+name: Docker Build and Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-docker-image:
+    runs-on: ubuntu-latest
+
+    permissions:
+      actions: write
+      contents: read
+      packages: write
+
+    env:
+      DOCKER_BASE_NAME: ghcr.io/${{ github.repository }}/${{ github.event.repository.name }}-docker
+      TAG_NAME: latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Packages
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Build Docker Image
+        run: |
+          docker buildx create --use
+          docker buildx inspect --bootstrap
+          docker buildx build \
+            -t ${{ env.DOCKER_BASE_NAME }}:${{ env.TAG_NAME }} \
+            --push .
