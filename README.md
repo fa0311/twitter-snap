@@ -34,6 +34,12 @@ npx twitter-snap@latest --theme MediaOnly https://x.com/elonmusk/status/13491296
 
 `npm -g i twitter-snap@latest`
 
+## Docker
+
+`docker run -it --rm -v $(pwd)/output:/app/output ghcr.io/fa0311/twitter-snap/twitter-snap-docker:latest https://x.com/elonmusk/status/1349129669258448897`
+
+`docker run -it --rm -v $(pwd)/output:/app/output -v $(pwd)/cookies.json:/app/cookies.json twitter-snap https://x.com/elonmusk/status/1349129669258448897 --session-type file`
+
 ## Arguments
 
 ```shell
