@@ -55,8 +55,9 @@ npm i twitter-snap
 ```
 
 ```typescript
-import {TwitterSnap} from 'twitter-snap'
+import {getFonts, twitterSnapGuest} from 'twitter-snap'
 
+const id = '1349129669258448897'
 const [client, api] = await twitterSnapGuest() // or twitterSnapCookies or twitterSnapPuppeteer
 const fonts = await getFonts('.cache/fonts')
 await client({id: id, limit: 1, type: 'getTweetDetail', startId: id}, async (render) => {
