@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.58",
+  "version": "0.0.59",
   "description": "Create beautiful Tweet images fast",
   "keywords": [
     "twitter",
@@ -70,7 +70,7 @@
     "ora": "^8.1.0",
     "puppeteer": "^23.6.1",
     "twitter-openapi-typescript": "^0.0.44",
-    "twitter-snap-core": "^0.0.41"
+    "twitter-snap-core": "^0.0.42"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
