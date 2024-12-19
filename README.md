@@ -28,6 +28,8 @@ npx twitter-snap@latest -i
 npx twitter-snap@latest --theme Json https://x.com/elonmusk/status/1349129669258448897
 # Download the media file and save it directly to a file in its raw format.
 npx twitter-snap@latest --theme MediaOnly https://x.com/elonmusk/status/1349129669258448897
+# Use chatgpt to summarize the data in this tweet.
+npx twitter-snap@latest --theme LiteJson --sessionType browser https://x.com/elonmusk | chatgpt -p 'Summarize the data in this tweet.'
 ```
 
 ## Install
@@ -154,7 +156,7 @@ FLAGS
       <options: RenderOceanBlueColor|RenderOceanBlueDarkColor|RenderSunsetGardenColor|RenderSunsetGardenDarkColor|RenderDa
       wnBlossomColor|RenderDawnBlossomDarkColor|RenderFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyColor|R
       enderTwilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|RenderTransparentDark|RenderTransp
-      arentShadow|RenderTransparentDarkShadow|RenderMakeItAQuote|MediaOnly|Json>
+      arentShadow|RenderTransparentDarkShadow|RenderMakeItAQuote|MediaOnly|Json|LiteJson>
 
   --width=<value>
       [default: 650] Width
