@@ -23,7 +23,14 @@ npx twitter-snap@latest -i
 
 <img src="./docs/img/input-1.png" width="49%" />
 
+---
+
 ```shell
+# Login with cookies
+npx twitter-snap@latest https://twitter.com/elonmusk/status/1349129669258448897 --session-type file --cookies-file cookies.json
+# Login with puppeteer
+npx twitter-snap@latest https://twitter.com/elonmusk/status/1349129669258448897 --session-type browser
+
 # Output the API response directly to a file in raw JSON format.
 npx twitter-snap@latest --theme Json https://x.com/elonmusk/status/1349129669258448897
 # Download the media file and save it directly to a file in its raw format.
