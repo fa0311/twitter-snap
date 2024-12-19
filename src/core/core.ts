@@ -12,6 +12,7 @@ import {
 import {InstructionUnionFromJSON} from 'twitter-openapi-typescript-generated'
 import {ThemeNameType, themeList} from 'twitter-snap-core'
 
+import {toLiteJson} from '../utils/liteJson.js'
 import {findNodeByKey} from '../utils/node.js'
 import {GetTweetApi, ThemeParamType, getTweetList} from '../utils/types.js'
 
@@ -25,7 +26,7 @@ export const twitterDomains = ['twitter.com', 'x.com'] as const
 const twitterDomainsPattern = new RegExp(`(${twitterDomains.join('|')})`)
 const allowDomains = twitterDomains.map((e) => `.${e}`)
 
-export const additonalTheme = ['MediaOnly', 'Json'] as const
+export const additonalTheme = ['MediaOnly', 'Json', 'LiteJson'] as const
 export type AdditonalThemeType = (typeof additonalTheme)[number]
 
 export const sessionType = ['browser', 'file', 'guest'] as const
@@ -242,6 +243,7 @@ const getFileNameInit = ({output, data, count}: getFileNameParam) => {
       ['{time-tweet-hh}', new Date(legacy.createdAt).getHours().toString().padStart(2, '0')],
       ['{time-tweet-mi}', new Date(legacy.createdAt).getMinutes().toString().padStart(2, '0')],
       ['{time-tweet-ss}', new Date(legacy.createdAt).getSeconds().toString().padStart(2, '0')],
+      ['{stdout}', '{stdout}'],
     ] as [string, string | number | undefined][]
 
     const replaceLast = [
@@ -311,10 +313,24 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
       await Promise.all(downloader)
     } else if (themeName === 'Json') {
       const {nameOutput} = getFileName(undefined, 'other')
-      if (nameOutput.split('/').length > 1) {
-        await fs.mkdir(nameOutput.split('/').slice(0, -1).join('/'), {recursive: true})
+      if (nameOutput === '{stdout}') {
+        return finalize({data: toLiteJson(data)})
+      } else {
+        if (nameOutput.split('/').length > 1) {
+          await fs.mkdir(nameOutput.split('/').slice(0, -1).join('/'), {recursive: true})
+        }
+        await fs.writeFile(nameOutput + '.json', JSON.stringify(data, null, 2))
       }
-      await fs.writeFile(nameOutput + '.json', JSON.stringify(data, null, 2))
+    } else if (themeName === 'LiteJson') {
+      const {nameOutput} = getFileName(undefined, 'other')
+      if (nameOutput === '{stdout}') {
+        return finalize({data: toLiteJson(data)})
+      } else {
+        if (nameOutput.split('/').length > 1) {
+          await fs.mkdir(nameOutput.split('/').slice(0, -1).join('/'), {recursive: true})
+        }
+        await fs.writeFile(nameOutput + '.json', JSON.stringify(toLiteJson(data), null, 2))
+      }
     } else {
       const Theme = Object.entries(themeList).find(([k, _]) => k === themeName)![1]
       const isVideo = extMedia.some((e) => e.type !== 'photo')
@@ -356,22 +372,32 @@ const twitterRender = (data: TweetApiUtilsData, count: number) => {
           image: inputPng,
           output: repOutput,
         })
-        return finalize([inputPng, ...res.temp])
+        return finalize({temp: [inputPng, ...res.temp]})
       } else {
         await fs.writeFile(pngOutput, png)
       }
     }
-    return finalize([])
+    return finalize({})
   }
 }
 
 type FinalizeParam = {
   cleanup: boolean
+  stdout?: (e: any) => void
 }
-const finalize = async (temp: string[]) => {
-  return async ({cleanup}: FinalizeParam) => {
+
+type FinalizeInput = {
+  temp?: string[]
+  data?: any
+}
+
+const finalize = async ({temp, data}: FinalizeInput) => {
+  return async ({cleanup, stdout}: FinalizeParam) => {
     if (cleanup) {
-      await Promise.all(temp.map((e) => fs.rm(e)))
+      await Promise.all((temp ?? []).map((e) => fs.rm(e)))
+    }
+    if (stdout && data) {
+      stdout(data)
     }
   }
 }

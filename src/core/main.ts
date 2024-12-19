@@ -9,6 +9,8 @@ import {normalizePath} from '../utils/path.js'
 import {sleepLoop} from '../utils/sleep.js'
 import {getForceStartIdList, twitterUrlConvertPromise} from '../utils/url.js'
 
+import {stdout} from 'process'
+
 import {
   HandlerType,
   getFonts,
@@ -49,7 +51,7 @@ export class TwitterSnap {
     if (!res.ok && some(args[0].toString())) {
       console.error(`Return http status: ${res.status}`)
     } else {
-      console.log(`Return http status: ${res.status}`)
+      console.debug(`Return http status: ${res.status}`)
     }
 
     return res
@@ -74,7 +76,7 @@ export class TwitterSnap {
         this.logger.hint('getTweetDetail is executed as getTweetResultByRestId because you are logged in')
       }
     }
-    if (flags.theme === 'Json' || flags.theme === 'MediaOnly') {
+    if (flags.theme === 'Json' || flags.theme === 'MediaOnly' || flags.theme === 'LiteJson') {
       if (isDefaultOption(flags, 'width')) {
         this.logger.hint('Width is not supported in Json theme')
       }
@@ -93,6 +95,10 @@ export class TwitterSnap {
       if (isDefaultOption(flags, 'ffmpegAdditonalOption')) {
         this.logger.hint('FFmpeg options is not supported in Json theme')
       }
+    }
+
+    if (!(flags.theme === 'Json' || flags.theme === 'LiteJson') && flags.output === '{stdout}') {
+      this.logger.hint('Output {stdout} is not supported in non-Json theme')
     }
 
     const getClient = () => {
@@ -134,8 +140,10 @@ export class TwitterSnap {
 
     const fontClient = getFonts(normalizePath(flags.fontPath))
     const fonts = await this.logger.guard({text: 'Loading font'}, fontClient)
+    const limit = flags.limit
+    const stdoutBuffer: any = []
 
-    const render = client({id, limit: flags.limit, type, startId}, async (render) => {
+    const render = client({id, limit, type, startId}, async (render) => {
       try {
         const finalize = await render({
           handler: this.logHandler.bind(this),
@@ -155,6 +163,7 @@ export class TwitterSnap {
 
         await finalize({
           cleanup: !flags.noCleanup,
+          stdout: (e) => stdoutBuffer.push(e),
         })
         this.logger.succeed()
       } catch (error) {
@@ -167,5 +176,9 @@ export class TwitterSnap {
     })
 
     await this.logger.guardProgress({max: flags.limit, text: 'Rendering tweet'}, render)
+
+    if (stdoutBuffer.length > 0) {
+      stdout.write(JSON.stringify(stdoutBuffer))
+    }
   }
 }
