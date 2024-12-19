@@ -25,7 +25,7 @@ const urlList = [
 const guestFallback = [['getTweetDetail', 'getTweetResultByRestId'] as const]
 const forceStartIdList = ['getTweetDetail']
 
-export const twitterUrlConvert = (arg: {url: string; guest: boolean}) => {
+export const twitterUrlConvertPromise = (arg: {url: string; guest: boolean}) => {
   const pattern = urlList.find(([pattern]) => new RegExp(pattern).test(arg.url))
   if (pattern) {
     const [url, type] = pattern
@@ -47,6 +47,30 @@ export const twitterUrlConvert = (arg: {url: string; guest: boolean}) => {
     }
   }
 
+  throw new Error('Invalid URL')
+}
+
+export const twitterUrlConvert = async (arg: {url: string; api: TwitterOpenApiClient}) => {
+  const pattern = urlList.find(([pattern]) => new RegExp(pattern).test(arg.url))
+  if (pattern) {
+    const guest = arg.api.config.apiKey!('ct0') === undefined
+
+    const [url, type] = pattern
+    const useType = guest ? getFallbackAPI(type) : type
+    const match = new RegExp(url).exec(arg.url)?.groups
+    if (match === undefined) {
+      return ['_', useType] as const
+    }
+
+    if (match.id) {
+      return [match.id, useType] as const
+    }
+
+    if (match.user) {
+      const res = await arg.api!.getUserApi().getUserByScreenName({screenName: match.user})
+      return [res.data.user!.restId!, useType] as const
+    }
+  }
   throw new Error('Invalid URL')
 }
 
