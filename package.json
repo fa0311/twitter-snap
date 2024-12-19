@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.58",
+  "version": "0.0.59",
   "description": "Create beautiful Tweet images fast",
   "keywords": [
     "twitter",
@@ -59,22 +59,22 @@
     }
   },
   "dependencies": {
-    "@clack/prompts": "^0.7.0",
-    "@oclif/core": "^4.0.31",
-    "@oclif/plugin-help": "^6.2.16",
-    "@oclif/plugin-plugins": "^5.4.15",
-    "@oclif/plugin-warn-if-update-available": "^3.1.21",
+    "@clack/prompts": "^0.8.2",
+    "@oclif/core": "^4.1.0",
+    "@oclif/plugin-help": "^6.2.19",
+    "@oclif/plugin-plugins": "^5.4.22",
+    "@oclif/plugin-warn-if-update-available": "^3.1.28",
     "@vercel/og": "^0.6.4",
     "cli-color": "^2.0.4",
     "log-symbols": "^7.0.0",
-    "ora": "^8.1.0",
-    "puppeteer": "^23.10.4",
-    "twitter-openapi-typescript": "^0.0.44",
-    "twitter-snap-core": "^0.0.41"
+    "ora": "^8.1.1",
+    "puppeteer": "^23.11.0",
+    "twitter-openapi-typescript": "^0.0.45",
+    "twitter-snap-core": "^0.0.43"
   },
   "devDependencies": {
     "@oclif/prettier-config": "^0.2.1",
-    "@oclif/test": "^4.0",
+    "@oclif/test": "^4.1",
     "@types/chai": "^5.0",
     "@types/cli-color": "^2.0.6",
     "@types/fluent-ffmpeg": "^2.1.26",
