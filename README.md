@@ -36,11 +36,17 @@ npx twitter-snap@latest --theme MediaOnly https://x.com/elonmusk/status/13491296
 
 ## Docker
 
-`docker run -it --rm -v $(pwd)/output:/app/output ghcr.io/fa0311/twitter-snap/twitter-snap-docker:latest https://x.com/elonmusk/status/1349129669258448897`
+```shell
+docker run -it --rm -v $(pwd)/output:/app/output ghcr.io/fa0311/twitter-snap/twitter-snap-docker:latest https://x.com/elonmusk/status/1349129669258448897
+```
 
-`docker run -it --rm -v $(pwd)/output:/app/output -v $(pwd)/cookies.json:/app/cookies.json twitter-snap https://x.com/elonmusk/status/1349129669258448897 --session-type file`
+```shell
+docker run -it --rm -v $(pwd)/output:/app/output -v $(pwd)/cookies.json:/app/cookies.json twitter-snap https://x.com/elonmusk/status/1349129669258448897 --session-type file
+```
 
-`--session-type=browser` is not supported
+`--session-type=browser` is not supported.
+
+`GPU` is not supported.
 
 # Use as a package
 
@@ -49,11 +55,11 @@ npm i twitter-snap
 ```
 
 ```typescript
-import {TwitterSnap} from 'twitter-snap'
-
-const [client, api] = await twitterSnapGuest() // or twitterSnapCookies or twitterSnapPuppeteer
-const fonts = await getFonts('.cache/fonts')
-await client({id: id, limit: 1, type: 'getTweetDetail', startId: id}, async (render) => {
+const url = 'https://twitter.com/elonmusk/status/1349129669258448897'
+const [client, api] = await twitterSnapGuest() // or twitterSnapCookies, twitterSnapPuppeteer
+const fonts = await getFonts('temp/fonts')
+const [id, type] = await twitterUrlConvert({url: url, api: api})
+await client({id: id, limit: 1, type: type, startId: id}, async (render) => {
   const finalize = await render({
     output: `temp/${id}.{if-photo:png:mp4}`,
     themeName: 'RenderOceanBlueColor',

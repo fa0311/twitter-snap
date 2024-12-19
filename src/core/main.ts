@@ -7,7 +7,7 @@ import {Logger, LoggerSimple} from '../utils/logger.js'
 import {isDefaultOption} from '../utils/oclif.js'
 import {normalizePath} from '../utils/path.js'
 import {sleepLoop} from '../utils/sleep.js'
-import {getForceStartIdList, twitterUrlConvert} from '../utils/url.js'
+import {getForceStartIdList, twitterUrlConvertPromise} from '../utils/url.js'
 
 import {
   HandlerType,
@@ -108,7 +108,7 @@ export class TwitterSnap {
 
     const getHttpType = async (api: TwitterOpenApiClient) => {
       if (args.id.startsWith('http')) {
-        const convert = twitterUrlConvert({url: args.id, guest: flags.sessionType === 'guest'})
+        const convert = twitterUrlConvertPromise({url: args.id, guest: flags.sessionType === 'guest'})
         if (typeof convert === 'function') {
           return await this.logger.guard({text: 'Get user id'}, convert(api))
         } else if (typeof convert === 'object') {

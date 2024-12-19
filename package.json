@@ -64,11 +64,11 @@
     "@oclif/plugin-help": "^6.2.16",
     "@oclif/plugin-plugins": "^5.4.15",
     "@oclif/plugin-warn-if-update-available": "^3.1.21",
-    "@vercel/og": "^0.6.3",
+    "@vercel/og": "^0.6.4",
     "cli-color": "^2.0.4",
     "log-symbols": "^7.0.0",
     "ora": "^8.1.0",
-    "puppeteer": "^23.6.1",
+    "puppeteer": "^23.10.4",
     "twitter-openapi-typescript": "^0.0.44",
     "twitter-snap-core": "^0.0.41"
   },
