@@ -305,9 +305,7 @@ export class LoggerSimple extends Logger {
     if (text) this.handler(`${logSymbols.success} ${text}`)
   }
 
-  update(text?: string | undefined): void {
-    // if (text) this.handler(text)
-  }
+  update(text?: string | undefined): void {}
 
   warn(...args: any[]) {
     this.handler(`${logSymbols.warning} ${this.toString(this.logNormalizer(args))}`)

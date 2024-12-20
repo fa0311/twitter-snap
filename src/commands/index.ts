@@ -135,10 +135,14 @@ export default class Default extends Command {
       const param = await this.parse(Default)
       const logger = param.flags.simpleLog ? new LoggerSimple(this.log.bind(this)) : new Logger()
 
-      console.log = param.flags.debug ? logger.log.bind(logger) : (_) => {}
-      console.debug = param.flags.debug ? logger.log.bind(logger) : (_) => {}
-      console.warn = logger.warn.bind(logger)
-      console.error = logger.error.bind(logger)
+      if (param.flags.simpleLog) {
+        console.debug = param.flags.debug ? console.debug : (_) => {}
+      } else {
+        console.log = param.flags.debug ? logger.log.bind(logger) : (_) => {}
+        console.debug = param.flags.debug ? logger.log.bind(logger) : (_) => {}
+        console.warn = logger.warn.bind(logger)
+        console.error = logger.error.bind(logger)
+      }
 
       const snap = new TwitterSnap({logger})
       await snap.run(param)
