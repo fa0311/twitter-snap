@@ -17,7 +17,7 @@ describe('Command test', () => {
     expect(message).to.contain('Unsupported URL')
   })
 
-  it('single tweet', async () => {
+  it('single test tweet', async () => {
     const {stdout} = await run('https://x.com/elonmusk/status/1349129669258448897', 'temp/{id}.png')
     await access('temp/1349129669258448897.png')
     expect(stdout).to.contain('✔ Initializing API')
@@ -27,7 +27,27 @@ describe('Command test', () => {
     expect(stdout).to.contain('✔ Rendering')
   })
 
+  it('single test tweet to video', async () => {
+    const {stdout} = await run('https://x.com/elonmusk/status/1349129669258448897', 'temp/{id}.mp4')
+    await access('temp/1349129669258448897.png')
+    expect(stdout).to.contain('✔ Initializing API')
+    expect(stdout).to.contain('✔ Loading font')
+    expect(stdout).to.contain('✔ Logging in')
+    expect(stdout).to.contain('✔ Initializing render')
+    expect(stdout).to.contain('✔ Rendering')
+  })
+
   it('single video tweet', async () => {
+    const {stdout} = await run('https://x.com/SpaceX/status/1768794901586804837', 'temp/{id}.png')
+    await access('temp/1768794901586804837.png')
+    expect(stdout).to.contain('✔ Initializing API')
+    expect(stdout).to.contain('✔ Loading font')
+    expect(stdout).to.contain('✔ Logging in')
+    expect(stdout).to.contain('✔ Initializing render')
+    expect(stdout).to.contain('✔ Rendering')
+  })
+
+  it('single video tweet to video', async () => {
     const {stdout} = await run('https://x.com/SpaceX/status/1768794901586804837', 'temp/{id}.mp4')
     await access('temp/1768794901586804837.mp4')
     expect(stdout).to.contain('✔ Initializing API')

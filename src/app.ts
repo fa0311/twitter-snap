@@ -1,4 +1,4 @@
-import {ColorThemeType, colorThemeList} from './config.js'
+import {ColorThemeType, colorThemeList, themeList} from './config.js'
 import {ElementColorUtils, ElementUtils} from './utils/element.js'
 import {FileUtils} from './utils/file.js'
 import {FontOptions, FontUtils} from './utils/font.js'
@@ -9,8 +9,12 @@ import {SnapRenderBaseUtils, SnapRenderColorUtils, SnapRenderUtils} from './util
 import {FileReplace, getName} from './utils/replace.js'
 import {VideoUtils} from './utils/video.js'
 
-const includeColorTheme = (theme: string): theme is ColorThemeType => {
+export const includeColorTheme = (theme: string): theme is ColorThemeType => {
   return theme in colorThemeList
+}
+
+export const includeTheme = (theme: string): theme is keyof typeof themeList => {
+  return theme in themeList
 }
 
 type ExtractGroups<T extends string> = T extends `${infer _Start}(?<${infer GroupName}>${infer _Rest})${infer Tail}`
@@ -46,49 +50,66 @@ export class SnapApp<T1> {
   }
 }
 
-type SnapRenderCallback2<T1> = (data: T1, utils: SnapRenderUtils) => Promise<void>
-type SnapRenderCallback3<T1> = (
-  data: T1,
-  utils: SnapRenderUtils,
-  placeholder: FileReplace[],
-  output: string,
-) => Promise<void>
+type CallbackImage<T1> = (data: T1, utils: SnapRenderColorUtils) => Promise<React.ReactElement>
+type CallbackVideo<T1> = (data: T1, utils: SnapRenderColorUtils) => Promise<void>
+type CallbackJson<T1> = (data: T1, utils: SnapRenderUtils) => Promise<void>
+type CallbackOther<T1> = (data: T1, utils: SnapRenderUtils, placeholder: FileReplace[], output: string) => Promise<void>
+type CallbackMedia<T1> = (data: T1, utils: SnapRenderUtils) => Promise<void>
 
 export class SnapRender<T1> {
-  callbackList: [string, SnapRenderCallback3<T1>][] = []
+  imageCallback: [string, CallbackImage<T1>][] = []
+  videoCallback: [string, CallbackVideo<T1>][] = []
+  otherCallback: [string, CallbackOther<T1>][] = []
 
   constructor(
     public isImage: (data: T1) => boolean,
     public placeholder: (data: T1) => FileReplace[],
-    public image: (data: T1, utils: SnapRenderColorUtils) => Promise<React.ReactElement>,
-    public video: (data: T1, utils: SnapRenderColorUtils) => Promise<void>,
-  ) {}
-
-  run = (data: AsyncGenerator<T1, any, any>) => {
-    return new SnapRenderChild(this.isImage, this.placeholder, this.image, this.video, this.callbackList, data)
+    image: CallbackImage<T1>,
+    video: CallbackVideo<T1>,
+  ) {
+    for (const theme of Object.keys(colorThemeList)) {
+      this.imageCallback.push([theme, image])
+      this.videoCallback.push([theme, video])
+    }
   }
 
-  other = (theme: string, callback: SnapRenderCallback3<T1>) => {
-    this.callbackList.push([theme, callback])
+  run = (data: AsyncGenerator<T1, any, any>) => {
+    return new SnapRenderChild(
+      this.isImage,
+      this.placeholder,
+      this.imageCallback,
+      this.videoCallback,
+      this.otherCallback,
+      data,
+    )
+  }
+
+  add = (theme: string, image: CallbackImage<T1>, video: CallbackVideo<T1>) => {
+    this.imageCallback.push([theme, image])
+    this.videoCallback.push([theme, video])
+  }
+
+  other = (theme: string, json: CallbackJson<T1>) => {
+    this.otherCallback.push([theme, async (data, utils) => json(data, utils)])
   }
 
   media = <T2>(
     theme: string,
     media: (data: T1) => T2[],
     mediaPlaceholder: (data: T2) => FileReplace[],
-    callback: SnapRenderCallback2<T2>,
+    callback: CallbackMedia<T2>,
   ) => {
-    const c: SnapRenderCallback3<T1> = async (data, utils, placeholder, output) => {
+    const c: CallbackOther<T1> = async (data, utils, placeholder, output) => {
       const list = media(data)
 
       for (const [i, item] of list.entries()) {
         const p = [...placeholder, ...mediaPlaceholder(item), ['{media-count}', i]] as FileReplace[]
-        utils.file.path = getName('media', p, output, i)
+        utils.file.path = getName('other', p, output, i)
         await callback(item, utils)
       }
     }
 
-    this.callbackList.push([theme, c])
+    this.otherCallback.push([theme, c])
   }
 }
 
@@ -113,12 +134,39 @@ export class SnapRenderChild<T1> {
   constructor(
     public isImage: (data: T1) => boolean,
     public placeholder: (data: T1) => FileReplace[],
-    public image: (data: T1, utils: SnapRenderColorUtils) => Promise<React.ReactElement>,
-    public video: (data: T1, utils: SnapRenderColorUtils) => Promise<void>,
-    public otherCallbackList: [string, SnapRenderCallback3<T1>][],
+    public imageCallback: [string, CallbackImage<T1>][],
+    public videoCallback: [string, CallbackVideo<T1>][],
+    public otherCallback: [string, CallbackOther<T1>][],
     public data: AsyncGenerator<T1, any, any>,
   ) {
     this.count = 0
+  }
+
+  image = (theme: string) => {
+    const callback = this.imageCallback.find(([t]) => t === theme)
+    if (!callback) {
+      throw new Error('No theme found')
+    }
+
+    return callback[1]
+  }
+
+  video = (theme: string) => {
+    const callback = this.videoCallback.find(([t]) => t === theme)
+    if (!callback) {
+      throw new Error('No theme found')
+    }
+
+    return callback[1]
+  }
+
+  other = (theme: string) => {
+    const callback = this.otherCallback.find(([t]) => t === theme)
+    if (!callback) {
+      throw new Error('No theme found')
+    }
+
+    return callback[1]
   }
 
   next = async (flag: SnapRenderChildNextParam<T1>): Promise<SnapRenderBaseUtils> => {
@@ -138,55 +186,86 @@ export class SnapRenderChild<T1> {
     }
 
     const utils = await (async () => {
-      if (includeColorTheme(theme)) {
-        const name = getName('image', this.placeholder(data), output, this.count++)
-        if (this.isImage(data)) {
-          if (name.isExtension('png')) {
-            const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme}))
-            const element = await this.image(data, utils)
-            await utils.file.saveImg(await utils.render(element))
-            return utils
+      if (includeTheme(theme)) {
+        switch (themeList[theme]) {
+          case 'element': {
+            if (this.isImage(data)) {
+              const name = getName('image', this.placeholder(data), output, this.count++)
+              if (name.isExtension('png')) {
+                const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme}))
+                const element = await this.image(theme)(data, utils)
+                await utils.file.saveImg(await utils.render(element))
+                return utils
+              } else if (name.isExtension('')) {
+                logger.hint('Output as png')
+                const rep = name.update({extension: 'png'})
+                const utils = new SnapRenderColorUtils(...base(rep), new ElementColorUtils({theme}))
+                const element = await this.image(theme)(data, utils)
+                await utils.file.saveImg(await utils.render(element))
+                return utils
+              } else {
+                const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme}))
+                await this.video(theme)(data, utils)
+                return utils
+              }
+            } else {
+              const name = getName('video', this.placeholder(data), output, this.count++)
+              if (name.isExtension('png')) {
+                const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme}))
+                const element = await this.image(theme)(data, utils)
+                await utils.file.saveImg(await utils.render(element))
+                return utils
+              } else if (name.isExtension('')) {
+                logger.hint('Output as mp4')
+                const rep = name.update({extension: 'mp4'})
+                const utils = new SnapRenderColorUtils(...base(rep), new ElementColorUtils({theme}))
+                await this.video(theme)(data, utils)
+                return utils
+              } else {
+                const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme}))
+                await this.video(theme)(data, utils)
+                return utils
+              }
+            }
           }
 
-          logger.hint('Output as png')
-          const rep = name.update({extension: 'png'})
-          const utils = new SnapRenderColorUtils(...base(rep), new ElementColorUtils({theme}))
-          const element = await this.image(data, utils)
-          await utils.file.saveImg(await utils.render(element))
-          return utils
-        } else {
-          const name = getName('video', this.placeholder(data), output, this.count++)
-          if (name.isExtension('png')) {
-            const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme}))
-            const element = await this.image(data, utils)
-            await utils.file.saveImg(await utils.render(element))
-            return utils
+          case 'other': {
+            const name = getName('other', this.placeholder(data), output, this.count++)
+            if (name.isExtension('')) {
+              const utils = new SnapRenderUtils(...base(name), new ElementUtils({theme}))
+              await this.other(theme)(data, utils, this.placeholder(data), output)
+
+              return utils
+            } else {
+              logger.hint('Extension is ignored')
+              const rep = name.update({extension: ''})
+              const utils = new SnapRenderUtils(...base(rep), new ElementUtils({theme}))
+              await this.other(theme)(data, utils, this.placeholder(data), output)
+
+              return utils
+            }
           }
 
-          if (name.isExtension('')) {
-            logger.hint('Output as mp4')
-            const rep = name.update({extension: 'mp4'})
-            const utils = new SnapRenderColorUtils(...base(rep), new ElementColorUtils({theme}))
-            await this.video(data, utils)
-            return utils
+          case 'json': {
+            const name = getName('json', this.placeholder(data), output, this.count++)
+            if (name.isExtension('json')) {
+              const utils = new SnapRenderUtils(...base(name), new ElementUtils({theme}))
+              await this.other(theme)(data, utils, this.placeholder(data), output)
+              return utils
+            } else {
+              logger.hint('Output as json')
+              const rep = name.update({extension: 'json'})
+              const utils = new SnapRenderUtils(...base(rep), new ElementUtils({theme}))
+              await this.other(theme)(data, utils, this.placeholder(data), output)
+              return utils
+            }
           }
-
-          const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme}))
-          await this.video(data, utils)
-          return utils
         }
-      }
-
-      const callback = this.otherCallbackList.find(([t]) => t === theme)
-      if (callback) {
-        const name = getName('json', this.placeholder(data), output, this.count++)
-        const utils = new SnapRenderUtils(...base(name), new ElementUtils({theme}))
-        await callback[1](data, utils, this.placeholder(data), output)
-        return utils
       }
 
       throw new Error('No theme found')
     })()
+
     return utils
   }
 }

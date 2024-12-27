@@ -3,6 +3,7 @@ import {default as ffmpeg, default as ffprobe} from 'fluent-ffmpeg'
 export type GetFFmpegType = () => ffmpeg.FfmpegCommand
 export type DumpCommandType = (prefix: string, command: ffmpeg.FfmpegCommand) => void
 export type RunFFmpegType = (command: ffmpeg.FfmpegCommand) => Promise<unknown>
+export type RunFFMpegIntegrationType = (command: ffmpeg.FfmpegCommand, title: string) => Promise<unknown>
 export type RunFFprobeType = (command: ffprobe.FfmpegCommand) => Promise<ffmpeg.FfprobeData>
 
 export type VideoUtilsParam = {
@@ -35,6 +36,19 @@ export class VideoUtils {
     }
   }
 
+  fromImage = async (input: string, output: string, title: string) => {
+    const command = this.getFFmpeg()
+    command.input(input)
+    command.addInputOptions('-loop', '1')
+    command.addOption('-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2')
+    command.addOption('-r', '30')
+    command.addOption('-t', '5')
+    command.addOption('-c:v', 'libx264')
+    command.addOption('-pix_fmt', 'yuv420p')
+    command.output(output)
+    await this.runFFMpegIntegration(command, title)
+  }
+
   getFFmpeg: GetFFmpegType = () => {
     return ffmpeg().setFfmpegPath(this.flags.ffmpegPath)
   }
@@ -62,10 +76,14 @@ export class VideoUtils {
     })
   }
 
-  runFFMpegIntegration: RunFFmpegType = (command) => {
+  runFFMpegIntegration: RunFFMpegIntegrationType = (command, title) => {
     for (const option of this.flags.ffmpegAdditonalOption) {
       command.addOption(option)
     }
+
+    const comment = 'Snapped by twitter-snap https://github.com/fa0311/twitter-snap'
+    command.addOption('-metadata', `title=${title}`)
+    command.addOption('-metadata', `comment=${comment}`)
 
     return this.runFFMpeg(command)
   }

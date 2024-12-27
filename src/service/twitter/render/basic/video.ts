@@ -28,10 +28,16 @@ export class RenderBasicVideo {
     const id = data.tweet.legacy!.idStr
     const title = `https://twitter.com/${screenName}/status/${id}`
 
-    const [index, blank] = getBiggerMedia(extMedia)
+    const [_, blank] = getBiggerMedia(extMedia)
+
+    if (!blank) {
+      await this.utils.video.fromImage(input.toString(), this.utils.file.path.toString(), title)
+      return {temp: removeList}
+    }
+
     const {width, height} = getResizedMediaByWidth(
-      blank!.videoInfo!.aspectRatio[0],
-      blank!.videoInfo!.aspectRatio[1],
+      blank.videoInfo!.aspectRatio[0],
+      blank.videoInfo!.aspectRatio[1],
       this.utils.width - this.utils.element.applyScaleNum((this.margin + this.padding) * 2),
     )
 
@@ -110,13 +116,9 @@ export class RenderBasicVideo {
     )
     command.map('[marge]')
     command.map('[audio]')
-    const comment = 'Snapped by twitter-snap-core https://github.com/fa0311/twitter-snap-core'
-
-    command.addOption('-metadata', `title=${title}`)
-    command.addOption('-metadata', `comment=${comment}`)
 
     command.output(this.utils.file.path.toString())
-    await this.utils.video.runFFMpegIntegration(command)
+    await this.utils.video.runFFMpegIntegration(command, title)
 
     return {temp: removeList}
   }

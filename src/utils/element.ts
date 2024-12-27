@@ -36,7 +36,7 @@ export class ElementUtils {
 
 export type ElementColorUtilsParam = {
   scale?: number
-  theme: ColorThemeType
+  theme: string
 }
 
 export class ElementColorUtils extends ElementUtils {

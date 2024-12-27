@@ -139,12 +139,23 @@ render.other('LiteJson', async (data, utils) => {
   utils.file.jsonOutput(toLiteJson(data))
 })
 
-render.other('RenderMakeItAQuote', async (data, utils) => {
-  utils.logger.update(`Rendering ${data.user.legacy.screenName} ${data.tweet.restId}`)
-  const element = new RenderMakeItAQuoteImage(utils).render({data})
-  const img = await utils.render(element)
-  await utils.file.saveImg(img)
-})
+render.add(
+  'RenderMakeItAQuote',
+  async (data, utils) => {
+    utils.logger.update(`Rendering ${data.user.legacy.screenName} ${data.tweet.restId}`)
+    return new RenderMakeItAQuoteImage(utils).render({data})
+  },
+  async (data, utils) => {
+    utils.logger.update(`Rendering ${data.user.legacy.screenName} ${data.tweet.restId}`)
+    const element = new RenderMakeItAQuoteImage(utils).render({data})
+    const input = await utils.file.tempImg(await utils.render(element))
+    await utils.video.fromImage(
+      input.toString(),
+      utils.file.path.toString(),
+      `https://twitter.com/${data.user.legacy.screenName}/status/${data.tweet.restId}`,
+    )
+  },
+)
 
 app.call(`/(?<user>[a-zA-Z0-9_]+)/status/(?<id>[0-9]+)`, async (utils, api, {id}) => {
   const guest = api.config.apiKey!('ct0') === undefined

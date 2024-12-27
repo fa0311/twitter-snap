@@ -11,7 +11,7 @@ const if4 = (e: string) => {
 }
 
 export const getName = (
-  type: 'image' | 'json' | 'media' | 'video',
+  type: 'image' | 'json' | 'other' | 'video',
   placeholder: FileReplace[],
   output: string,
   count: number,
@@ -21,7 +21,7 @@ export const getName = (
       [if2('if-photo'), type === 'image' ? '$1' : '$2'],
       [if2('if-video'), type === 'video' ? '$1' : '$2'],
       [if2('if-json'), type === 'json' ? '$1' : '$2'],
-      [if2('if-media'), type === 'media' ? '$1' : '$2'],
+      [if2('if-other'), type === 'other' ? '$1' : '$2'],
       [if4('if-type'), type === 'image' ? '$1' : type === 'video' ? '$2' : type === 'json' ? '$3' : '$4'],
       ['{time-now-yyyy}', new Date().getFullYear().toString().padStart(4, '0')],
       ['{time-now-mm}', (new Date().getMonth() + 1).toString().padStart(2, '0')],
