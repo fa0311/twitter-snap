@@ -1,22 +1,24 @@
 import {Args, Command, Flags} from '@oclif/core'
+import {stdout} from 'node:process'
 
-import {themeList, ThemeNameType} from 'twitter-snap-core'
-import {additonalTheme, AdditonalThemeType, sessionType, SessionType} from '../core/core.js'
-import {TwitterSnap} from '../core/main.js'
+import {ThemeNameType, themeList} from '../config.js'
+import {getSnapAppRender} from '../service/core.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
-import {GetTweetApi, getTweetList} from './../utils/types.js'
+import {sleepLoop} from '../utils/sleep.js'
 
 export abstract class DefaultCommand extends Command {
   public getDefault() {
     return this.parse(Default)
   }
 }
-type PromiseType<T extends Promise<any>> = T extends Promise<infer U> ? U : never
-export type DefaultCommandType = PromiseType<ReturnType<typeof DefaultCommand.prototype.getDefault>>
+export type DefaultCommandType = Awaited<ReturnType<typeof DefaultCommand.prototype.getDefault>>
+
+const sessionType = ['browser', 'file', 'guest'] as const
+type SessionType = (typeof sessionType)[number]
 
 export default class Default extends Command {
   static args = {
-    id: Args.string({description: 'Twitter status id', required: true}),
+    url: Args.string({description: 'Twitter url', required: true}),
   }
 
   static description = ['Create beautiful Tweet images fast', 'https://github.com/fa0311/twitter-snap'].join('\n')
@@ -33,11 +35,6 @@ export default class Default extends Command {
   ]
 
   static flags = {
-    api: Flags.custom<'getTweetResultByRestId' | keyof GetTweetApi>({
-      default: 'getTweetResultByRestId',
-      description: 'API type',
-      options: ['getTweetResultByRestId', ...getTweetList],
-    })(),
     browserHeadless: Flags.boolean({
       aliases: ['browser-headless'],
       default: false,
@@ -92,7 +89,7 @@ export default class Default extends Command {
     }),
     output: Flags.string({
       char: 'o',
-      default: '{if-media-only:{id}-{media-id}:{id}}.{if-photo:png:mp4}',
+      default: '{if-media:{id}-{media-id}:{id}}.{if-type:png:mp4:json:}',
       description: 'Output file name',
     }),
     sessionType: Flags.custom<SessionType>({
@@ -110,10 +107,10 @@ export default class Default extends Command {
       default: 0,
       description: 'Sleep (ms)',
     }),
-    theme: Flags.custom<ThemeNameType | AdditonalThemeType>({
+    theme: Flags.custom<ThemeNameType>({
       default: 'RenderOceanBlueColor',
       description: 'Theme type',
-      options: [...Object.keys(themeList), ...additonalTheme],
+      options: Object.keys(themeList),
     })(),
     width: Flags.integer({
       default: 650,
@@ -125,27 +122,90 @@ export default class Default extends Command {
     })(),
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-useless-constructor
-  constructor(argv: string[], config: any) {
-    super(argv, config)
-  }
-
   async run(): Promise<void> {
     try {
       const param = await this.parse(Default)
-      const logger = param.flags.simpleLog ? new LoggerSimple(this.log.bind(this)) : new Logger()
+      const {flags, args} = param
 
-      if (param.flags.simpleLog) {
-        console.debug = param.flags.debug ? console.debug : (_) => {}
+      const logger = flags.simpleLog ? new LoggerSimple(this.log.bind(this)) : new Logger()
+
+      if (flags.simpleLog) {
+        console.debug = flags.debug ? console.debug : (_) => {}
       } else {
-        console.log = param.flags.debug ? logger.log.bind(logger) : (_) => {}
-        console.debug = param.flags.debug ? logger.log.bind(logger) : (_) => {}
+        console.log = flags.debug ? logger.log.bind(logger) : (_) => {}
+        console.debug = flags.debug ? logger.log.bind(logger) : (_) => {}
         console.warn = logger.warn.bind(logger)
         console.error = logger.error.bind(logger)
       }
 
-      const snap = new TwitterSnap({logger})
-      await snap.run(param)
+      const app = getSnapAppRender({url: args.url, logger})
+      await logger.guard({
+        text: 'Initializing API',
+        callback: (async () => {
+          return app.init()
+        })(),
+      })
+      const font = await logger.guard({
+        text: 'Loading font',
+        callback: (async () => {
+          return app.getFont({cachePath: flags.fontPath})
+        })(),
+      })
+      const session = await logger.guard({
+        text: 'Logging in',
+        callback: (() => {
+          return app.login({
+            sessionType: flags.sessionType,
+            browserProfile: flags.browserProfile,
+            browserHeadless: flags.browserHeadless,
+            cookiesFile: flags.cookiesFile,
+          })
+        })(),
+      })
+
+      const render = await logger.guard({
+        text: 'Initializing render',
+        callback: (async () => {
+          return app.getRender({limit: flags.limit, session})
+        })(),
+      })
+
+      const ffmpegOption = flags.ffmpegAdditonalOption?.split(' ') || []
+
+      const utilsList = await logger.guardProgress({
+        max: flags.limit,
+        text: 'Rendering',
+        callback: app.run(render, async (run) => {
+          try {
+            const res = await run({
+              width: flags.width,
+              font,
+              scale: flags.scale,
+              theme: flags.theme,
+              output: flags.output,
+              ffmpegPath: flags.ffmpegPath,
+              ffprobePath: flags.ffprobePath,
+              ffmpegAdditonalOption: ffmpegOption,
+            })
+            if (!flags.noCleanup) {
+              await res.file.tempCleanup()
+            }
+
+            await sleepLoop(flags.sleep, async (count) => {
+              logger.update(`Sleeping ${count} seconds`)
+            })
+            logger.succeed()
+            return res
+          } catch (error) {
+            logger.catchFail(error)
+          }
+        }),
+      })
+
+      if (flags.output === '{stdout}') {
+        const data = utilsList?.filter((data) => data !== undefined).map((utils) => utils.file.jsonOutputData)
+        stdout.write(JSON.stringify(data))
+      }
     } catch (error) {
       if (typeof error === 'string') {
         this.error(error)

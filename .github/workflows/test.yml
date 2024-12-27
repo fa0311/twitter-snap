@@ -21,6 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node_version }}
+          cache: npm
       - uses: FedericoCarboni/setup-ffmpeg@v3
         id: setup-ffmpeg
       - run: npm install

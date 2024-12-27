@@ -14,12 +14,17 @@ class Progress {
 
   color(value: Progress['value'][0]) {
     switch (value) {
-      case 'loading':
+      case 'loading': {
         return ['-', clc.white] as const
-      case 'succeed':
+      }
+
+      case 'succeed': {
         return ['|', clc.green] as const
-      case 'fail':
+      }
+
+      case 'fail': {
         return ['|', clc.red] as const
+      }
     }
   }
 
@@ -80,10 +85,10 @@ export class Logger {
     this.stackLogDump()
   }
 
-  async guard<T>({text}: {text: string}, fn: Promise<T>) {
+  async guard<T>({text, callback}: {callback: Promise<T>; text: string}) {
     try {
       this.ora = ora(text).start()
-      const res = await fn
+      const res = await callback
       this.succeed(text)
       return res
     } catch (error) {
@@ -92,12 +97,12 @@ export class Logger {
     }
   }
 
-  async guardProgress<T>({max, text}: {max: number; text: string}, fn: Promise<T>) {
+  async guardProgress<T>({max, text, callback}: {callback: Promise<T>; max: number; text: string}) {
     try {
       this.ora = ora(text).start()
       this.progress = new Progress(max)
       this.update(text)
-      const res = await fn
+      const res = await callback
       this.progress = undefined
       this.succeed(text)
       return res
@@ -113,29 +118,36 @@ export class Logger {
   }
 
   protected logNormalizer(e: any[]) {
-    return e.reduce((acc, cur) => {
-      const last = acc.at(-1)
-      if (last === undefined) {
-        return [cur]
+    return e.map((e) => {
+      if (typeof e === 'string') {
+        return e.trim()
       }
 
-      if (typeof last === 'string' && typeof cur === 'string') {
-        return [...acc.slice(0, -1), `${last} ${cur}`]
-      }
+      return e
+    })
+    // return e.reduce((acc, cur) => {
+    //   const last = acc.at(-1)
+    //   if (last === undefined) {
+    //     return [cur]
+    //   }
 
-      const data = JSON.stringify(cur)
-      if (data.length < 30) {
-        return [...acc.slice(0, -1), `${last} ${data}`]
-      }
+    //   if (typeof last === 'string' && typeof cur === 'string') {
+    //     return [...acc.slice(0, -1), `${last} ${cur}`]
+    //   }
 
-      return [...acc, cur]
-    }, [])
+    //   const data = JSON.stringify(cur)
+    //   if (data.length < 30) {
+    //     return [...acc.slice(0, -1), `${last} ${data}`]
+    //   }
+
+    //   return [...acc, cur]
+    // }, [])
   }
 
   protected stackLogDump() {
     for (const e of this.stackLog) {
       const line = e.split('\n').filter((e) => e.startsWith('    at'))
-      this.terminal(line.join('\n').slice(1))
+      this.terminal(line.join('\n'))
     }
 
     this.stackLog = []
@@ -267,9 +279,9 @@ export class LoggerSimple extends Logger {
     this.handler(`${logSymbols.error} ${this.toString(this.logNormalizer(args))}`)
   }
 
-  async guard<T>({text}: {text: string}, fn: Promise<T>) {
+  async guard<T>({text, callback}: {callback: Promise<T>; text: string}) {
     try {
-      const res = await fn
+      const res = await callback
       this.handler(`${logSymbols.success} ${text}`)
       return res
     } catch (error) {
@@ -278,9 +290,9 @@ export class LoggerSimple extends Logger {
     }
   }
 
-  async guardProgress<T>({max, text}: {max: number; text: string}, fn: Promise<T>) {
+  async guardProgress<T>({text, callback}: {callback: Promise<T>; text: string}) {
     try {
-      const res = await fn
+      const res = await callback
       this.handler(`${logSymbols.success} ${text}`)
       return res
     } catch (error) {
@@ -310,4 +322,30 @@ export class LoggerSimple extends Logger {
   warn(...args: any[]) {
     this.handler(`${logSymbols.warning} ${this.toString(this.logNormalizer(args))}`)
   }
+}
+
+export class LoggerMute extends Logger {
+  catchError(e: any) {}
+
+  catchFail(e: any) {}
+
+  error(...args: any[]) {}
+
+  async guard<T>({callback}: {callback: Promise<T>}) {
+    return callback
+  }
+
+  async guardProgress<T>({callback}: {callback: Promise<T>}) {
+    return callback
+  }
+
+  log(...args: any[]) {}
+
+  stackLogDump() {}
+
+  succeed(text?: string) {}
+
+  update(text?: string) {}
+
+  warn(...args: any[]) {}
 }

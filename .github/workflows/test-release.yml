@@ -14,8 +14,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node_version }}
+          cache: npm
       - uses: FedericoCarboni/setup-ffmpeg@v3
         id: setup-ffmpeg
       - run: npx twitter-snap@latest --help
-      - run: npx twitter-snap@latest -o temp/{id}.png 1349129669258448897
-      - run: npx twitter-snap@latest -o temp/{id}.mp4 1768794901586804837
+      - run: npx twitter-snap@latest -o temp/{id}.png https://x.com/elonmusk/status/1349129669258448897
+      - run: npx twitter-snap@latest -o temp/{id}.mp4 https://x.com/SpaceX/status/1768794901586804837
