@@ -25,4 +25,4 @@ COPY --from=build /root/.cache /root/.cache
 COPY --from=build /app/bin /app/bin
 COPY --from=build /app/dist /app/dist
 
-ENTRYPOINT ["node", "bin/run.js", "-o", "output/{if-media-only:{id}-{media-id}:{id}}.{if-photo:png:mp4}"]
+ENTRYPOINT ["node", "bin/run.js", "-o", "output/{id}-{count}.{if-type:png:mp4:json:}"]

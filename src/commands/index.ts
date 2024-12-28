@@ -89,7 +89,7 @@ export default class Default extends Command {
     }),
     output: Flags.string({
       char: 'o',
-      default: '{if-media:{id}-{media-id}:{id}}.{if-type:png:mp4:json:}',
+      default: '{id}-{count}.{if-type:png:mp4:json:}',
       description: 'Output file name',
     }),
     sessionType: Flags.custom<SessionType>({

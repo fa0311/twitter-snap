@@ -13,7 +13,7 @@ type SnapRunParam = {
   ffmpegPath?: string
   ffprobePath?: string
   font?: FontOptions
-  output?: '{id}.{if-photo:png:mp4}' | ({} & string)
+  output?: '{id}-{count}.{if-type:png:mp4:json:}' | ({} & string)
   scale?: number
   theme?: 'RenderOceanBlueColor' | ({} & string)
   width?: number
@@ -62,7 +62,7 @@ export const getSnapAppRender = ({url, logger}: {logger?: Logger; url: string}) 
             font: param.font ?? {text: [], emoji: undefined},
             scale: param.scale ?? 1,
             theme: param.theme ?? 'RenderOceanBlueColor',
-            output: param.output ?? '{id}.{if-photo:png:mp4}',
+            output: param.output ?? '{id}-{count}.{if-type:png:mp4:json:}',
             ffmpegPath: param.ffmpegPath,
             ffprobePath: param.ffprobePath,
             ffmpegAdditonalOption: param.ffmpegAdditonalOption ?? [],

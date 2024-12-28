@@ -137,7 +137,11 @@ const hook: Hook.Preparse = async ({argv, options, context}) => {
             const ext = await select({
               message: 'Please select the output format',
               options: [
-                {value: '.{if-photo:png:mp4}', label: 'default (mp4/png)', hint: `${output}.{if-photo:png:mp4}`},
+                {
+                  value: '.{if-type:png:mp4:json:}',
+                  label: 'default (mp4/png)',
+                  hint: `${output}.{if-type:png:mp4:json:}`,
+                },
                 {value: '.png', label: 'image only (png)', hint: `${output}.png`},
                 {value: 'custom with fallback', label: 'Custom with fallback to png'},
                 {value: 'custom', label: 'Custom manual entry'},

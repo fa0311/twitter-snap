@@ -23,7 +23,7 @@ describe('Package test', () => {
         width: 650,
         theme: 'RenderOceanBlueColor',
         font,
-        output: 'temp/{id}.{if-photo:png:mp4}',
+        output: 'temp/{id}-{count}.{if-type:png:mp4:json:}',
       })
       await res.file.tempCleanup()
     })
