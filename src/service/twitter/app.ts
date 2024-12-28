@@ -129,14 +129,14 @@ render.media(
   },
 )
 
-render.other('Json', async (data, utils) => {
+render.json('Json', async (data, utils) => {
   utils.logger.update(`Parsing ${data.user.legacy.screenName} ${data.tweet.restId}`)
-  utils.file.jsonOutput(data)
+  return data
 })
 
 render.other('LiteJson', async (data, utils) => {
   utils.logger.update(`Parsing ${data.user.legacy.screenName} ${data.tweet.restId}`)
-  utils.file.jsonOutput(toLiteJson(data))
+  return toLiteJson(data)
 })
 
 render.add(

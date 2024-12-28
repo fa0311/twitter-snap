@@ -2,6 +2,8 @@ import clc from 'cli-color'
 import logSymbols from 'log-symbols'
 import ora, {Ora} from 'ora'
 
+const HINT = '💡'
+
 class Progress {
   index: number
   max: number
@@ -72,17 +74,49 @@ export class Logger {
     this.stackHint = []
   }
 
-  catchError(e: any) {
-    this.error(this.toString(e))
+  log(...args: any[]) {
+    this.terminal(this.toString(this.logNormalizer(args)), 'log')
+    this.stackLogDump()
   }
 
-  catchFail(e: any) {
-    this.fail(this.toString(e))
+  hint(...args: any[]) {
+    this.terminal(this.toString(this.logNormalizer(args)), 'hint')
+    this.stackLogDump()
+  }
+
+  warn(...args: any[]) {
+    this.terminal(this.toString(this.logNormalizer(args)), 'warn')
+    this.stackLogDump()
   }
 
   error(...args: any[]) {
     this.terminal(this.toString(this.logNormalizer(args)), 'error')
     this.stackLogDump()
+  }
+
+  catchError(e: any) {
+    this.error(this.toString(e))
+  }
+
+  private terminal(e: string, type?: 'error' | 'hint' | 'log' | 'warn') {
+    const pattern = {
+      error: [clc.redBright, (e: Ora) => e.fail()] as const,
+      hint: [clc.cyanBright, (e: Ora) => e.stopAndPersist({symbol: HINT})] as const,
+      log: [clc.blackBright, (e: Ora) => e.info()] as const,
+      undefined: [clc.blackBright, (e: Ora) => e.stopAndPersist({symbol: ''})] as const,
+      warn: [clc.yellowBright, (e: Ora) => e.warn()] as const,
+    }
+    if (this.ora?.isSpinning) {
+      this.ora!.clear()
+    }
+
+    const pat = pattern[type ?? 'undefined']
+    const text = type ? `[${type.toUpperCase()}] ${e}` : e
+    const o = pat[1](ora(pat[0](text)))
+
+    if (this.ora?.isSpinning) {
+      this.ora!.start()
+    }
   }
 
   async guard<T>({text, callback}: {callback: Promise<T>; text: string}) {
@@ -112,8 +146,32 @@ export class Logger {
     }
   }
 
-  log(...args: any[]) {
-    this.terminal(this.toString(this.logNormalizer(args)), 'log')
+  update(text?: string) {
+    this.ora!.text = this.format(text)
+  }
+
+  succeed(text?: string) {
+    if (this.progress) {
+      this.progress.succeed()
+      this.update(text)
+    } else {
+      this.ora!.succeed(this.format(text))
+    }
+  }
+
+  catchFail(e: any) {
+    this.fail(this.toString(e))
+  }
+
+  private fail(text?: string) {
+    if (this.progress) {
+      this.progress.fail()
+      this.error(text)
+      this.update()
+    } else {
+      this.ora!.fail(this.format(text))
+    }
+
     this.stackLogDump()
   }
 
@@ -125,23 +183,6 @@ export class Logger {
 
       return e
     })
-    // return e.reduce((acc, cur) => {
-    //   const last = acc.at(-1)
-    //   if (last === undefined) {
-    //     return [cur]
-    //   }
-
-    //   if (typeof last === 'string' && typeof cur === 'string') {
-    //     return [...acc.slice(0, -1), `${last} ${cur}`]
-    //   }
-
-    //   const data = JSON.stringify(cur)
-    //   if (data.length < 30) {
-    //     return [...acc.slice(0, -1), `${last} ${data}`]
-    //   }
-
-    //   return [...acc, cur]
-    // }, [])
   }
 
   protected stackLogDump() {
@@ -159,15 +200,6 @@ export class Logger {
     this.stackHint = []
   }
 
-  succeed(text?: string) {
-    if (this.progress) {
-      this.progress.succeed()
-      this.update(text)
-    } else {
-      this.ora!.succeed(this.format(text))
-    }
-  }
-
   protected toString(e: any): string {
     if (Array.isArray(e)) {
       if (e.length === 0) return 'no message'
@@ -176,20 +208,6 @@ export class Logger {
     }
 
     return this._toString(e)
-  }
-
-  update(text?: string) {
-    this.ora!.text = this.format(text)
-  }
-
-  warn(...args: any[]) {
-    this.terminal(this.toString(this.logNormalizer(args)), 'warn')
-    this.stackLogDump()
-  }
-
-  hint(...args: any[]) {
-    this.terminal(this.toString(this.logNormalizer(args)), 'hint')
-    this.stackLogDump()
   }
 
   private _toString(e: any): string {
@@ -216,18 +234,6 @@ export class Logger {
     return `${e}`
   }
 
-  private fail(text?: string) {
-    if (this.progress) {
-      this.progress.fail()
-      this.error(text)
-      this.update()
-    } else {
-      this.ora!.fail(this.format(text))
-    }
-
-    this.stackLogDump()
-  }
-
   private format(text?: string) {
     this.text = text ?? this.text!
     if (this.progress) {
@@ -237,52 +243,49 @@ export class Logger {
 
     return this.text
   }
-
-  private terminal(e: string, type?: 'error' | 'hint' | 'log' | 'warn') {
-    const pattern = {
-      error: [clc.redBright, (e: Ora) => e.fail()] as const,
-      hint: [clc.cyanBright, (e: Ora) => e.stopAndPersist({symbol: '💡'})] as const,
-      log: [clc.blackBright, (e: Ora) => e.info()] as const,
-      undefined: [clc.blackBright, (e: Ora) => e.stopAndPersist({symbol: ''})] as const,
-      warn: [clc.yellowBright, (e: Ora) => e.warn()] as const,
-    }
-    if (this.ora?.isSpinning) {
-      this.ora!.clear()
-    }
-
-    const pat = pattern[type ?? 'undefined']
-    const text = type ? `[${type.toUpperCase()}] ${e}` : e
-    const o = pat[1](ora(pat[0](text)))
-
-    if (this.ora?.isSpinning) {
-      this.ora!.start()
-    }
-  }
+}
+type LoggerSimpleParam = {
+  error: (e: any) => void
+  log: (e: any) => void
+  warn: (e: any) => void
 }
 
 export class LoggerSimple extends Logger {
-  handler: (e: any) => void
-  constructor(handler: (e: any) => void, ...args: ConstructorParameters<typeof Logger>) {
+  logHandler: (e: any) => void
+  warnHandler: (e: any) => void
+  errorHandler: (e: any) => void
+
+  constructor({log, warn, error}: LoggerSimpleParam, ...args: ConstructorParameters<typeof Logger>) {
     super(...args)
-    this.handler = handler
+    this.logHandler = log
+    this.warnHandler = warn
+    this.errorHandler = error
   }
 
-  catchError(e: any) {
-    this.handler(`${logSymbols.error} ${this.toString(e)}`)
+  log(...args: any[]) {
+    this.logHandler(`${logSymbols.info} ${this.toString(this.logNormalizer(args))}`)
   }
 
-  catchFail(e: any) {
-    this.handler(`${logSymbols.error} ${this.toString(e)}`)
+  hint(...args: any[]) {
+    this.warnHandler(`${HINT} ${this.toString(this.logNormalizer(args))}`)
+  }
+
+  warn(...args: any[]) {
+    this.warnHandler(`${logSymbols.warning} ${this.toString(this.logNormalizer(args))}`)
   }
 
   error(...args: any[]) {
-    this.handler(`${logSymbols.error} ${this.toString(this.logNormalizer(args))}`)
+    this.errorHandler(`${logSymbols.error} ${this.toString(this.logNormalizer(args))}`)
+  }
+
+  catchError(e: any) {
+    this.errorHandler(`${logSymbols.error} ${this.toString(e)}`)
   }
 
   async guard<T>({text, callback}: {callback: Promise<T>; text: string}) {
     try {
       const res = await callback
-      this.handler(`${logSymbols.success} ${text}`)
+      this.logHandler(`${logSymbols.success} ${text}`)
       return res
     } catch (error) {
       this.catchFail(error)
@@ -293,44 +296,29 @@ export class LoggerSimple extends Logger {
   async guardProgress<T>({text, callback}: {callback: Promise<T>; text: string}) {
     try {
       const res = await callback
-      this.handler(`${logSymbols.success} ${text}`)
+      this.logHandler(`${logSymbols.success} ${text}`)
       return res
     } catch (error) {
       this.catchFail(error)
     }
   }
 
-  log(...args: any[]) {
-    this.handler(`${logSymbols.info} ${this.toString(this.logNormalizer(args))}`)
-  }
-
-  stackLogDump() {
-    for (const e of this.stackLog) {
-      const line = e.split('\n').filter((e) => e.startsWith('    at'))
-      this.handler(line.join('\n').slice(1))
-    }
-
-    this.stackLog = []
+  update(text?: string | undefined): void {}
+  catchFail(e: any) {
+    this.errorHandler(`${logSymbols.error} ${this.toString(e)}`)
   }
 
   succeed(text?: string) {
-    if (text) this.handler(`${logSymbols.success} ${text}`)
-  }
-
-  update(text?: string | undefined): void {}
-
-  warn(...args: any[]) {
-    this.handler(`${logSymbols.warning} ${this.toString(this.logNormalizer(args))}`)
+    if (text) this.logHandler(`${logSymbols.success} ${text}`)
   }
 }
 
 export class LoggerMute extends Logger {
-  catchError(e: any) {}
-
-  catchFail(e: any) {}
-
+  log(...args: any[]) {}
+  hint(...args: any[]) {}
+  warn(...args: any[]) {}
   error(...args: any[]) {}
-
+  catchError(e: any) {}
   async guard<T>({callback}: {callback: Promise<T>}) {
     return callback
   }
@@ -339,13 +327,7 @@ export class LoggerMute extends Logger {
     return callback
   }
 
-  log(...args: any[]) {}
-
-  stackLogDump() {}
-
-  succeed(text?: string) {}
-
   update(text?: string) {}
-
-  warn(...args: any[]) {}
+  succeed(text?: string) {}
+  catchFail(e: any) {}
 }

@@ -5,9 +5,8 @@ import {FilePath, URLPath} from './path'
 
 export class FileUtils {
   tempPathList: FilePath[]
-  jsonOutputData: any
 
-  constructor(public path: FilePath, public stdout = false) {
+  constructor(public path: FilePath) {
     this.tempPathList = []
   }
 
@@ -52,13 +51,5 @@ export class FileUtils {
   saveFetch = async (url: URLPath) => {
     const buffer = await fetch(url.toString())
     await this.writeFile(await buffer.arrayBuffer(), this.path.update({extension: url.extension}))
-  }
-
-  jsonOutput = async (data: any) => {
-    if (this.stdout) {
-      this.jsonOutputData = data
-    } else {
-      await this.path.update({extension: 'json'}).writeFile(JSON.stringify(data, null, 2))
-    }
   }
 }

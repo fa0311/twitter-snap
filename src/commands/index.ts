@@ -123,12 +123,14 @@ export default class Default extends Command {
   }
 
   async run(): Promise<void> {
+    const param = await this.parse(Default)
+    const {flags, args} = param
+
+    const logger = flags.simpleLog
+      ? new LoggerSimple({error: console.error, log: console.log, warn: console.warn})
+      : new Logger()
+
     try {
-      const param = await this.parse(Default)
-      const {flags, args} = param
-
-      const logger = flags.simpleLog ? new LoggerSimple(this.log.bind(this)) : new Logger()
-
       if (flags.simpleLog) {
         console.debug = flags.debug ? console.debug : (_) => {}
       } else {
@@ -203,16 +205,16 @@ export default class Default extends Command {
       })
 
       if (flags.output === '{stdout}') {
-        const data = utilsList?.filter((data) => data !== undefined).map((utils) => utils.file.jsonOutputData)
-        stdout.write(JSON.stringify(data))
+        const utils = utilsList?.filter((data) => data !== undefined)
+        stdout.write(JSON.stringify(utils!.map((utils) => utils.stdout)))
       }
     } catch (error) {
       if (typeof error === 'string') {
-        this.error(error)
+        logger.catchError(error)
       } else if (error instanceof Error) {
-        this.error(error.message)
+        logger.catchError(error.message)
       } else {
-        this.error('Unknown error')
+        logger.catchError('Unknown error')
       }
     }
   }

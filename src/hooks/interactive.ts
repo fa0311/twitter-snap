@@ -93,7 +93,7 @@ const hook: Hook.Preparse = async ({argv, options, context}) => {
     newArgs.push('--theme', theme)
 
     const stdout = await (async () => {
-      if (themeList[theme].json) {
+      if (themeList[theme] === 'json') {
         const stdout = await select({
           message: 'Please select the output destination',
           options: [
@@ -124,43 +124,43 @@ const hook: Hook.Preparse = async ({argv, options, context}) => {
       }
 
       const outputExt = await (async () => {
-        if (Object.values(themeList[theme]).filter(Boolean).length === 1) {
-          if (themeList[theme].json) {
+        switch (themeList[theme]) {
+          case 'json': {
             return '.json'
-          } else if (themeList[theme].auto) {
-            return ''
-          } else if (themeList[theme].image) {
-            return '.png'
-          } else if (themeList[theme].video) {
-            return '.mp4'
-          }
-        } else {
-          const ext = await select({
-            message: 'Please select the output format',
-            options: [
-              {value: '.{if-photo:png:mp4}', label: 'default (mp4/png)', hint: `${output}.{if-photo:png:mp4}`},
-              {value: '.png', label: 'image only (png)', hint: `${output}.png`},
-              {value: 'custom with fallback', label: 'Custom with fallback to png'},
-              {value: 'custom', label: 'Custom manual entry'},
-            ],
-          })
-          if (isCancel(ext)) {
-            throw exit('Operation canceled', context)
           }
 
-          if (ext === 'custom' || ext === 'custom with fallback') {
-            const extInput = await text({
-              message: 'Please enter the output extension',
-              placeholder: 'webm',
-              validate: nonEmptyValidation,
+          case 'other': {
+            return ''
+          }
+
+          case 'element': {
+            const ext = await select({
+              message: 'Please select the output format',
+              options: [
+                {value: '.{if-photo:png:mp4}', label: 'default (mp4/png)', hint: `${output}.{if-photo:png:mp4}`},
+                {value: '.png', label: 'image only (png)', hint: `${output}.png`},
+                {value: 'custom with fallback', label: 'Custom with fallback to png'},
+                {value: 'custom', label: 'Custom manual entry'},
+              ],
             })
-            if (isCancel(extInput)) {
+            if (isCancel(ext)) {
               throw exit('Operation canceled', context)
             }
 
-            return ext === 'custom with fallback' ? `.{if-photo:png:${extInput}}` : `.${extInput}`
-          } else {
-            return ext as string
+            if (ext === 'custom' || ext === 'custom with fallback') {
+              const extInput = await text({
+                message: 'Please enter the output extension',
+                placeholder: 'webm',
+                validate: nonEmptyValidation,
+              })
+              if (isCancel(extInput)) {
+                throw exit('Operation canceled', context)
+              }
+
+              return ext === 'custom with fallback' ? `.{if-photo:png:${extInput}}` : `.${extInput}`
+            } else {
+              return ext as string
+            }
           }
         }
       })()

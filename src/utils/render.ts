@@ -7,6 +7,7 @@ import {Logger} from './logger.js'
 import {VideoUtils} from './video.js'
 
 export class SnapRenderBaseUtils {
+  public stdout: any = undefined
   constructor(
     public logger: Logger,
     public file: FileUtils,
