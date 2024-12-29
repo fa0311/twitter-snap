@@ -4,9 +4,10 @@ import {Logger, LoggerMute} from '../utils/logger.js'
 import {SnapAppBrowserUtils, SnapAppBrowserUtilsParams} from '../utils/login.js'
 import {DirectoryPath} from '../utils/path.js'
 import {SnapRenderBaseUtils} from '../utils/render.js'
+import pixiv from './pixiv/app.js'
 import twitter from './twitter/app.js'
 
-export const apps = [twitter] as SnapApp<any>[]
+export const apps = [twitter, pixiv] as SnapApp<any>[]
 
 type SnapRunParam = {
   ffmpegAdditonalOption?: string[]
