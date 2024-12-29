@@ -51,9 +51,13 @@ const getRender = async (url: string) => {
   const groups = match[0].exec(url)!.groups!
   const [session, font] = await sessionCache(app.name, async () => {
     const font = await app.fonts(new FontUtils(DirectoryPath.from('~/.cache/twitter-snap/fonts')))
+    const type = await fs
+      .access('cookies.json')
+      .then(() => 'file' as const)
+      .catch(() => 'browser' as const)
     const session = await app.callback(
       new SnapAppBrowserUtils({
-        sessionType: 'file',
+        sessionType: type,
         browserProfile: '~/.cache/twitter-snap/profiles',
         cookiesFile: 'cookies.json',
       }),
@@ -106,7 +110,6 @@ app.get('/', async (c) => {
 })
 
 app.get('/element', async (c) => {
-  console.log(c.req.query('url'))
   const url = c.req.query('url')!
   const theme = c.req.query('theme')!
 

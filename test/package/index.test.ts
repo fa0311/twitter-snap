@@ -1,7 +1,13 @@
+import {expect} from 'chai'
 import fs from 'node:fs/promises'
 
 import {getSnapAppRender} from '../../src/main.js'
-import {access} from '../utils.js'
+const access = async (path: string) => {
+  await fs
+    .access(path)
+    .then(() => expect(true).to.equal(true))
+    .catch(() => expect(false).to.equal(true))
+}
 
 describe('Package test', () => {
   before(async () => {
@@ -28,6 +34,6 @@ describe('Package test', () => {
       await res.file.tempCleanup()
     })
 
-    await access('temp/1349129669258448897.png')
+    await access('temp/1349129669258448897-0.png')
   })
 })

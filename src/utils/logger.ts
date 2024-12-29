@@ -123,7 +123,7 @@ export class Logger {
     try {
       this.ora = ora(text).start()
       const res = await callback
-      this.succeed(text)
+      this.succeed()
       return res
     } catch (error) {
       this.catchFail(error)
@@ -138,7 +138,7 @@ export class Logger {
       this.update(text)
       const res = await callback
       this.progress = undefined
-      this.succeed(text)
+      this.succeed()
       return res
     } catch (error) {
       this.progress = undefined
@@ -150,12 +150,12 @@ export class Logger {
     this.ora!.text = this.format(text)
   }
 
-  succeed(text?: string) {
+  succeed() {
     if (this.progress) {
       this.progress.succeed()
-      this.update(text)
+      this.update()
     } else {
-      this.ora!.succeed(this.format(text))
+      this.ora!.succeed(this.format())
     }
   }
 
@@ -168,11 +168,10 @@ export class Logger {
       this.progress.fail()
       this.error(text)
       this.update()
+      this.stackLogDump()
     } else {
-      this.ora!.fail(this.format(text))
+      this.ora!.fail()
     }
-
-    this.stackLogDump()
   }
 
   protected logNormalizer(e: any[]) {

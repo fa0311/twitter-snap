@@ -1,4 +1,4 @@
-import {Session, SnapRenderChild} from '../app.js'
+import {Session, SnapApp, SnapRenderChild} from '../app.js'
 import {FontOptions, FontUtils} from '../utils/font.js'
 import {Logger, LoggerMute} from '../utils/logger.js'
 import {SnapAppBrowserUtils, SnapAppBrowserUtilsParams} from '../utils/login.js'
@@ -6,7 +6,7 @@ import {DirectoryPath} from '../utils/path.js'
 import {SnapRenderBaseUtils} from '../utils/render.js'
 import twitter from './twitter/app.js'
 
-export const apps = [twitter]
+export const apps = [twitter] as SnapApp<any>[]
 
 type SnapRunParam = {
   ffmpegAdditonalOption?: string[]

@@ -8,7 +8,7 @@ export type FontEmojiOptions = NonNullable<ConstructorParameters<typeof ImageRes
 
 export type FontOptions = {
   emoji: FontEmojiOptions
-  text: FontTextOptions[]
+  text: FontTextOptions[] | undefined
 }
 
 export class FontUtils {

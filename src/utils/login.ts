@@ -27,6 +27,7 @@ export class SnapAppBrowserUtils {
 
   async get() {
     return launch({
+      defaultViewport: null,
       headless: this.flags.browserHeadless,
       timeout: 0,
       userDataDir: DirectoryPath.from(this.flags.browserProfile).toString(),
@@ -51,12 +52,21 @@ export class SnapAppBrowserUtils {
   puppeteerLogin = async (url: string, pattern: string) => {
     const browser = await this.get()
     const [page] = await browser.pages()
-    await page.goto(url)
 
     page.setDefaultNavigationTimeout(0)
     page.setDefaultTimeout(0)
 
-    await page.waitForResponse((res) => new RegExp(pattern).test(res.url()))
+    const hook = new Promise<void>((resolve) => {
+      page.on('response', (res) => {
+        if (new RegExp(pattern).test(res.url())) {
+          resolve()
+        }
+      })
+    })
+
+    await page.goto(url)
+    await hook
+
     const cookies = await browser.cookies()
     await browser.close()
     return new SnapAppCookies(cookies)
