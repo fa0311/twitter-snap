@@ -98,15 +98,15 @@ app.get('/', async (c) => {
         {Object.entries(themeList)
           .filter(([, type]) => type === 'element')
           .map(([theme]) => (
-            <option key={theme} value={theme}>
+            <option defaultValue={theme} key={theme}>
               {theme}
             </option>
           ))}
       </select>
       <p>width</p>
-      <input id="width" type="number" value="650" />
+      <input defaultValue="650" id="width" type="number" />
       <p>scale</p>
-      <input id="scale" type="number" value="1" />
+      <input defaultValue="1" id="scale" type="number" />
       <button id="submit">submit</button>
     </div>
   )
