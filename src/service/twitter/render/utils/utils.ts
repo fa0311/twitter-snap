@@ -18,12 +18,6 @@ export const getBiggerMedia = (extMedia: MediaExtended[]) => {
   return [video.indexOf(sorted[0]), sorted[0]] as const
 }
 
-export const getResizedMediaByWidth = (aspectRatioWidth: number, aspectRatioHeight: number, width: number) => {
-  const h = (width * aspectRatioHeight) / aspectRatioWidth
-  const height = Math.floor(h / 2) * 2
-  return {width, height}
-}
-
 export const getVideo = (videoInfo: MediaVideoInfo) => {
   return [...videoInfo.variants].sort((a, b) => {
     if (a.bitrate === undefined) return 1

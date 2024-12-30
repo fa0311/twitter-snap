@@ -10,6 +10,10 @@ export class DirectoryPath {
     return new DirectoryPath(p.replaceAll(sep, '/'))
   }
 
+  toFilePath(file: string) {
+    return FilePath.fromDirectory(this.path, file)
+  }
+
   toString() {
     return this.path
   }
@@ -54,6 +58,11 @@ export class FilePath {
 
   update({dir, name, extension}: {dir?: string; extension?: string; name?: string}) {
     return new FilePath(dir ?? this.dir, name ?? this.name, extension ?? this.extension)
+  }
+
+  sliceDirectory(slice: number) {
+    const dirList = this.dir.split('/')
+    return new FilePath(dirList.slice(slice).join('/'), this.name, this.extension)
   }
 
   toString() {

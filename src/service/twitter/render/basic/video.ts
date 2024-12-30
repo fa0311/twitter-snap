@@ -2,7 +2,8 @@ import {TweetApiUtilsData} from 'twitter-openapi-typescript'
 
 import {FilePath} from '../../../../utils/path.js'
 import {SnapRenderColorUtils} from '../../../../utils/render.js'
-import {getBiggerMedia, getResizedMediaByWidth} from '../utils/utils.js'
+import {getResizedMediaByWidth} from '../../../../utils/video.js'
+import {getBiggerMedia} from '../utils/utils.js'
 
 export class RenderBasicVideo {
   margin: number = 30
