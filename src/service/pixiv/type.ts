@@ -1,5 +1,5 @@
 export type PixivData = {
-  illust: IllustBody
+  illust: IllustBody[]
 
   meta: {
     illust: IllustMeta
@@ -160,7 +160,7 @@ export type IllustBody = {
     thumb_mini: string
   }
   width: number
-}[]
+}
 
 export type UgoiraBody = {
   frames: {

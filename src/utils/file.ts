@@ -68,8 +68,8 @@ export class FileUtils {
     await this.writeFile(data, this.path)
   }
 
-  saveFetch = async (url: URLPath) => {
-    const buffer = await fetch(url.toString())
+  saveFetch = async (url: URLPath, init?: RequestInit) => {
+    const buffer = await fetch(url.toString(), init)
     await this.writeFile(await buffer.arrayBuffer(), this.path.update({extension: url.extension}))
   }
 }

@@ -13,6 +13,8 @@
     "perfectionist/sort-classes": "off",
     "unicorn/numeric-separators-style": "off",
     "complexity": "off",
-    "no-else-return": "off"
+    "no-else-return": "off",
+    "unicorn/prefer-ternary": "off",
+    "unicorn/prefer-switch": "off"
   }
 }

@@ -27,7 +27,7 @@
     "/oclif.manifest.json"
   ],
   "scripts": {
-    "build": "shx rm -rf dist && tsc -b",
+    "build": "shx rm -rf dist && tsc -p tsconfig.build.json",
     "lint": "eslint . --ext .ts",
     "postpack": "shx rm -f oclif.manifest.json",
     "posttest": "npm run lint",
@@ -36,9 +36,6 @@
     "version": "node ./replace.js && git add README.md",
     "dev": "vite"
   },
-  "workspaces": [
-    "packages/*"
-  ],
   "oclif": {
     "bin": "twitter-snap",
     "dirname": "twitter-snap",

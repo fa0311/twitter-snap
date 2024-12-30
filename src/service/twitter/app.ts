@@ -85,12 +85,12 @@ const render = new SnapRender<TweetApiUtilsData>(
       ['{id}', data.tweet.restId],
       ['{user-screen-name}', data.user.legacy.screenName],
       ['{user-id}', data.user.restId],
-      ['{time-tweet-yyyy}', new Date(legacy.createdAt).getFullYear().toString().padStart(4, '0')],
-      ['{time-tweet-mm}', (new Date(legacy.createdAt).getMonth() + 1).toString().padStart(2, '0')],
-      ['{time-tweet-dd}', new Date(legacy.createdAt).getDate().toString().padStart(2, '0')],
-      ['{time-tweet-hh}', new Date(legacy.createdAt).getHours().toString().padStart(2, '0')],
-      ['{time-tweet-mi}', new Date(legacy.createdAt).getMinutes().toString().padStart(2, '0')],
-      ['{time-tweet-ss}', new Date(legacy.createdAt).getSeconds().toString().padStart(2, '0')],
+      ['{time-yyyy}', new Date(legacy.createdAt).getFullYear().toString().padStart(4, '0')],
+      ['{time-mm}', (new Date(legacy.createdAt).getMonth() + 1).toString().padStart(2, '0')],
+      ['{time-dd}', new Date(legacy.createdAt).getDate().toString().padStart(2, '0')],
+      ['{time-hh}', new Date(legacy.createdAt).getHours().toString().padStart(2, '0')],
+      ['{time-mi}', new Date(legacy.createdAt).getMinutes().toString().padStart(2, '0')],
+      ['{time-ss}', new Date(legacy.createdAt).getSeconds().toString().padStart(2, '0')],
     ] as [string, number | string | undefined][]
   },
   async (data, utils) => {
@@ -124,8 +124,18 @@ render.media(
   async (data, utils) => {
     const isVideo = data.type !== 'photo'
     utils.logger.update(`Downloading ${isVideo ? 'video' : 'image'} ${data.idStr}`)
-    const url = isVideo ? getVideo(data.videoInfo!).url : data.mediaUrlHttps
-    await utils.file.saveFetch(URLPath.fromURL(url))
+    const mediaUrl = isVideo ? getVideo(data.videoInfo!).url : data.mediaUrlHttps
+
+    const url = URLPath.fromURL(mediaUrl)
+
+    if (utils.file.path.isExtension('')) {
+      await utils.file.saveFetch(url)
+    } else if (utils.file.path.isExtension(url.extension)) {
+      await utils.file.saveFetch(url)
+    } else {
+      utils.logger.hint(`Extension is ignored, saving as ${url.extension}`)
+      await utils.file.saveFetch(url)
+    }
   },
 )
 

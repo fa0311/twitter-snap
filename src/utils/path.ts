@@ -2,6 +2,8 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import {sep} from 'node:path'
 
+const imageFormat = new Set(['png', 'jpg', 'jpeg', 'webp', 'svg', 'pdf'])
+
 export class DirectoryPath {
   constructor(public path: string) {}
 
@@ -16,6 +18,10 @@ export class DirectoryPath {
 
   toString() {
     return this.path
+  }
+
+  slice(start: number, end?: number) {
+    return new DirectoryPath(this.path.split('/').slice(start, end).join('/'))
   }
 }
 
@@ -60,9 +66,8 @@ export class FilePath {
     return new FilePath(dir ?? this.dir, name ?? this.name, extension ?? this.extension)
   }
 
-  sliceDirectory(slice: number) {
-    const dirList = this.dir.split('/')
-    return new FilePath(dirList.slice(slice).join('/'), this.name, this.extension)
+  slice(start: number, end?: number) {
+    return new FilePath(this.dir.split('/').slice(start, end).join('/'), this.name, this.extension)
   }
 
   toString() {
@@ -83,6 +88,10 @@ export class FilePath {
     }
 
     fs.writeFile(this.toString(), data)
+  }
+
+  isImage() {
+    return imageFormat.has(this.extension)
   }
 }
 

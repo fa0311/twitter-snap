@@ -1,12 +1,11 @@
 import * as fflate from 'fflate'
 
 import {FilePath} from '../../../utils/path.js'
-import {SnapRenderColorUtils} from '../../../utils/render.js'
+import {SnapRenderColorUtils, SnapRenderUtils} from '../../../utils/render.js'
 import {PixivData, UgoiraBody} from '../type.js'
 
-const ugoiraEncode = async (utils: SnapRenderColorUtils, ugoira: UgoiraBody) => {
+export const ugoiraEncode = async (utils: SnapRenderUtils, ugoira: UgoiraBody, output: FilePath) => {
   const imagesTemp = utils.file.getTemp('txt')
-  const ugoiraTemp = utils.file.getTemp('mp4')
 
   const massiveFileBuf = await fetch(ugoira.originalSrc, {
     headers: {
@@ -38,7 +37,8 @@ const ugoiraEncode = async (utils: SnapRenderColorUtils, ugoira: UgoiraBody) => 
 
   const images = Object.values(ugoira.frames)
     .flatMap(({delay, file}) => {
-      return [`file '${tempList[file].sliceDirectory(1)}'`, `duration ${delay / 1000}`]
+      const path = tempList[file].slice(-1).toString()
+      return [`file '${path}'`, `duration ${delay / 1000}`]
     })
     .join('\n')
 
@@ -48,25 +48,22 @@ const ugoiraEncode = async (utils: SnapRenderColorUtils, ugoira: UgoiraBody) => 
   command.inputOptions('-f concat')
   command.inputOptions('-safe 0')
 
-  command.output(ugoiraTemp.toString())
+  command.output(output.toString())
   await utils.video.runFFMpeg(command)
-
-  return ugoiraTemp
 }
 
 export const pixivVideoRender = async (data: PixivData, utils: SnapRenderColorUtils, input: FilePath) => {
   const margin: number = 30
   const padding: number = 12
+  const title = `https://www.pixiv.net/artworks/${data.meta.illust.id}`
 
   if (!data.ugoira) {
-    return []
+    await utils.video.fromImage(input.toString(), utils.file.path.toString(), title)
+    return
   }
 
-  const ugoiraTemp = await ugoiraEncode(utils, data.ugoira)
-
-  const ugoiraCommand = utils.video.getFFprobe()
-  ugoiraCommand.input(ugoiraTemp.toString())
-  const ugoiraData = await utils.video.runProbe(ugoiraCommand)
+  const ugoiraTemp = utils.file.getTemp('mp4')
+  await ugoiraEncode(utils, data.ugoira, ugoiraTemp)
 
   const width = utils.width - utils.element.applyScaleNum((margin + padding) * 2)
   const overlay = utils.element.applyScaleNum(margin + padding)
@@ -81,10 +78,8 @@ export const pixivVideoRender = async (data: PixivData, utils: SnapRenderColorUt
     `[i][video]overlay=x=${overlay}:y=${overlay}[marge]`,
   ])
 
-  // ffmpeg -i "temp/temp-0-bmqrak5gsuo.png" -i "temp/temp-2-bmqrak5gsuo.mp4" -y -filter_complex "[0]scale=trunc(iw/2)*2:trunc(ih/2)*2[i];[1:v]scale='min(iw,(W-10)):-1'[video];[i][video]overlay=x=5:y=10[marge]" -map "[marge]" -preset ultrafast -metadata title="Pixiv Ugoira" -metadata comment="Snapped by twitter-snap https://github.com/fa0311/twitter-snap" "temp/bmqrak5gsuo.mp4"
-
   command.map('[marge]')
   command.output(utils.file.path.toString())
 
-  await utils.video.runFFMpegIntegration(command, 'Pixiv Ugoira')
+  await utils.video.runFFMpegIntegration(command, title)
 }

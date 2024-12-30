@@ -202,7 +202,6 @@ export class SnapRenderChild<T1> {
     }
 
     const utils = await (async () => {
-      const unsupportedFormat = new Set(['jpg', 'jpeg', 'webp', 'svg'])
       if (includeTheme(theme)) {
         switch (themeList[theme]) {
           case 'element': {
@@ -220,7 +219,7 @@ export class SnapRenderChild<T1> {
                 const element = await this.image(theme)(data, utils)
                 await utils.file.saveImg(await utils.render(element))
                 return utils
-              } else if (unsupportedFormat.has(name.extension)) {
+              } else if (name.isImage()) {
                 logger.hint(`Unsupported format: ${name.extension}, output as png`)
                 const rep = name.update({extension: 'png'})
                 const utils = new SnapRenderColorUtils(...base(rep), new ElementColorUtils({theme}))
@@ -245,7 +244,7 @@ export class SnapRenderChild<T1> {
                 const utils = new SnapRenderColorUtils(...base(rep), new ElementColorUtils({theme}))
                 await this.video(theme)(data, utils)
                 return utils
-              } else if (unsupportedFormat.has(name.extension)) {
+              } else if (name.isImage()) {
                 logger.hint(`Unsupported format: ${name.extension}, output as png`)
                 const rep = name.update({extension: 'png'})
                 const utils = new SnapRenderColorUtils(...base(rep), new ElementColorUtils({theme}))
@@ -262,17 +261,9 @@ export class SnapRenderChild<T1> {
 
           case 'other': {
             const name = getName('other', this.placeholder(data), output, this.count++)
-            if (name.isExtension('')) {
-              const utils = new SnapRenderUtils(...base(name), new ElementUtils({theme}))
-              await this.other(theme)(data, utils, this.placeholder(data), output)
-              return utils
-            } else {
-              logger.hint('Extension is ignored')
-              const rep = name.update({extension: ''})
-              const utils = new SnapRenderUtils(...base(rep), new ElementUtils({theme}))
-              await this.other(theme)(data, utils, this.placeholder(data), output)
-              return utils
-            }
+            const utils = new SnapRenderUtils(...base(name), new ElementUtils({theme}))
+            await this.other(theme)(data, utils, this.placeholder(data), output)
+            return utils
           }
 
           case 'json': {

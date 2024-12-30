@@ -175,6 +175,11 @@ export class Logger {
   }
 
   protected logNormalizer(e: any[]) {
+    const error = e.find((e) => e instanceof Error)
+    if (error) {
+      return [error]
+    }
+
     return e.map((e) => {
       if (typeof e === 'string') {
         return e.trim()
@@ -213,10 +218,6 @@ export class Logger {
     if (e instanceof Error) {
       if (e.stack) {
         this.stackLog.push(e.stack)
-      }
-
-      if (e.message === "No variant of TweetUnion exists with 'typename=undefined'") {
-        this.stackHint.push('This tweet contains sensitive content. Please login using --session-type')
       }
 
       return `${e.name}: ${e.message}`
