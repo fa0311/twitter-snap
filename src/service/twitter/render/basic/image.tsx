@@ -10,7 +10,8 @@ import {
 } from 'twitter-openapi-typescript-generated'
 
 import {SnapRenderColorUtils} from '../../../../utils/render.js'
-import {RenderCssType, RenderWidgetType, getBiggerMedia, getResizedMediaByWidth} from '../utils/utils.js'
+import {getResizedMediaByWidth} from '../../../../utils/video.js'
+import {RenderCssType, RenderWidgetType, getBiggerMedia} from '../utils/utils.js'
 
 export class RenderTweetImage {
   backgroundColor: string

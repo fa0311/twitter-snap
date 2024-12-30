@@ -12,6 +12,12 @@ export type VideoUtilsParam = {
   ffprobePath?: string
 }
 
+export const getResizedMediaByWidth = (aspectRatioWidth: number, aspectRatioHeight: number, width: number) => {
+  const h = (width * aspectRatioHeight) / aspectRatioWidth
+  const height = Math.floor(h / 2) * 2
+  return {width, height}
+}
+
 export class VideoUtils {
   private flags: Required<VideoUtilsParam>
   constructor(flags: VideoUtilsParam) {

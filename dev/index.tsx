@@ -69,7 +69,7 @@ const getRender = async (url: string) => {
   return {render, font}
 }
 
-const getUtils = (font: FontOptions, name: string, theme: string) => {
+const getUtils = (font: FontOptions, name: string, theme: string, width: number, scale: number) => {
   return new SnapRenderColorUtils(
     new LoggerMute(),
     new FileUtils(FilePath.from(name)),
@@ -77,8 +77,8 @@ const getUtils = (font: FontOptions, name: string, theme: string) => {
       ffmpegAdditonalOption: ['-preset', 'ultrafast'],
     }),
     font,
-    650,
-    new ElementColorUtils({theme}),
+    width,
+    new ElementColorUtils({theme, scale}),
   )
 }
 
@@ -103,6 +103,10 @@ app.get('/', async (c) => {
             </option>
           ))}
       </select>
+      <p>width</p>
+      <input id="width" type="number" value="650" />
+      <p>scale</p>
+      <input id="scale" type="number" value="1" />
       <button id="submit">submit</button>
     </div>
   )
@@ -112,17 +116,19 @@ app.get('/', async (c) => {
 app.get('/element', async (c) => {
   const url = c.req.query('url')!
   const theme = c.req.query('theme')!
+  const width = Number(c.req.query('width')!)
+  const scale = Number(c.req.query('scale')!)
 
   const {font, render} = await getRender(url)
   const data = await fetchCache(url, async () => {
     return (await render.data.next()).value
   })
   const id = Math.random().toString(32).slice(2)
-  const param = getUtils(font, `temp/${id}.png`, theme)
+  const param = getUtils(font, `temp/${id}.png`, theme, width, scale)
   const element = await render.image(theme)(data, param)
   return c.render(
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
-      <div style={{width: 650, display: 'flex'}}>{element}</div>
+      <div style={{width, display: 'flex'}}>{element}</div>
     </div>,
   )
 })
@@ -130,13 +136,15 @@ app.get('/element', async (c) => {
 app.get('/image', async (c) => {
   const url = c.req.query('url')!
   const theme = c.req.query('theme')!
+  const width = Number(c.req.query('width')!)
+  const scale = Number(c.req.query('scale')!)
 
   const {font, render} = await getRender(url)
   const data = await fetchCache(url, async () => {
     return (await render.data.next()).value
   })
   const id = Math.random().toString(32).slice(2)
-  const param = getUtils(font, `temp/${id}.png`, theme)
+  const param = getUtils(font, `temp/${id}.png`, theme, width, scale)
   const element = await render.image(theme)(data, param)
   const img = await param.render(element)
   c.header('Content-Type', 'image/png')
@@ -148,13 +156,15 @@ app.get('/image', async (c) => {
 app.get('/video', async (c) => {
   const url = c.req.query('url')!
   const theme = c.req.query('theme')!
+  const width = Number(c.req.query('width')!)
+  const scale = Number(c.req.query('scale')!)
 
   const {font, render} = await getRender(url)
   const data = await fetchCache(url, async () => {
     return (await render.data.next()).value
   })
   const id = Math.random().toString(32).slice(2)
-  const param = getUtils(font, `temp/${id}.mp4`, theme)
+  const param = getUtils(font, `temp/${id}.mp4`, theme, width, scale)
   await render.video(theme)(data, param)
   const body = await fs.readFile(`./temp/${id}.mp4`)
   await param.file.tempCleanup()

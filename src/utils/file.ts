@@ -1,10 +1,20 @@
 import {ImageResponse} from '@vercel/og'
 import fs from 'node:fs/promises'
 
-import {FilePath, URLPath} from './path'
+import {DirectoryPath, FilePath, URLPath} from './path.js'
+
+type TempType =
+  | {
+      path: DirectoryPath
+      type: 'dir'
+    }
+  | {
+      path: FilePath
+      type: 'file'
+    }
 
 export class FileUtils {
-  tempPathList: FilePath[]
+  tempPathList: TempType[]
 
   constructor(public path: FilePath) {
     this.tempPathList = []
@@ -15,12 +25,22 @@ export class FileUtils {
       name: `temp-${this.tempPathList.length}-${this.path.name}`,
       extension: extension ?? this.path.extension,
     })
-    this.tempPathList.push(path)
+    this.tempPathList.push({path, type: 'file'})
+    return path
+  }
+
+  getTempList = () => {
+    const path = new DirectoryPath(`${this.path.dir}/temp-${this.tempPathList.length}-${this.path.name}`)
+    this.tempPathList.push({path, type: 'dir'})
     return path
   }
 
   tempCleanup = async () => {
-    await Promise.all(this.tempPathList.map(async (temp) => fs.rm(temp.toString())))
+    await Promise.all(
+      this.tempPathList.map(async (temp) => {
+        await fs.rm(temp.path.toString(), {recursive: temp.type === 'dir'})
+      }),
+    )
     this.tempPathList = []
   }
 

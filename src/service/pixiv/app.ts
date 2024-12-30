@@ -1,8 +1,10 @@
 import {Session, SnapApp, SnapRender} from '../../app.js'
+import {SnapAppCookies} from '../../utils/cookies.js'
 import {pixivRender} from './render/image.js'
-import {IllustBody, IllustBodyResponse, IllustData, IllustDataResponse, IllustUser} from './type.js'
+import {pixivVideoRender} from './render/video.js'
+import {APIResponse, IllustBody, IllustDataResponse, PixivData, UgoiraBody} from './type.js'
 
-const getHeader = async () => {
+const getFetch = async (cookies: SnapAppCookies) => {
   const latestHeader = await fetch('https://raw.githubusercontent.com/fa0311/latest-user-agent/main/header.json').then(
     (res) => res.json(),
   )
@@ -14,7 +16,14 @@ const getHeader = async () => {
   delete header.host
   delete header.connection
 
-  return header as any
+  return async (url: string) => {
+    return fetch(url, {
+      headers: {
+        ...header,
+        cookie: cookies.toString(),
+      },
+    })
+  }
 }
 
 const app = new SnapApp(
@@ -36,7 +45,7 @@ const app = new SnapApp(
       }
 
       case 'guest': {
-        return new Session(undefined)
+        return new Session(new SnapAppCookies([]))
       }
     }
   },
@@ -49,48 +58,59 @@ const app = new SnapApp(
   async (utils) => {},
 )
 
-const render = new SnapRender<[IllustData, IllustUser, IllustBody]>(
-  (_) => {
-    return true
+const render = new SnapRender<PixivData>(
+  (data) => {
+    return data.ugoira === undefined
   },
-  ([data, body]) => {
-    return [['{id}', data.id]] as [string, number | string | undefined][]
+  (data) => {
+    return [
+      ['{id}', data.meta.illust.id],
+      ['{user-screen-name}', data.meta.user.userId],
+    ] as [string, number | string | undefined][]
   },
   async (data, utils) => {
     return pixivRender(data, utils, false)
   },
   async (data, utils) => {
-    console.log(data)
+    const element = await pixivRender(data, utils, true)
+    const input = await utils.file.tempImg(await utils.render(element))
+    await pixivVideoRender(data, utils, input)
   },
 )
 
 app.call('/artworks/(?<id>[0-9]+)', async (utils, cookie, {id}) => {
-  const data = await fetch(`https://www.pixiv.net/artworks/${id}`, {
-    headers: {
-      ...(await getHeader()),
-      cookie: cookie?.toString(),
-    },
-  })
-  const text = await data.text()
-  const preloadData = text.match(/<meta name="preload-data" id="meta-preload-data" content='(.+?)'>/)
-  const json = JSON.parse(preloadData![1]) as IllustDataResponse
+  const fetch = await getFetch(cookie)
+
+  const html = await fetch(`https://www.pixiv.net/artworks/${id}`).then((res) => res.text())
+  const metaPreloadData = html.match(/<meta name="preload-data" id="meta-preload-data" content='(.+?)'>/)
+  const metaJson = JSON.parse(metaPreloadData![1]) as IllustDataResponse
 
   const url = new URL(`https://www.pixiv.net/ajax/illust/${id}/pages`)
   url.searchParams.append('lang', 'ja')
   url.searchParams.append('version', 'a64d52acd3aace2086ab632abec7a061c10825fe')
 
-  const dataRes = await fetch(url.toString(), {
-    headers: {
-      ...(await getHeader()),
-      cookie: cookie?.toString(),
+  const illustData = (await fetch(url.toString()).then((res) => res.json())) as APIResponse<IllustBody>
+
+  const ugoiraData = await (async () => {
+    if (metaJson.illust[id].illustType === 2) {
+      const url = new URL(`https://www.pixiv.net/ajax/illust/${id}/ugoira_meta`)
+      url.searchParams.append('lang', 'ja')
+      url.searchParams.append('version', 'a64d52acd3aace2086ab632abec7a061c10825fe')
+      return (await fetch(url.toString()).then((res) => res.json())) as APIResponse<UgoiraBody>
+    }
+  })()
+
+  const res: PixivData = {
+    meta: {
+      illust: Object.values(metaJson.illust)[0],
+      user: Object.values(metaJson.user)[0],
     },
-  })
-  const body = (await dataRes.json()) as IllustBodyResponse
-  const illust = Object.values(json.illust)[0]
-  const user = Object.values(json.user)[0]
+    illust: illustData.body,
+    ugoira: ugoiraData?.body,
+  }
 
   const fn = (async function* () {
-    yield [illust, user, body.body] as unknown as [IllustData, IllustUser, IllustBody]
+    yield res
   })()
   return render.run(fn)
 })

@@ -1,15 +1,24 @@
+export type PixivData = {
+  illust: IllustBody
+
+  meta: {
+    illust: IllustMeta
+    user: IllustUserMeta
+  }
+  ugoira: UgoiraBody | undefined
+}
+
 export type IllustDataResponse = {
   illust: {
-    [key: string]: IllustData
+    [key: string]: IllustMeta
   }
   timestamp: string
-
   user: {
-    [key: string]: IllustUser
+    [key: string]: IllustUserMeta
   }
 }
 
-export type IllustData = {
+export type IllustMeta = {
   alt: string
   bookStyle: number
   bookmarkCount: number
@@ -115,7 +124,7 @@ export type IllustData = {
   }
 }
 
-export type IllustUser = {
+export type IllustUserMeta = {
   background: {
     color: null | string
     isPrivate: boolean
@@ -136,8 +145,8 @@ export type IllustUser = {
   userId: string
 }
 
-export type IllustBodyResponse = {
-  body: IllustBody
+export type APIResponse<T> = {
+  body: T
   error: boolean
   message: string
 }
@@ -152,3 +161,13 @@ export type IllustBody = {
   }
   width: number
 }[]
+
+export type UgoiraBody = {
+  frames: {
+    delay: number
+    file: string
+  }[]
+  mime_type: string
+  originalSrc: string
+  src: string
+}
