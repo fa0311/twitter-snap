@@ -108,8 +108,7 @@ ARGUMENTS
 
 FLAGS
   -o, --output=<value>
-      [default: {if-media:{id}-{media-id}:{id}}.{if-type:png:mp4:json:}] Output
-      file name
+      [default: {id}-{count}.{if-type:png:mp4:json:}] Output file name
 
   --browserHeadless
       Browser headless
