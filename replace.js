@@ -21,7 +21,7 @@ try {
     throw new Error('Placeholders not found in README.md')
   }
 
-  const commandsContent = readmeContent.substring(startIndex, endIndex + endPlaceholder.length)
+  const commandsContent = readmeContent.slice(startIndex, endIndex + endPlaceholder.length)
   const updatedCommandsContent = `${startPlaceholder}\n\n${startCodeBlock}\n${helpOutput}\n${endCodeBlock}\n\n${endPlaceholder}`
   readmeContent = readmeContent.replace(commandsContent, updatedCommandsContent)
 

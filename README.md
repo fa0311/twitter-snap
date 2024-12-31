@@ -14,6 +14,10 @@ npx twitter-snap@latest https://twitter.com/elonmusk/status/1770222178279252062
   <img src="./docs/img/output-4.png" width="49%" />
 </p>
 
+<p float="left">
+  <img src="./docs/img/output-1-1.png" width="49%" />
+</p>
+
 [More Samples](https://github.com/fa0311/twitter-snap/issues/47)
 
 ```shell
@@ -185,6 +189,23 @@ EXAMPLES
 ```
 
 <!-- COMMANDS_PLACEHOLDER_END -->
+
+# Features
+
+- `https?://(www.)?(mobile.)?(x|twitter).com`
+
+  - `/:user/status/:id`
+  - `/search?:params`
+  - `/home`
+  - `/i/lists/:id`
+  - `/:user/with_replies`
+  - `/:user/media`
+  - `/:user/likes`
+  - `/:user`
+  - `/i/bookmarks`
+
+- `https?://(www.)?pixiv.net`
+  - `/artworks/:id`
 
 ## Dependence
 
