@@ -1,8 +1,17 @@
 import {expect} from 'chai'
+import * as fs from 'node:fs/promises'
 
 import {access, count, run} from './utils'
 
 describe('Pixiv test', () => {
+  before(async () => {
+    await fs.rm('temp', {recursive: true}).catch(() => {})
+  })
+
+  after(async () => {
+    await fs.rm('temp', {recursive: true}).catch(() => {})
+  })
+
   it('run command', async () => {
     const {stderr, error, result, stdout} = await run('https://www.pixiv.net/artworks/0', 'temp/aa.png')
 
@@ -16,7 +25,7 @@ describe('Pixiv test', () => {
 
   it('single_illust_to_image', async () => {
     const {stderr, error, result, stdout} = await run(
-      'https://www.pixiv.net/artworks/124498022 ',
+      'https://www.pixiv.net/artworks/124498022',
       'temp/single_illust_to_image/{count}.png',
     )
     await count('temp/single_illust_to_image', 1)
@@ -35,7 +44,7 @@ describe('Pixiv test', () => {
 
   it('single_illust_to_video', async () => {
     const {stderr, error, result, stdout} = await run(
-      'https://www.pixiv.net/artworks/124498022 ',
+      'https://www.pixiv.net/artworks/124498022',
       'temp/single_illust_to_video/{count}.mp4',
     )
     await count('temp/single_illust_to_video', 1)

@@ -88,42 +88,44 @@ const render = new SnapRender<PixivData>(
   },
 )
 
-type MediaResponse = {data: IllustBody; type: 'image'} | {data: UgoiraBody; type: 'ugoira'}
+type MediaResponse = {data: IllustBody; ugoira?: UgoiraBody}
 
 render.media<MediaResponse>(
   'Media',
   (data) => {
     if (data.ugoira) {
-      return [{type: 'ugoira', data: data.ugoira}]
+      return [{ugoira: data.ugoira, data: data.illust[0]}]
     } else {
-      return data.illust.map((illust) => ({type: 'image', data: illust}))
+      return data.illust.map((illust) => ({data: illust}))
     }
   },
   (data) => {
     return [] as [string, number | string | undefined][]
   },
   async (data, utils) => {
-    utils.logger.update(`Downloading ${data.type}`)
-
-    if (data.type === 'image') {
+    if (data.ugoira === undefined) {
       const url = URLPath.fromURL(data.data.urls.original)
       if (!utils.file.path.isExtension(url.extension)) {
         utils.logger.hint(`Extension is ignored, saving as ${url.extension}`)
       }
 
-      await utils.file.saveFetch(url, {
-        headers: {
-          referer: 'https://www.pixiv.net/',
-        },
-      })
-    } else if (data.type === 'ugoira') {
-      if (utils.file.path.isImage()) {
+      utils.logger.update(`Downloading image`)
+      await utils.file.saveFetch(url, {headers: {referer: 'https://www.pixiv.net/'}})
+    } else {
+      const url = URLPath.fromURL(data.data.urls.original)
+      if (utils.file.path.isExtension(url.extension)) {
+        utils.logger.update(`Downloading image`)
+        await utils.file.saveFetch(url, {headers: {referer: 'https://www.pixiv.net/'}})
+      } else if (utils.file.path.isImage()) {
         utils.logger.hint(`Unsupported format: ${utils.file.path.extension}, output as mp4`)
-        await ugoiraEncode(utils, data.data, utils.file.path.update({extension: 'mp4'}))
+        utils.logger.update(`Downloading ugoira`)
+        await ugoiraEncode(utils, data.ugoira, utils.file.path.update({extension: 'mp4'}))
       } else if (utils.file.path.isExtension('')) {
-        await ugoiraEncode(utils, data.data, utils.file.path.update({extension: 'mp4'}))
+        utils.logger.update(`Downloading ugoira`)
+        await ugoiraEncode(utils, data.ugoira, utils.file.path.update({extension: 'mp4'}))
       } else {
-        await ugoiraEncode(utils, data.data, utils.file.path)
+        utils.logger.update(`Downloading ugoira`)
+        await ugoiraEncode(utils, data.ugoira, utils.file.path)
       }
     }
   },

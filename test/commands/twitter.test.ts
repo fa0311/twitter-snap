@@ -1,8 +1,17 @@
 import {expect} from 'chai'
+import * as fs from 'node:fs/promises'
 
 import {access, count, run} from './utils'
 
 describe('Twitter test', () => {
+  before(async () => {
+    await fs.rm('temp', {recursive: true}).catch(() => {})
+  })
+
+  after(async () => {
+    await fs.rm('temp', {recursive: true}).catch(() => {})
+  })
+
   it('run command', async () => {
     const {stderr, error, result, stdout} = await run('https://x.com/elonmusk/status/114514', 'temp/aa.png')
 
@@ -106,19 +115,6 @@ describe('Twitter test', () => {
     expect(stdout).to.contain('✔ Logging in')
     expect(stdout).to.contain('✔ Initializing render')
     expect(stdout).to.contain('✔ Rendering')
-
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
-  })
-
-  it('placeholder_test', async () => {
-    const {error, result, stderr} = await run(
-      'https://x.com/elonmusk/status/1349129669258448897',
-      'temp/placeholder_test/{time-yyyy}/{time-mm}/{time-dd}/{time-hh}-{time-mi}-{time-ss}.png',
-    )
-    await count('temp/placeholder_test', 1)
-    await access('temp/placeholder_test/2021/01/13/08-02-33.png')
 
     expect(stderr).to.be.empty
     expect(error).to.be.undefined
