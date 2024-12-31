@@ -9,7 +9,7 @@ type ExtractGroups<T extends string> = T extends `${infer _Start}(?<${infer Grou
   : {}
 
 const htmlReplace = (text: string): string => {
-  return text.replaceAll('&lt;', '<').replaceAll('&gt;', '>')
+  return text.replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&amp;#44;', ',')
 }
 
 const match = <T extends string>(text: T, callback: (groups: ExtractGroups<T>) => React.ReactElement[]) => {
@@ -38,28 +38,20 @@ const htmlParse = (text: string): React.ReactElement[] => {
     }),
   ]
 
-  const pattern = `(${replace.map((e) => e[0]).join('|')})`
-  const regex = new RegExp(pattern, 'g')
-
-  const groupsCount = new RegExp('(\\(\\?<(\\w+)>[^\\)]+\\))').exec(pattern)!.length
-
   const parsedText = text.split('<br />').map((item, index) => {
     if (item === '') {
       return <div key={index} style={{height: '1em'}}></div>
     } else {
-      const child = item
-        .split(regex)
-        .filter((e, i) => i === 0 || i % (groupsCount + 1) === 1)
-        .map((item, index) => {
-          if (replace.some((e) => new RegExp(e[0]).test(item))) {
-            const match = replace.find((e) => new RegExp(e[0]).test(item))
-            const groups = new RegExp(match![0]).exec(item)!.groups!
-            return match![1](groups as any)
-          } else {
-            return textWrap(item, {color: '#474747'})
-          }
-        })
-        .filter((e) => e !== null)
+      const data = replace.reduce((acc, e) => acc.flatMap((item) => item.split(e[0])), [item])
+      const child = data.map((item) => {
+        if (replace.some((e) => new RegExp(e[0]).test(item))) {
+          const match = replace.find((e) => new RegExp(e[0]).test(item))
+          const groups = new RegExp(match![0]).exec(item)!.groups!
+          return match![1](groups as any)
+        } else {
+          return textWrap(item, {color: '#474747'})
+        }
+      })
 
       return (
         <div key={index} style={{display: 'flex', flexDirection: 'row', margin: 0, flexWrap: 'wrap'}}>
