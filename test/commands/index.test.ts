@@ -1,78 +1,60 @@
-import {runCommand} from '@oclif/test'
 import {expect} from 'chai'
-
 import * as fs from 'node:fs/promises'
 
-describe('Command test', () => {
-  const videoCommand = ['--simpleLog', '--ffmpegAdditonalOption', '-preset ultrafast']
+import {access, count, run} from './utils'
 
+describe('Command test', () => {
   before(async () => {
+    await fs.rm(`${process.env.HOME}/twitter_snap_temp`, {recursive: true}).catch(() => {})
+    await fs.rm('temp', {recursive: true}).catch(() => {})
+  })
+
+  after(async () => {
+    await fs.rm(`${process.env.HOME}/twitter_snap_temp`, {recursive: true}).catch(() => {})
     await fs.rm('temp', {recursive: true}).catch(() => {})
   })
 
   it('run command', async () => {
-    const cmd = ['--simpleLog', '-o', 'temp/aa.png', 'aa']
-    const {stdout} = await runCommand(cmd)
-    expect(stdout).to.contain('✖ ResponseError: Response returned an error code')
+    const {stderr, error, result, stdout} = await run('aa', 'temp/aa.png')
+    expect(stderr).to.contain('✖️ Unsupported URL')
   })
 
-  it('single tweet', async () => {
-    const cmd = ['--simpleLog', '-o', 'temp/{id}.png', '1349129669258448897']
-    const {stdout} = await runCommand(cmd)
-    await fs.access('temp/1349129669258448897.png').then(() => {
-      expect(true).to.equal(true)
-    })
-    expect(stdout).to.contain('✔ Rendering tweet')
+  it('placeholder_test', async () => {
+    const {error, result, stderr} = await run(
+      'https://x.com/elonmusk/status/1349129669258448897',
+      'temp/placeholder_test/{time-yyyy}/{time-mm}/{time-dd}/{time-hh}-{time-mi}-{time-ss}.png',
+    )
+    await count('temp/placeholder_test', 1)
+    await access('temp/placeholder_test/2021/01/13/08-02-33.png')
+
+    expect(stderr).to.be.empty
+    expect(error).to.be.undefined
+    expect(result).to.be.undefined
   })
 
-  it('get uset tweet', async () => {
-    const cmd = ['--simpleLog', '-o', 'temp/user/{id}.png', '44196397', '--api', 'getUserTweets', '--limit', '10']
-    const {stdout} = await runCommand(cmd)
-    await fs.readdir('temp/user').then((files) => {
-      expect(files.length).to.equal(10)
-    })
-    expect(stdout).to.contain('✔ Rendering tweet')
+  it('home_path_test', async () => {
+    const {error, result, stderr} = await run(
+      'https://x.com/elonmusk/status/1349129669258448897',
+      '~/twitter_snap_temp/absolute_path_test/{count}.png',
+    )
+    await count(`${process.env.HOME}/twitter_snap_temp/absolute_path_test`, 1)
+    await access(`${process.env.HOME}/twitter_snap_temp/absolute_path_test/0.png`)
+
+    expect(stderr).to.be.empty
+    expect(error).to.be.undefined
+    expect(result).to.be.undefined
   })
 
-  it('single video tweet', async () => {
-    const cmd = [...videoCommand, '-o', 'temp/{id}.mp4', '1768794901586804837']
-    const {stdout} = await runCommand(cmd)
-    await fs.access('temp/1768794901586804837.mp4').then(() => {
-      expect(true).to.equal(true)
-    })
-    expect(stdout).to.contain('✔ Rendering tweet')
-  })
+  it('absolute_path_test', async () => {
+    const {error, result, stderr} = await run(
+      'https://x.com/elonmusk/status/1349129669258448897',
+      `${process.env.HOME}/twitter_snap_temp/absolute_path_test/{count}.png`,
+    )
+    await count(`${process.env.HOME}/twitter_snap_temp/absolute_path_test`, 1)
+    await access(`${process.env.HOME}/twitter_snap_temp/absolute_path_test/0.png`)
 
-  it('single video tweet no clean up', async () => {
-    const cmd = [...videoCommand, '-o', 'temp/no-cleanup/{id}.mp4', '1768794901586804837', '--noCleanup']
-    const {stdout} = await runCommand(cmd)
-    await fs.access('temp/no-cleanup/1768794901586804837.png').then(() => {
-      expect(true).to.equal(true)
-    })
-    await fs.access('temp/no-cleanup/1768794901586804837.mp4').then(() => {
-      expect(true).to.equal(true)
-    })
-    await fs.access('temp/no-cleanup/temp-1768794901586804837-0.mp4').then(() => {
-      expect(true).to.equal(true)
-    })
-    expect(stdout).to.contain('✔ Rendering tweet')
-  })
-
-  it('output test 1', async () => {
-    const cmd = [
-      '--simpleLog',
-      '-o',
-      'temp/{time-tweet-yyyy}/{time-tweet-mm}/{time-tweet-dd}/{time-tweet-hh}-{time-tweet-mi}-{time-tweet-ss}.png',
-      '1349129669258448897',
-    ]
-    const {stdout} = await runCommand(cmd)
-    await fs.access('temp/2021/01/13/08-02-33.png')
-    expect(stdout).to.contain('✔ Rendering tweet')
-  })
-
-  it('input user url', async () => {
-    const cmd = ['--simpleLog', '-o', 'temp/{id}.png', 'https://twitter.com/faa0311']
-    const {stdout} = await runCommand(cmd)
-    expect(stdout).to.contain('✔ Rendering tweet')
+    expect(stderr).to.be.empty
+    expect(error).to.be.undefined
+    expect(result).to.be.undefined
   })
 })
