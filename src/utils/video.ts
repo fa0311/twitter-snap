@@ -9,6 +9,7 @@ export type RunFFprobeType = (command: ffprobe.FfmpegCommand) => Promise<ffmpeg.
 export type VideoUtilsParam = {
   ffmpegAdditonalOption?: string[]
   ffmpegPath?: string
+  ffmpegTimeout?: number
   ffprobePath?: string
 }
 
@@ -24,6 +25,7 @@ export class VideoUtils {
     this.flags = {
       ffmpegPath: flags.ffmpegPath ?? 'ffmpeg',
       ffprobePath: flags.ffprobePath ?? 'ffprobe',
+      ffmpegTimeout: flags.ffmpegTimeout ?? -1,
       ffmpegAdditonalOption: flags.ffmpegAdditonalOption ?? [],
     }
   }
@@ -56,7 +58,9 @@ export class VideoUtils {
   }
 
   getFFmpeg: GetFFmpegType = () => {
-    return ffmpeg().setFfmpegPath(this.flags.ffmpegPath)
+    return ffmpeg({
+      timeout: this.flags.ffmpegTimeout < 0 ? undefined : this.flags.ffmpegTimeout,
+    }).setFfmpegPath(this.flags.ffmpegPath)
   }
 
   getFFprobe: GetFFmpegType = () => {

@@ -123,6 +123,7 @@ export type SnapRenderChildNextParam<T1> = {
   data: T1
   ffmpegAdditonalOption?: string[]
   ffmpegPath?: string
+  ffmpegTimeout?: number
   ffprobePath?: string
 
   font: FontOptions
@@ -186,12 +187,25 @@ export class SnapRenderChild<T1> {
   }
 
   next = async (flag: SnapRenderChildNextParam<T1>): Promise<SnapRenderBaseUtils> => {
-    const {theme, scale, data, logger, output, ffmpegPath, ffprobePath, ffmpegAdditonalOption, font, width} = flag
+    const {
+      theme,
+      scale,
+      data,
+      logger,
+      output,
+      ffmpegPath,
+      ffprobePath,
+      ffmpegTimeout,
+      ffmpegAdditonalOption,
+      font,
+      width,
+    } = flag
     const base = (path: FilePath) => {
       return [
         logger,
         new FileUtils(path),
         new VideoUtils({
+          ffmpegTimeout,
           ffmpegPath,
           ffprobePath,
           ffmpegAdditonalOption,

@@ -97,15 +97,16 @@ Create beautiful Tweet images fast
 USAGE
   $ twitter-snap  URL [--browserHeadless] [--browserProfile
     <value>] [--cookiesFile <value>] [--debug] [--interactive]
-    [--ffmpegAdditonalOption <value>] [--ffmpegPath <value>] [--ffprobePath
-    <value>] [--fontPath <value>] [--limit <value>] [--noCleanup] [-o <value>]
-    [--sessionType browser|file|guest] [--simpleLog] [--sleep <value>] [--theme
-    RenderOceanBlueColor|RenderOceanBlueDarkColor|RenderSunsetGardenColor|Render
-    SunsetGardenDarkColor|RenderDawnBlossomColor|RenderDawnBlossomDarkColor|Rend
-    erFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyColor|RenderT
-    wilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|
-    RenderTransparentDark|RenderTransparentShadow|RenderTransparentShadowDark|Js
-    on|LiteJson|Media|RenderMakeItAQuote] [--width <value>] [--scale <value>]
+    [--ffmpegAdditonalOption <value>] [--ffmpegTimeout <value>] [--ffmpegPath
+    <value>] [--ffprobePath <value>] [--fontPath <value>] [--limit <value>]
+    [--noCleanup] [-o <value>] [--sessionType browser|file|guest] [--simpleLog]
+    [--sleep <value>] [--theme RenderOceanBlueColor|RenderOceanBlueDarkColor|Ren
+    derSunsetGardenColor|RenderSunsetGardenDarkColor|RenderDawnBlossomColor|Rend
+    erDawnBlossomDarkColor|RenderFierySunsetColor|RenderFierySunsetDarkColor|Ren
+    derTwilightSkyColor|RenderTwilightSkyDarkColor|RenderPlainColor|RenderPlainD
+    arkColor|RenderTransparent|RenderTransparentDark|RenderTransparentShadow|Ren
+    derTransparentShadowDark|Json|LiteJson|Media|RenderMakeItAQuote] [--width
+    <value>] [--scale <value>]
 
 ARGUMENTS
   URL  Twitter url
@@ -131,6 +132,9 @@ FLAGS
 
   --ffmpegPath=<value>
       [default: ffmpeg] FFmpeg path
+
+  --ffmpegTimeout=<value>
+      [default: -1] FFmpeg timeout
 
   --ffprobePath=<value>
       [default: ffprobe] FFprobe path
