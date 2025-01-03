@@ -1,6 +1,7 @@
 import split from 'graphemesplit'
 import * as React from 'react'
 import {TweetApiUtilsData} from 'twitter-openapi-typescript'
+import {Tweet} from 'twitter-openapi-typescript-generated'
 
 import {SnapRenderUtils} from '../../../../utils/render.js'
 import {RenderWidgetType} from '../utils/utils.js'
@@ -8,12 +9,29 @@ import {RenderWidgetType} from '../utils/utils.js'
 export class RenderMakeItAQuoteImage {
   constructor(public utils: SnapRenderUtils) {}
 
-  textAlign: () => React.CSSProperties = () => {
-    if (this.utils.element.window) {
-      return {textAlign: 'center'}
+  tweetReplace = (tweet: string): string => {
+    return tweet
+      .replaceAll('&amp;', '&')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&quot;', '"')
+      .replaceAll('&apos;', "'")
+  }
+
+  tweetNormalize = (tweet: Tweet): string => {
+    if (tweet.noteTweet?.noteTweetResults.result.text) {
+      return this.tweetReplace(tweet.noteTweet.noteTweetResults.result.text)
     }
 
-    return {justifyContent: 'center'}
+    if (tweet.legacy?.fullText) {
+      if ((tweet.legacy.entities.media ?? []).length > 0) {
+        return this.tweetReplace(tweet.legacy.fullText.replace(/https:\/\/t\.co\/[\dA-Za-z]{10}$/, ''))
+      } else {
+        return this.tweetReplace(tweet.legacy.fullText)
+      }
+    } else {
+      return ''
+    }
   }
 
   render: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
@@ -21,7 +39,6 @@ export class RenderMakeItAQuoteImage {
     const icon = data.user.legacy.profileImageUrlHttps.replace(...reg)
     const note = data.tweet.noteTweet?.noteTweetResults.result
     const legacy = data.tweet.legacy!
-    const text = note?.text ?? legacy.fullText
     const {name, screenName} = data.user.legacy
     const id = screenName
     return (
@@ -49,6 +66,7 @@ export class RenderMakeItAQuoteImage {
               flexDirection: 'column',
               justifyContent: 'center',
               position: 'relative',
+              alignItems: 'center',
               width: this.utils.width * 0.75 - 20,
               left: this.utils.width * -0.25,
             }}
@@ -60,7 +78,6 @@ export class RenderMakeItAQuoteImage {
                 fontSize: this.utils.element.applyScale(14),
                 color: '#ffffff',
                 margin: '0',
-                ...this.textAlign(),
               }}
             >
               - {name}
@@ -70,7 +87,6 @@ export class RenderMakeItAQuoteImage {
                 fontSize: this.utils.element.applyScale(14),
                 color: '#888888',
                 margin: '0',
-                ...this.textAlign(),
               }}
             >
               @{id}
@@ -84,7 +100,7 @@ export class RenderMakeItAQuoteImage {
   tweetRender: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
     const note = data.tweet.noteTweet?.noteTweetResults.result
     const legacy = data.tweet.legacy!
-    const text = note?.text ?? legacy.fullText
+    const text = this.tweetNormalize(data.tweet)
     const trueSplit = split(text).map((char, index) => ({char, index}))
 
     const textDataList: string[][] = []
