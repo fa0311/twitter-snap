@@ -68,6 +68,8 @@ npm i twitter-snap
 ```
 
 ```typescript
+import {getSnapAppRender} from 'twitter-snap'
+
 const snap = getSnapAppRender({url: 'https://x.com/elonmusk/status/1349129669258448897'})
 const font = await snap.getFont()
 const session = await snap.login({sessionType: 'guest'})
@@ -79,6 +81,25 @@ await snap.run(render, async (run) => {
     theme: 'RenderOceanBlueColor',
     font,
     output: 'temp/{id}-{count}.{if-type:png:mp4:json:}',
+  })
+  await res.file.tempCleanup()
+})
+```
+
+```typescript
+import {getSnapAppRender} from 'twitter-snap'
+
+const snap = getSnapAppRender({url: 'https://x.com/elonmusk/status/1349129669258448897'})
+const font = await snap.getFont()
+const session = await snap.login({sessionType: 'guest'})
+const render = await snap.getRender({limit: 1, session})
+
+await snap.run(render, async (run) => {
+  const res = await run({
+    width: 650,
+    theme: 'Media',
+    font,
+    output: 'output',
   })
   await res.file.tempCleanup()
 })

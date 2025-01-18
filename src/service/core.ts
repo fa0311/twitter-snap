@@ -17,7 +17,7 @@ type SnapRunParam = {
   font?: FontOptions
   output?: '{id}-{count}.{if-type:png:mp4:json:}' | ({} & string)
   scale?: number
-  theme?: 'RenderOceanBlueColor' | ({} & string)
+  theme?: 'Json' | 'Media' | 'RenderOceanBlueColor' | ({} & string)
   width?: number
 }
 
