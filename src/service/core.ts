@@ -12,11 +12,12 @@ export const apps = [twitter, pixiv] as SnapApp<any>[]
 type SnapRunParam = {
   ffmpegAdditonalOption?: string[]
   ffmpegPath?: string
+  ffmpegTimeout?: number
   ffprobePath?: string
   font?: FontOptions
   output?: '{id}-{count}.{if-type:png:mp4:json:}' | ({} & string)
   scale?: number
-  theme?: 'RenderOceanBlueColor' | ({} & string)
+  theme?: 'Json' | 'Media' | 'RenderOceanBlueColor' | ({} & string)
   width?: number
 }
 
@@ -67,6 +68,7 @@ export const getSnapAppRender = ({url, logger}: {logger?: Logger; url: string}) 
             ffmpegPath: param.ffmpegPath,
             ffprobePath: param.ffprobePath,
             ffmpegAdditonalOption: param.ffmpegAdditonalOption ?? [],
+            ffmpegTimeout: param.ffmpegTimeout,
             logger: log,
           })
         })

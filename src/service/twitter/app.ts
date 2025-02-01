@@ -11,7 +11,7 @@ import {tweetCursor} from './utils.js'
 
 const app = new SnapApp(
   'twitter snap',
-  'https?://(www.)?(mobile.)?(x|twitter).com',
+  'https?://(www\\.)?(mobile\\.)?(x|twitter)\\.com',
   async (utils) => {
     const allowDomains = ['twitter.com', 'x.com']
 

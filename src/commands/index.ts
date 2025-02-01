@@ -63,6 +63,10 @@ export default class Default extends Command {
       aliases: ['ffmpeg-additonal-option'],
       description: 'FFmpeg additonal option',
     }),
+    ffmpegTimeout: Flags.integer({
+      default: -1,
+      description: 'FFmpeg timeout',
+    }),
     ffmpegPath: Flags.string({
       aliases: ['ffmpeg-path'],
       default: 'ffmpeg',
@@ -188,6 +192,7 @@ export default class Default extends Command {
               ffmpegPath: flags.ffmpegPath,
               ffprobePath: flags.ffprobePath,
               ffmpegAdditonalOption: ffmpegOption,
+              ffmpegTimeout: flags.ffmpegTimeout,
             })
             if (!flags.noCleanup) {
               await res.file.tempCleanup()

@@ -29,7 +29,7 @@ const getFetch = async (cookies: SnapAppCookies) => {
 
 const app = new SnapApp(
   'pixiv snap',
-  'https?://(www.)?pixiv.net',
+  'https?://(www\\.)?pixiv\\.net',
   async (utils) => {
     switch (utils.sessionType) {
       case 'browser': {
