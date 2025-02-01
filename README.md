@@ -9,7 +9,7 @@ npx twitter-snap@latest https://twitter.com/elonmusk/status/1770222178279252062
 
 <p float="left">
   <img src="./docs/img/output-1.png" width="49%" />
-  <img src="./docs/img/output-2.png" width="49%" /> 
+  <img src="./docs/img/output-2.png" width="49%" />
   <img src="./docs/img/output-3.png" width="49%" />
   <img src="./docs/img/output-4.png" width="49%" />
 </p>
@@ -104,8 +104,6 @@ await snap.run(render, async (run) => {
   await res.file.tempCleanup()
 })
 ```
-
-Also, if you use advanced customization, please use [twitter-snap-core](https://github.com/fa0311/twitter-snap-core).
 
 # Usage
 
