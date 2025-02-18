@@ -35,7 +35,7 @@ export const getSnapAppRender = ({url, logger}: {logger?: Logger; url: string}) 
     throw new Error('Unsupported URL')
   }
 
-  const groups = match[0].exec(url)!.groups!
+  const groups = match[0].exec(path)!.groups!
 
   return {
     app,
