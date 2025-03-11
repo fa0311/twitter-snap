@@ -168,7 +168,7 @@ render.add(
 )
 
 app.call(`/(?<user>[a-zA-Z0-9_]+)/status/(?<id>[0-9]+)`, async (utils, api, {id}) => {
-  const guest = api.config.apiKey!('ct0') === undefined
+  const guest = api.config.apiKey!('x-csrf-token') === undefined
 
   if (guest) {
     const fn = (async function* () {
