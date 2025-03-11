@@ -168,14 +168,13 @@ render.add(
 )
 
 app.call(`/(?<user>[a-zA-Z0-9_]+)/status/(?<id>[0-9]+)`, async (utils, api, {id}) => {
-  const guest = api.config.apiKey!('ct0') === undefined
+  const guest = api.config.apiKey!('x-csrf-token') === undefined
 
   if (guest) {
-    throw new Error('Guest user is deprecated')
-    // const fn = (async function* () {
-    //   yield (await api.getDefaultApi().getTweetResultByRestId({tweetId: id})).data!
-    // })()
-    // return render.run(fn)
+    const fn = (async function* () {
+      yield (await api.getDefaultApi().getTweetResultByRestId({tweetId: id})).data!
+    })()
+    return render.run(fn)
   }
 
   const fn = tweetCursor({limit: utils.limit, id}, async (cursor) => {
