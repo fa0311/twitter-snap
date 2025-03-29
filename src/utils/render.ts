@@ -1,4 +1,4 @@
-import {ImageResponse} from '@vercel/og'
+import {ImageResponse} from 'vercel-og-win-patched'
 
 import {ElementColorUtils, ElementUtils} from './element.js'
 import {FileUtils} from './file.js'

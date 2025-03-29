@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.71",
+  "version": "0.0.72",
   "description": "Create beautiful Tweet images fast",
   "keywords": [
     "twitter",
@@ -65,7 +65,7 @@
     "@oclif/plugin-help": "^6.2.25",
     "@oclif/plugin-plugins": "^5.4.33",
     "@oclif/plugin-warn-if-update-available": "^3.1.33",
-    "@vercel/og": "^0.6.5",
+    "vercel-og-win-patched": "^0.6.5",
     "cli-color": "^2.0.4",
     "escape-string-regexp": "^5.0.0",
     "fflate": "^0.8.2",
