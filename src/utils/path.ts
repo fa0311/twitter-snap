@@ -87,7 +87,7 @@ export class FilePath {
       await fs.mkdir(this.dir, {recursive: true})
     }
 
-    fs.writeFile(this.toString(), data)
+    await fs.writeFile(this.toString(), data)
   }
 
   isImage() {

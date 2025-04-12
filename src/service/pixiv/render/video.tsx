@@ -55,7 +55,7 @@ export const ugoiraEncode = async (utils: SnapRenderUtils, ugoira: UgoiraBody, o
 export const pixivVideoRender = async (data: PixivData, utils: SnapRenderColorUtils, input: FilePath) => {
   const margin: number = 30
   const padding: number = 12
-  const title = `https://www.pixiv.net/artworks/${data.meta.illust.id}`
+  const title = `https://www.pixiv.net/artworks/${data.meta.illust.illustId}`
 
   if (!data.ugoira) {
     await utils.video.fromImage(input.toString(), utils.file.path.toString(), title)

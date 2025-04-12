@@ -3,7 +3,7 @@ import {SnapAppCookies} from '../../utils/cookies.js'
 import {URLPath} from '../../utils/path.js'
 import {pixivRender} from './render/image.js'
 import {pixivVideoRender, ugoiraEncode} from './render/video.js'
-import {APIResponse, IllustBody, IllustDataResponse, PixivData, UgoiraBody} from './type.js'
+import {APIResponse, IllustBody, PixivBody, PixivData, UgoiraBody, UserProfile} from './type.js'
 
 const getFetch = async (cookies: SnapAppCookies) => {
   const latestHeader = await fetch('https://raw.githubusercontent.com/fa0311/latest-user-agent/main/header.json').then(
@@ -24,6 +24,15 @@ const getFetch = async (cookies: SnapAppCookies) => {
         cookie: cookies.toString(),
       },
     })
+  }
+}
+
+const getRequest = async (fetch: Awaited<ReturnType<typeof getFetch>>) => {
+  return async <T>(base: string) => {
+    const url = new URL(base)
+    url.searchParams.append('lang', 'ja')
+    url.searchParams.append('version', '87e15fb6d059b34d6ca434d8e84fc0cd810122ec')
+    return (await fetch(url.toString()).then((res) => res.json())) as APIResponse<T>
   }
 }
 
@@ -65,7 +74,7 @@ const render = new SnapRender<PixivData>(
   },
   (data) => {
     return [
-      ['{id}', data.meta.illust.id],
+      ['{id}', data.meta.illust.illustId],
       ['{user-id}', data.meta.user.userId],
       ['{time-yyyy}', new Date(data.meta.illust.createDate).getFullYear().toString().padStart(4, '0')],
       ['{time-mm}', (new Date(data.meta.illust.createDate).getMonth() + 1).toString().padStart(2, '0')],
@@ -76,13 +85,13 @@ const render = new SnapRender<PixivData>(
     ] as [string, number | string | undefined][]
   },
   async (data, utils) => {
-    utils.logger.update(`Rendering image ${data.meta.user.name} ${data.meta.illust.id}`)
+    utils.logger.update(`Rendering image ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
     return pixivRender(data, utils, false)
   },
   async (data, utils) => {
-    utils.logger.update(`Rendering image ${data.meta.user.name} ${data.meta.illust.id}`)
+    utils.logger.update(`Rendering image ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
     const element = await pixivRender(data, utils, true)
-    utils.logger.update(`Rendering video ${data.meta.user.name} ${data.meta.illust.id}`)
+    utils.logger.update(`Rendering video ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
     const input = await utils.file.tempImg(await utils.render(element))
     await pixivVideoRender(data, utils, input)
   },
@@ -132,36 +141,28 @@ render.media<MediaResponse>(
 )
 
 render.json('Json', async (data, utils) => {
-  utils.logger.update(`Parsing ${data.meta.user.name} ${data.meta.illust.id}`)
+  utils.logger.update(`Parsing ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
   return data
 })
 
 app.call('/artworks/(?<id>[0-9]+)', async (utils, cookie, {id}) => {
   const fetch = await getFetch(cookie)
+  const request = await getRequest(fetch)
 
-  const html = await fetch(`https://www.pixiv.net/artworks/${id}`).then((res) => res.text())
-  const metaPreloadData = html.match(/<meta name="preload-data" id="meta-preload-data" content='(.+?)'>/)
-  const metaJson = JSON.parse(metaPreloadData![1]) as IllustDataResponse
-
-  const url = new URL(`https://www.pixiv.net/ajax/illust/${id}/pages`)
-  url.searchParams.append('lang', 'ja')
-  url.searchParams.append('version', 'a64d52acd3aace2086ab632abec7a061c10825fe')
-
-  const illustData = (await fetch(url.toString()).then((res) => res.json())) as APIResponse<IllustBody[]>
+  const metaJson = await request<PixivBody>(`https://www.pixiv.net/ajax/illust/${id}`)
+  const illustData = await request<IllustBody[]>(`https://www.pixiv.net/ajax/illust/${id}/pages`)
+  const userProfileData = await request<UserProfile>(`https://www.pixiv.net/ajax/user/${metaJson.body.userId}`)
 
   const ugoiraData = await (async () => {
-    if (metaJson.illust[id].illustType === 2) {
-      const url = new URL(`https://www.pixiv.net/ajax/illust/${id}/ugoira_meta`)
-      url.searchParams.append('lang', 'ja')
-      url.searchParams.append('version', 'a64d52acd3aace2086ab632abec7a061c10825fe')
-      return (await fetch(url.toString()).then((res) => res.json())) as APIResponse<UgoiraBody>
+    if (metaJson.body.illustType === 2) {
+      return await request<UgoiraBody>(`https://www.pixiv.net/ajax/illust/${id}/ugoira_meta`)
     }
   })()
 
   const res: PixivData = {
     meta: {
-      illust: Object.values(metaJson.illust)[0],
-      user: Object.values(metaJson.user)[0],
+      illust: metaJson.body,
+      user: userProfileData.body,
     },
     illust: illustData.body,
     ugoira: ugoiraData?.body,

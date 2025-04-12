@@ -14,9 +14,9 @@ describe('Package test', () => {
     await fs.rm('temp', {recursive: true}).catch(() => {})
   })
 
-  after(async () => {
-    await fs.rm('temp', {recursive: true}).catch(() => {})
-  })
+  // after(async () => {
+  //   await fs.rm('temp', {recursive: true}).catch(() => {})
+  // })
 
   it('README example', async () => {
     const snap = getSnapAppRender({url: 'https://x.com/elonmusk/status/1349129669258448897'})
@@ -26,13 +26,19 @@ describe('Package test', () => {
 
     await snap.run(render, async (run) => {
       const res = await run({
-        width: 650,
+        width: 1440,
+        scale: 2,
         theme: 'RenderOceanBlueColor',
         font,
         output: 'temp/{id}-{count}.{if-type:png:mp4:json:}',
       })
       await res.file.tempCleanup()
     })
+    const a = await fs.readFile('temp/1349129669258448897-0.png')
+    await fs.writeFile('temp/1349129669258448897-1.png', a)
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    const b = await fs.readFile('temp/1349129669258448897-0.png')
+    expect(a).to.deep.equal(b)
 
     await access('temp/1349129669258448897-0.png')
   })
