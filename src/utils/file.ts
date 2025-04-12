@@ -1,5 +1,5 @@
+import {ImageResponse} from '@vercel/og'
 import fs from 'node:fs/promises'
-import {ImageResponse} from 'vercel-og-win-patched'
 
 import {DirectoryPath, FilePath, URLPath} from './path.js'
 

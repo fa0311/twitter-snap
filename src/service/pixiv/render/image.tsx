@@ -83,7 +83,7 @@ export const pixivRender = async (data: PixivData, utils: SnapRenderColorUtils, 
   )
 
   const userImage = await (async () => {
-    const image = await fetch(data.meta.user.image, {
+    const image = await fetch(data.meta.user.imageBig, {
       headers: {
         referer: 'https://www.pixiv.net/',
       },
@@ -128,7 +128,7 @@ export const pixivRender = async (data: PixivData, utils: SnapRenderColorUtils, 
             margin: utils.element.applyScales([4, 0]),
           }}
         >
-          {data.meta.illust.title}
+          {data.meta.illust.illustTitle}
         </p>
         <div
           style={{
