@@ -6,9 +6,8 @@ import {pixivVideoRender, ugoiraEncode} from './render/video.js'
 import {APIResponse, IllustBody, PixivBody, PixivData, UgoiraBody, UserProfile} from './type.js'
 
 const getFetch = async (cookies: SnapAppCookies) => {
-  const latestHeader = await fetch('https://raw.githubusercontent.com/fa0311/latest-user-agent/main/header.json').then(
-    (res) => res.json(),
-  )
+  const url = 'https://raw.githubusercontent.com/fa0311/latest-user-agent/main/header.json'
+  const latestHeader = await fetch(url).then((res) => res.json())
   const header = {
     ...latestHeader.chrome,
     'accept-encoding': 'gzip, deflate, br, zstd',
