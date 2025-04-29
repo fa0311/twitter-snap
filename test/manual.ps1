@@ -1,4 +1,4 @@
-Write-Outpute-Output "normal_tweets_to_image" 
+Write-Output "normal_tweets_to_image" 
 bin/dev.cmd https://x.com/elonmusk/status/1349129669258448897 --session-type=file --cookiesFile="cookies.json"
 
 Write-Output "normal_tweets_to_video"
@@ -15,5 +15,6 @@ bin/dev.cmd https://x.com/elonmusk --session-type=file --cookiesFile="cookies.js
 
 Write-Output "normal_tweets_to_image_from_browser"
 bin/dev.cmd https://x.com/elonmusk/status/1349129669258448897 --session-type=browser
+
 
 
