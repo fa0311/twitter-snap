@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.0.76",
+  "version": "0.0.77",
   "description": "Create beautiful Tweet images fast",
   "keywords": [
     "twitter",
@@ -75,8 +75,8 @@
     "ora": "^8.2.0",
     "puppeteer": "^24.2.1",
     "react": "^19.0.0",
-    "twitter-openapi-typescript": "^0.0.53",
-    "twitter-openapi-typescript-generated": "^0.0.37"
+    "twitter-openapi-typescript": "^0.0.55",
+    "twitter-openapi-typescript-generated": "^0.0.38"
   },
   "devDependencies": {
     "@hono/react-renderer": "^0.3.0",
