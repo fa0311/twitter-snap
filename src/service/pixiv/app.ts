@@ -36,7 +36,7 @@ const getRequest = async (fetch: Awaited<ReturnType<typeof getFetch>>) => {
 }
 
 const app = new SnapApp(
-  'pixiv snap',
+  'pixiv',
   'https?://(www\\.)?pixiv\\.net',
   async (utils) => {
     switch (utils.sessionType) {

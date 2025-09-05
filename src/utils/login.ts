@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises'
-import { launch } from 'puppeteer'
+import {launch} from 'puppeteer'
 
-import { Cookie, SnapAppCookies } from './cookies.js'
-import { DirectoryPath, FilePath } from './path.js'
+import {Cookie, SnapAppCookies} from './cookies.js'
+import {DirectoryPath, FilePath} from './path.js'
 
 export class SnapAppBrowserUtilsParams {
   sessionType?: 'browser' | 'file' | 'guest'
@@ -19,7 +19,7 @@ export class SnapAppBrowserUtils {
     this.sessionType = flags.sessionType ?? 'guest'
     this.flags = {
       sessionType: this.sessionType,
-      browserProfile: flags.browserProfile ?? '~/browser',
+      browserProfile: flags.browserProfile ?? '~/.cache/twitter-snap/profiles',
       browserHeadless: flags.browserHeadless ?? false,
       cookiesFile: flags.cookiesFile ?? 'cookies.json',
     }

@@ -2,12 +2,12 @@
   "compilerOptions": {
     "jsx": "react",
     "declaration": true,
-    "module": "esnext",
+    "module": "nodenext",
     "outDir": "dist",
     "rootDir": "src",
     "strict": true,
     "target": "es2022",
-    "moduleResolution": "node",
+    "moduleResolution": "nodenext",
     "composite": true,
     "allowSyntheticDefaultImports": true
   },

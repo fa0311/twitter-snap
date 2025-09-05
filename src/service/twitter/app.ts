@@ -10,8 +10,8 @@ import {getVideo, toLiteJson} from './render/utils/utils.js'
 import {tweetCursor} from './utils.js'
 
 const app = new SnapApp(
-  'twitter snap',
-  'https?://(www\\.)?(mobile\\.)?(x|twitter)\\.com',
+  'twitter',
+  'https?://(www\\.)?(mobile\\.)?(x|twitter|fxtwitter|vxtwitter)\\.com',
   async (utils) => {
     const allowDomains = ['twitter.com', 'x.com']
 

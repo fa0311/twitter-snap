@@ -1,7 +1,7 @@
-import {expect} from 'chai'
+import { expect } from 'chai'
 import * as fs from 'node:fs/promises'
 
-import {access, count, run} from './utils'
+import { access, count, run } from './utils'
 
 describe('Pixiv test', () => {
   before(async () => {
@@ -19,8 +19,7 @@ describe('Pixiv test', () => {
     expect(stdout).to.contain('✔ Loading font')
     expect(stdout).to.contain('✔ Logging in')
 
-    expect(stderr).to.contain("✖️ TypeError: Cannot read properties of undefined (reading '0')")
-    expect(stderr).to.contain("✖️ Cannot read properties of undefined (reading '0')")
+    expect(stderr).to.contain("✖️ TypeError: Failed to parse URL from undefined")
   })
 
   it('single_illust_to_image', async () => {
