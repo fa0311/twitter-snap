@@ -47,6 +47,8 @@ export const ugoiraEncode = async (utils: SnapRenderUtils, ugoira: UgoiraBody, o
   command.input(imagesTemp.toString())
   command.inputOptions('-f concat')
   command.inputOptions('-safe 0')
+  command.complexFilter([`[0:v]scale=trunc(iw/2)*2:trunc(ih/2)*2[output]`])
+  command.map('[output]')
 
   command.output(output.toString())
   await utils.video.runFFMpeg(command)

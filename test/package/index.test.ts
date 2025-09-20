@@ -2,6 +2,7 @@ import {expect} from 'chai'
 import fs from 'node:fs/promises'
 
 import {getSnapAppRender} from '../../src/main.js'
+import {getSnapAppRenderWithCache} from '../../src/service/core.js'
 const access = async (path: string) => {
   await fs
     .access(path)
@@ -34,6 +35,30 @@ describe('Package test', () => {
       })
       await res.file.tempCleanup()
     })
+    const a = await fs.readFile('temp/1349129669258448897-0.png')
+    await fs.writeFile('temp/1349129669258448897-1.png', a)
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+    const b = await fs.readFile('temp/1349129669258448897-0.png')
+    expect(a).to.deep.equal(b)
+
+    await access('temp/1349129669258448897-0.png')
+  })
+
+  it('README example with cache', async () => {
+    const snap = getSnapAppRenderWithCache({})
+    const res = await snap({
+      url: 'https://x.com/elonmusk/status/1349129669258448897',
+      callback: async (run) => {
+        const res = await run({
+          width: 1440,
+          scale: 2,
+          theme: 'RenderOceanBlueColor',
+          output: 'temp/{id}-{count}.{if-type:png:mp4:json:}',
+        })
+        await res.file.tempCleanup()
+      },
+    })
+
     const a = await fs.readFile('temp/1349129669258448897-0.png')
     await fs.writeFile('temp/1349129669258448897-1.png', a)
     await new Promise((resolve) => setTimeout(resolve, 1000))

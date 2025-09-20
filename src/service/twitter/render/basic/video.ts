@@ -1,6 +1,6 @@
 import {TweetApiUtilsData} from 'twitter-openapi-typescript'
 
-import {FilePath} from '../../../../utils/path.js'
+import {FilePath, URLPath} from '../../../../utils/path.js'
 import {SnapRenderColorUtils} from '../../../../utils/render.js'
 import {getResizedMediaByWidth} from '../../../../utils/video.js'
 import {getBiggerMedia} from '../utils/utils.js'
@@ -43,10 +43,13 @@ export class RenderBasicVideo {
     )
 
     const res = video.map(async ({url}, i) => {
-      const temp = this.utils.file.getTemp()
+      const path = URLPath.fromURL(url)
+      const temp = this.utils.file.getTemp(path.extension)
 
       const command = this.utils.video.getFFmpeg()
       command.input(url)
+      command.addOption('-c:v', 'copy')
+      command.addOption('-c:a', 'copy')
       command.output(temp.toString())
       await this.utils.video.runFFMpeg(command)
 
@@ -64,7 +67,7 @@ export class RenderBasicVideo {
         const tempAudio = this.utils.file.getTemp('aac')
         const tempOutput = this.utils.file.getTemp()
         const command = this.utils.video.getFFmpeg()
-        command.input('anullsrc=channel_layout=mono:sample_rate=44100')
+        command.input('anullsrc=channel_layout=stereo:sample_rate=128000')
         command.inputFormat('lavfi')
         command.addOption('-t', duration.toString())
         command.output(tempAudio.toString())

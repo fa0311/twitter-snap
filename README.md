@@ -54,7 +54,7 @@ docker run -it --rm -v $(pwd)/output:/app/output ghcr.io/fa0311/twitter-snap/twi
 ```
 
 ```shell
-docker run -it --rm -v $(pwd)/output:/app/output -v $(pwd)/cookies.json:/app/cookies.json twitter-snap https://x.com/elonmusk/status/1349129669258448897 --session-type file
+docker run -it --rm -v $(pwd)/output:/app/output -v $(pwd)/cookies.json:/app/cookies.json ghcr.io/fa0311/twitter-snap/twitter-snap-docker:latest https://x.com/elonmusk/status/1349129669258448897 --session-type file
 ```
 
 `--session-type=browser` is not supported.
@@ -87,21 +87,20 @@ await snap.run(render, async (run) => {
 ```
 
 ```typescript
-import {getSnapAppRender} from 'twitter-snap'
+import {getSnapAppRenderWithCache} from 'twitter-snap'
 
-const snap = getSnapAppRender({url: 'https://x.com/elonmusk/status/1349129669258448897'})
-const font = await snap.getFont()
-const session = await snap.login({sessionType: 'guest'})
-const render = await snap.getRender({limit: 1, session})
-
-await snap.run(render, async (run) => {
-  const res = await run({
-    width: 650,
-    theme: 'Media',
-    font,
-    output: 'output',
-  })
-  await res.file.tempCleanup()
+const snap = getSnapAppRenderWithCache({})
+const res = await snap({
+  url: 'https://x.com/elonmusk/status/1349129669258448897',
+  callback: async (run) => {
+    const res = await run({
+      width: 1440,
+      scale: 2,
+      theme: 'RenderOceanBlueColor',
+      output: 'temp/{id}-{count}.{if-type:png:mp4:json:}',
+    })
+    await res.file.tempCleanup()
+  },
 })
 ```
 

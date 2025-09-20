@@ -11,11 +11,15 @@ export type FontOptions = {
   text: FontTextOptions[] | undefined
 }
 
+export type FontUtilsOptions = {
+  dir?: DirectoryPath
+}
+
 export class FontUtils {
   public dir: DirectoryPath
 
-  constructor(dir: DirectoryPath) {
-    this.dir = dir
+  constructor(param: FontUtilsOptions) {
+    this.dir = param.dir ?? DirectoryPath.from('~/.cache/twitter-snap/fonts')
   }
 
   async getFonts(file: string, fetch: () => Promise<ArrayBuffer>) {

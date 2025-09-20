@@ -11,7 +11,7 @@ import {FileUtils} from '../src/utils/file.js'
 import {type FontOptions, FontUtils} from '../src/utils/font.js'
 import {LoggerMute} from '../src/utils/logger.js'
 import {SnapAppBrowserUtils} from '../src/utils/login.js'
-import {DirectoryPath, FilePath} from '../src/utils/path.js'
+import {FilePath} from '../src/utils/path.js'
 import {SnapRenderColorUtils} from '../src/utils/render.js'
 import {VideoUtils} from '../src/utils/video.js'
 import {renderer} from './renderer.js'
@@ -50,7 +50,7 @@ const getRender = async (url: string) => {
 
   const groups = match[0].exec(url)!.groups!
   const [session, font] = await sessionCache(app.name, async () => {
-    const font = await app.fonts(new FontUtils(DirectoryPath.from('~/.cache/twitter-snap/fonts')))
+    const font = await app.fonts(new FontUtils({}))
     const type = await fs
       .access('cookies.json')
       .then(() => 'file' as const)

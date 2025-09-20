@@ -10,8 +10,8 @@ import {getVideo, toLiteJson} from './render/utils/utils.js'
 import {tweetCursor} from './utils.js'
 
 const app = new SnapApp(
-  'twitter snap',
-  'https?://(www\\.)?(mobile\\.)?(x|twitter)\\.com',
+  'twitter',
+  'https?://(www\\.)?(mobile\\.)?(x|twitter|fxtwitter|vxtwitter)\\.com',
   async (utils) => {
     const allowDomains = ['twitter.com', 'x.com']
 
@@ -236,18 +236,26 @@ app.call(`/(?<user>[a-zA-Z0-9_]+)/likes`, async (utils, api, {user}) => {
   return render.run(fn)
 })
 
+app.call(`/i/bookmarks`, async (utils, api) => {
+  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
+    return api.getTweetApi().getBookmarks({cursor})
+  })
+  return render.run(fn)
+})
+
+app.call(`/i/communities/(?<id>[0-9]+)`, async (utils, api, {id}) => {
+  console.log(id)
+  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
+    return await api.getTweetApi().getCommunityTweetsTimeline({communityId: id, cursor: cursor, rankingMode: 'Recency'})
+  })
+  return render.run(fn)
+})
+
 app.call(`/(?<user>[a-zA-Z0-9_]+)`, async (utils, api, {user}) => {
   const userData = await api.getUserApi().getUserByScreenName({screenName: user})
   const id = userData.data.user!.restId!
   const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
     return api.getTweetApi().getUserTweets({userId: id, cursor})
-  })
-  return render.run(fn)
-})
-
-app.call(`/i/bookmarks`, async (utils, api) => {
-  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getBookmarks({cursor})
   })
   return render.run(fn)
 })
