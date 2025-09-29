@@ -45,10 +45,15 @@ export const ugoiraEncode = async (utils: SnapRenderUtils, ugoira: UgoiraBody, o
   await imagesTemp.writeFile(images)
 
   command.input(imagesTemp.toString())
-  command.inputOptions('-f concat')
-  command.inputOptions('-safe 0')
+  command.inputOptions(['-f', 'concat'])
+  command.inputOptions(['-safe', '0'])
   command.complexFilter([`[0:v]scale=trunc(iw/2)*2:trunc(ih/2)*2[output]`])
   command.map('[output]')
+  if (output.extension === 'mov') {
+    command.addOption('-c:v', 'prores_ks')
+    command.addOption('-profile:v', '3')
+    command.addOption('-pix_fmt', 'yuv422p10le')
+  }
 
   command.output(output.toString())
   await utils.video.runFFMpeg(command)
@@ -64,7 +69,7 @@ export const pixivVideoRender = async (data: PixivData, utils: SnapRenderColorUt
     return
   }
 
-  const ugoiraTemp = utils.file.getTemp('mp4')
+  const ugoiraTemp = utils.file.getTemp('mov')
   await ugoiraEncode(utils, data.ugoira, ugoiraTemp)
 
   const width = utils.width - utils.element.applyScaleNum((margin + padding) * 2)
