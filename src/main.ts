@@ -1,1 +1,1 @@
-export {getSnapAppRender} from './service/core.js'
+export {getSnapAppRender, getSnapAppRenderWithCache} from './service/core.js'
