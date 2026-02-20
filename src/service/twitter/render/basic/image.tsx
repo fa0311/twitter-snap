@@ -786,38 +786,38 @@ export class RenderTweetImage {
 
     const normalizeHashtags = [...(noteEntity?.hashtags ?? []), ...(legacySet?.hashtags ?? [])].map(
       ({indices, tag}) => ({
-        start: normalizeMap.findIndex(({array}) => array === indices[0]),
-        end: normalizeMap.findIndex(({array}) => array === indices[1]),
+        start: normalizeMap.findIndex(({str}) => str === indices[0]),
+        end: normalizeMap.findIndex(({str}) => str === indices[1]),
         tag,
       }),
     )
 
     const normalizeMedia = [...(extEntities?.media ?? [])].map(({indices, idStr, mediaUrlHttps, type}) => ({
-      start: normalizeMap.findIndex(({array}) => array === indices[0]),
-      end: normalizeMap.findIndex(({array}) => array === indices[1]),
+      start: normalizeMap.findIndex(({str}) => str === indices[0]),
+      end: normalizeMap.findIndex(({str}) => str === indices[1]),
       remove: video && type !== 'photo',
       idStr,
       mediaUrlHttps,
     }))
 
     const normalizeNoteMedia = [...(noteEntity?.media ?? [])].map(({indices, idStr, mediaUrlHttps, type}) => ({
-      start: normalizeMap.findIndex(({array}) => array === indices[0]),
-      end: normalizeMap.findIndex(({array}) => array === indices[1]),
+      start: normalizeMap.findIndex(({str}) => str === indices[0]),
+      end: normalizeMap.findIndex(({str}) => str === indices[1]),
       remove: video && type !== 'photo',
       idStr,
       mediaUrlHttps,
     }))
 
     const normalizeUrls = [...(noteEntity?.urls ?? []), ...(legacySet?.urls ?? [])].map(({indices, displayUrl}) => ({
-      start: normalizeMap.findIndex(({array}) => array === indices[0]),
-      end: normalizeMap.findIndex(({array}) => array === indices[1]),
+      start: normalizeMap.findIndex(({str}) => str === indices[0]),
+      end: normalizeMap.findIndex(({str}) => str === indices[1]),
       displayUrl,
     }))
 
     const normalizeUserMentions = [...(noteEntity?.userMentions ?? []), ...(legacySet?.userMentions ?? [])].map(
       ({indices, screenName}) => ({
-        start: normalizeMap.findIndex(({array}) => array === indices[0]),
-        end: normalizeMap.findIndex(({array}) => array === indices[1]),
+        start: normalizeMap.findIndex(({str}) => str === indices[0]),
+        end: normalizeMap.findIndex(({str}) => str === indices[1]),
         screenName,
       }),
     )
