@@ -16,7 +16,7 @@ describe('Command test', () => {
 
   it('run command', async () => {
     const {stderr, error, result, stdout} = await run('aa', 'temp/aa.png')
-    expect(stderr).to.contain('✖️ Unsupported URL')
+    expect(stderr).to.contain('Unsupported URL')
   })
 
   it('placeholder_test', async () => {

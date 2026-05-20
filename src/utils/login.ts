@@ -1,8 +1,8 @@
 import fs from 'node:fs/promises'
-import {launch} from 'puppeteer'
+import { launch } from 'puppeteer'
 
-import {Cookie, SnapAppCookies} from './cookies.js'
-import {DirectoryPath, FilePath} from './path.js'
+import { Cookie, SnapAppCookies } from './cookies.js'
+import { DirectoryPath, FilePath } from './path.js'
 
 export class SnapAppBrowserUtilsParams {
   sessionType?: 'browser' | 'file' | 'guest'
@@ -27,6 +27,7 @@ export class SnapAppBrowserUtils {
 
   async get() {
     return launch({
+      args: ['--disable-blink-features=AutomationControlled'],
       defaultViewport: null,
       headless: this.flags.browserHeadless,
       timeout: 0,

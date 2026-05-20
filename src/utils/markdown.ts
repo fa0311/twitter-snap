@@ -1,4 +1,4 @@
-import {apps} from '../service/core'
+import {apps} from '../service/core.js'
 
 const data = apps.map((app) => {
   return {

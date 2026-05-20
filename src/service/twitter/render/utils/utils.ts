@@ -1,5 +1,5 @@
-import {TweetApiUtilsData} from 'twitter-openapi-typescript'
-import {MediaExtended, MediaVideoInfo} from 'twitter-openapi-typescript-generated'
+import { TweetApiUtilsData } from 'twitter-openapi-typescript'
+import { MediaExtended, MediaVideoInfo, User } from 'twitter-openapi-typescript-generated'
 
 export type RenderWidgetType<T> = (props: T) => React.ReactElement
 export type RenderCssType<T> = (props: T) => React.CSSProperties
@@ -26,15 +26,21 @@ export const getVideo = (videoInfo: MediaVideoInfo) => {
   })[0]
 }
 
+export const getUserName = (user: User) => user.core?.name ?? user.legacy.name ?? ''
+
+export const getUserScreenName = (user: User) => user.core?.screenName ?? user.legacy.screenName ?? ''
+
+export const getUserAvatarUrl = (user: User) => user.avatar?.imageUrl ?? user.legacy.profileImageUrlHttps
+
 export const toLiteJson = (obj: TweetApiUtilsData): any => {
   const res = {
     user: {
-      id: obj.user.legacy?.screenName,
-      name: obj.user.legacy?.screenName,
+      id: getUserScreenName(obj.user),
+      name: getUserName(obj.user),
       followersCount: obj.user.legacy?.followersCount,
       followingCount: obj.user.legacy?.friendsCount,
       description: obj.user.legacy?.description,
-      createAt: obj.user.legacy?.createdAt,
+      createAt: obj.user.core?.createdAt ?? obj.user.legacy?.createdAt,
     },
     tweet: {
       id: obj.tweet.restId,
