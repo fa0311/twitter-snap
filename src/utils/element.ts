@@ -1,4 +1,4 @@
-import {ColorThemeType} from '../config'
+import {ColorThemeType} from '../config.js'
 
 export type ElementUtilsParam = {
   scale?: number

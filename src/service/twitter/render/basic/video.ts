@@ -3,7 +3,7 @@ import {TweetApiUtilsData} from 'twitter-openapi-typescript'
 import {FilePath, URLPath} from '../../../../utils/path.js'
 import {SnapRenderColorUtils} from '../../../../utils/render.js'
 import {getResizedMediaByWidth} from '../../../../utils/video.js'
-import {getBiggerMedia} from '../utils/utils.js'
+import {getBiggerMedia, getUserScreenName} from '../utils/utils.js'
 
 export class RenderBasicVideo {
   margin: number = 30
@@ -25,7 +25,7 @@ export class RenderBasicVideo {
         return b.bitrate - a.bitrate
       })[0]
     })
-    const {screenName} = data.user.legacy!
+    const screenName = getUserScreenName(data.user)
     const id = data.tweet.legacy!.idStr
     const title = `https://twitter.com/${screenName}/status/${id}`
 

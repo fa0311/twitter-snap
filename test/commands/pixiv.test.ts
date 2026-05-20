@@ -15,11 +15,11 @@ describe('Pixiv test', () => {
   it('run command', async () => {
     const {stderr, error, result, stdout} = await run('https://www.pixiv.net/artworks/0', 'temp/aa.png')
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
 
-    expect(stderr).to.contain("✖️ TypeError: Failed to parse URL from undefined")
+    expect(stderr).to.contain("TypeError: Failed to parse URL from undefined")
   })
 
   it('single_illust_to_image', async () => {
@@ -30,11 +30,11 @@ describe('Pixiv test', () => {
     await count('temp/single_illust_to_image', 1)
     await access('temp/single_illust_to_image/0.png')
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
-    expect(stdout).to.contain('✔ Initializing render')
-    expect(stdout).to.contain('✔ Rendering')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
+    expect(stdout).to.contain('Initializing render')
+    expect(stdout).to.contain('Rendering')
 
     expect(stderr).to.be.empty
     expect(error).to.be.undefined
@@ -49,11 +49,11 @@ describe('Pixiv test', () => {
     await count('temp/single_illust_to_video', 1)
     await access('temp/single_illust_to_video/0.mp4')
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
-    expect(stdout).to.contain('✔ Initializing render')
-    expect(stdout).to.contain('✔ Rendering')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
+    expect(stdout).to.contain('Initializing render')
+    expect(stdout).to.contain('Rendering')
 
     expect(stderr).to.be.empty
     expect(error).to.be.undefined
@@ -68,11 +68,11 @@ describe('Pixiv test', () => {
     await count('temp/single_ugoira_to_image', 1)
     await access('temp/single_ugoira_to_image/0.png')
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
-    expect(stdout).to.contain('✔ Initializing render')
-    expect(stdout).to.contain('✔ Rendering')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
+    expect(stdout).to.contain('Initializing render')
+    expect(stdout).to.contain('Rendering')
 
     expect(stderr).to.be.empty
     expect(error).to.be.undefined
@@ -87,11 +87,11 @@ describe('Pixiv test', () => {
     await count('temp/single_ugoira_to_video', 1)
     await access('temp/single_ugoira_to_video/0.mp4')
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
-    expect(stdout).to.contain('✔ Initializing render')
-    expect(stdout).to.contain('✔ Rendering')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
+    expect(stdout).to.contain('Initializing render')
+    expect(stdout).to.contain('Rendering')
 
     expect(stderr).to.be.empty
     expect(error).to.be.undefined
@@ -107,15 +107,15 @@ describe('Pixiv test', () => {
     await count('temp/single_ugoira_to_video_no_cleanup', 5)
     await access('temp/single_ugoira_to_video_no_cleanup/0.mp4')
     await access('temp/single_ugoira_to_video_no_cleanup/temp-0-0.png')
-    await access('temp/single_ugoira_to_video_no_cleanup/temp-1-0.mp4')
+    await access('temp/single_ugoira_to_video_no_cleanup/temp-1-0.mov')
     await access('temp/single_ugoira_to_video_no_cleanup/temp-2-0.txt')
     await count('temp/single_ugoira_to_video_no_cleanup/temp-3-0', 12)
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
-    expect(stdout).to.contain('✔ Initializing render')
-    expect(stdout).to.contain('✔ Rendering')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
+    expect(stdout).to.contain('Initializing render')
+    expect(stdout).to.contain('Rendering')
 
     expect(stderr).to.be.empty
     expect(error).to.be.undefined

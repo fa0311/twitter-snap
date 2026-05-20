@@ -91,9 +91,11 @@ export class VideoUtils {
       command.addOption(option)
     }
 
+    // 色々便利なメタデータをつけるmp4
     const comment = 'Snapped by twitter-snap https://github.com/fa0311/twitter-snap'
     command.addOption('-metadata', `title=${title}`)
     command.addOption('-metadata', `comment=${comment}`)
+    command.addOption('-metadata', `creation_time=${new Date().toISOString()}`)
 
     return this.runFFMpeg(command)
   }

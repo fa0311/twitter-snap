@@ -6,7 +6,7 @@ import {Session, SnapApp, SnapRender} from './../../app.js'
 import {RenderTweetImage} from './render/basic/image.js'
 import {RenderBasicVideo} from './render/basic/video.js'
 import {RenderMakeItAQuoteImage} from './render/makeItAQuote/image.js'
-import {getVideo, toLiteJson} from './render/utils/utils.js'
+import {getUserScreenName, getVideo, toLiteJson} from './render/utils/utils.js'
 import {tweetCursor} from './utils.js'
 
 const app = new SnapApp(
@@ -83,7 +83,7 @@ const render = new SnapRender<TweetApiUtilsData>(
     const legacy = data.tweet.legacy!
     return [
       ['{id}', data.tweet.restId],
-      ['{user-screen-name}', data.user.legacy.screenName],
+      ['{user-screen-name}', getUserScreenName(data.user)],
       ['{user-id}', data.user.restId],
       ['{time-yyyy}', new Date(legacy.createdAt).getFullYear().toString().padStart(4, '0')],
       ['{time-mm}', (new Date(legacy.createdAt).getMonth() + 1).toString().padStart(2, '0')],
@@ -94,14 +94,14 @@ const render = new SnapRender<TweetApiUtilsData>(
     ] as [string, number | string | undefined][]
   },
   async (data, utils) => {
-    utils.logger.update(`Rendering image ${data.user.legacy.screenName} ${data.tweet.restId}`)
+    utils.logger.update(`Rendering image ${getUserScreenName(data.user)} ${data.tweet.restId}`)
     return new RenderTweetImage(utils, false).render({data})
   },
   async (data, utils) => {
-    utils.logger.update(`Rendering image ${data.user.legacy.screenName} ${data.tweet.restId}`)
+    utils.logger.update(`Rendering image ${getUserScreenName(data.user)} ${data.tweet.restId}`)
     const element = new RenderTweetImage(utils, true).render({data})
     const input = await utils.file.tempImg(await utils.render(element))
-    utils.logger.update(`Rendering video ${data.user.legacy.screenName} ${data.tweet.restId}`)
+    utils.logger.update(`Rendering video ${getUserScreenName(data.user)} ${data.tweet.restId}`)
     await new RenderBasicVideo(utils).render({data, input})
   },
 )
@@ -140,29 +140,29 @@ render.media(
 )
 
 render.json('Json', async (data, utils) => {
-  utils.logger.update(`Parsing ${data.user.legacy.screenName} ${data.tweet.restId}`)
+  utils.logger.update(`Parsing ${getUserScreenName(data.user)} ${data.tweet.restId}`)
   return data
 })
 
 render.other('LiteJson', async (data, utils) => {
-  utils.logger.update(`Parsing ${data.user.legacy.screenName} ${data.tweet.restId}`)
+  utils.logger.update(`Parsing ${getUserScreenName(data.user)} ${data.tweet.restId}`)
   return toLiteJson(data)
 })
 
 render.add(
   'RenderMakeItAQuote',
   async (data, utils) => {
-    utils.logger.update(`Rendering ${data.user.legacy.screenName} ${data.tweet.restId}`)
+    utils.logger.update(`Rendering ${getUserScreenName(data.user)} ${data.tweet.restId}`)
     return new RenderMakeItAQuoteImage(utils).render({data})
   },
   async (data, utils) => {
-    utils.logger.update(`Rendering ${data.user.legacy.screenName} ${data.tweet.restId}`)
+    utils.logger.update(`Rendering ${getUserScreenName(data.user)} ${data.tweet.restId}`)
     const element = new RenderMakeItAQuoteImage(utils).render({data})
     const input = await utils.file.tempImg(await utils.render(element))
     await utils.video.fromImage(
       input.toString(),
       utils.file.path.toString(),
-      `https://twitter.com/${data.user.legacy.screenName}/status/${data.tweet.restId}`,
+      `https://twitter.com/${getUserScreenName(data.user)}/status/${data.tweet.restId}`,
     )
   },
 )

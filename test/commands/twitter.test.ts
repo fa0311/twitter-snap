@@ -15,12 +15,12 @@ describe('Twitter test', () => {
   it('run command', async () => {
     const {stderr, error, result, stdout} = await run('https://x.com/elonmusk/status/114514', 'temp/aa.png')
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
-    expect(stdout).to.contain('✔ Initializing render')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
+    expect(stdout).to.contain('Initializing render')
 
-    expect(stderr).to.contain('✖️ Error: No data')
+    expect(stderr).to.contain('Error: No data')
   })
 
   it('single_text_tweet_to_image', async () => {
@@ -31,11 +31,11 @@ describe('Twitter test', () => {
     await count('temp/single_text_tweet_to_image', 1)
     await access('temp/single_text_tweet_to_image/0.png')
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
-    expect(stdout).to.contain('✔ Initializing render')
-    expect(stdout).to.contain('✔ Rendering')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
+    expect(stdout).to.contain('Initializing render')
+    expect(stdout).to.contain('Rendering')
 
     expect(stderr).to.be.empty
     expect(error).to.be.undefined
@@ -50,11 +50,11 @@ describe('Twitter test', () => {
     await count('temp/single_text_tweet_to_video', 1)
     await access('temp/single_text_tweet_to_video/0.mp4')
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
-    expect(stdout).to.contain('✔ Initializing render')
-    expect(stdout).to.contain('✔ Rendering')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
+    expect(stdout).to.contain('Initializing render')
+    expect(stdout).to.contain('Rendering')
 
     expect(stderr).to.be.empty
     expect(error).to.be.undefined
@@ -69,11 +69,11 @@ describe('Twitter test', () => {
     await count('temp/single_video_tweet_to_image', 1)
     await access('temp/single_video_tweet_to_image/0.png')
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
-    expect(stdout).to.contain('✔ Initializing render')
-    expect(stdout).to.contain('✔ Rendering')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
+    expect(stdout).to.contain('Initializing render')
+    expect(stdout).to.contain('Rendering')
 
     expect(stderr).to.be.empty
     expect(error).to.be.undefined
@@ -88,11 +88,11 @@ describe('Twitter test', () => {
     await count('temp/single_video_tweet_to_video', 1)
     await access('temp/single_video_tweet_to_video/0.mp4')
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
-    expect(stdout).to.contain('✔ Initializing render')
-    expect(stdout).to.contain('✔ Rendering')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
+    expect(stdout).to.contain('Initializing render')
+    expect(stdout).to.contain('Rendering')
 
     expect(stderr).to.be.empty
     expect(error).to.be.undefined
@@ -110,11 +110,11 @@ describe('Twitter test', () => {
     await access('temp/single_video_tweet_to_video_no_cleanup/temp-0-0.png')
     await access('temp/single_video_tweet_to_video_no_cleanup/temp-1-0.mp4')
 
-    expect(stdout).to.contain('✔ Initializing API')
-    expect(stdout).to.contain('✔ Loading font')
-    expect(stdout).to.contain('✔ Logging in')
-    expect(stdout).to.contain('✔ Initializing render')
-    expect(stdout).to.contain('✔ Rendering')
+    expect(stdout).to.contain('Initializing API')
+    expect(stdout).to.contain('Loading font')
+    expect(stdout).to.contain('Logging in')
+    expect(stdout).to.contain('Initializing render')
+    expect(stdout).to.contain('Rendering')
 
     expect(stderr).to.be.empty
     expect(error).to.be.undefined

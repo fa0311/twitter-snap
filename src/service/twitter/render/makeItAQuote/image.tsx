@@ -4,7 +4,7 @@ import {TweetApiUtilsData} from 'twitter-openapi-typescript'
 import {Tweet} from 'twitter-openapi-typescript-generated'
 
 import {SnapRenderUtils} from '../../../../utils/render.js'
-import {RenderWidgetType} from '../utils/utils.js'
+import {RenderWidgetType, getUserAvatarUrl, getUserName, getUserScreenName} from '../utils/utils.js'
 
 export class RenderMakeItAQuoteImage {
   constructor(public utils: SnapRenderUtils) {}
@@ -24,7 +24,7 @@ export class RenderMakeItAQuoteImage {
     }
 
     if (tweet.legacy?.fullText) {
-      if ((tweet.legacy.entities.media ?? []).length > 0) {
+      if ((tweet.legacy.entities?.media ?? []).length > 0) {
         return this.tweetReplace(tweet.legacy.fullText.replace(/https:\/\/t\.co\/[\dA-Za-z]{10}$/, ''))
       } else {
         return this.tweetReplace(tweet.legacy.fullText)
@@ -36,11 +36,11 @@ export class RenderMakeItAQuoteImage {
 
   render: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
     const reg = [/_[a-z]+\.([a-z]+)$/, '.$1'] as const
-    const icon = data.user.legacy.profileImageUrlHttps.replace(...reg)
+    const icon = getUserAvatarUrl(data.user)?.replace(...reg)
     const note = data.tweet.noteTweet?.noteTweetResults.result
     const legacy = data.tweet.legacy!
-    const {name, screenName} = data.user.legacy
-    const id = screenName
+    const name = getUserName(data.user)
+    const id = getUserScreenName(data.user)
     return (
       <div
         style={{
@@ -50,15 +50,17 @@ export class RenderMakeItAQuoteImage {
           background: '#000000',
         }}
       >
-        <img
-          alt="icon"
-          src={icon}
-          style={{
-            width: this.utils.width * 0.5,
-            height: this.utils.width * 0.5,
-            maskImage: 'linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0))',
-          }}
-        />
+        {icon && (
+          <img
+            alt="icon"
+            src={icon}
+            style={{
+              width: this.utils.width * 0.5,
+              height: this.utils.width * 0.5,
+              maskImage: 'linear-gradient(to right, rgba(0,0,0,1), rgba(0,0,0,0))',
+            }}
+          />
+        )}
         <div style={{display: 'flex'}}>
           <div
             style={{

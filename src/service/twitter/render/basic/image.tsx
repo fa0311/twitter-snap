@@ -11,7 +11,7 @@ import {
 
 import {SnapRenderColorUtils} from '../../../../utils/render.js'
 import {getResizedMediaByWidth} from '../../../../utils/video.js'
-import {RenderCssType, RenderWidgetType, getBiggerMedia} from '../utils/utils.js'
+import {RenderCssType, RenderWidgetType, getBiggerMedia, getUserAvatarUrl, getUserName, getUserScreenName} from '../utils/utils.js'
 
 export class RenderTweetImage {
   backgroundColor: string
@@ -26,7 +26,10 @@ export class RenderTweetImage {
   margin: number = 30
   padding: number = 12
 
-  constructor(public utils: SnapRenderColorUtils, public video: boolean) {
+  constructor(
+    public utils: SnapRenderColorUtils,
+    public video: boolean,
+  ) {
     this.backgroundColor = this.utils.element.getDark() ? '#000000' : '#ffffff'
     this.subBackgroundColor = this.utils.element.getDark() ? '#16181c' : '#f7f9f9'
     this.textColor = this.utils.element.getDark() ? '#ffffff' : '#000000'
@@ -112,6 +115,27 @@ export class RenderTweetImage {
         // };
       }
     }
+  }
+
+  icon: RenderWidgetType<{alt: string; size: number; src?: string; type?: UserProfileImageShapeEnum}> = ({
+    alt,
+    size,
+    src,
+    type,
+  }) => {
+    const scaledSize = this.utils.element.applyScale(size)
+    const style = {
+      width: scaledSize,
+      height: scaledSize,
+      margin: this.utils.element.applyScale(4),
+      ...(type ? this.getIconShapeWidget({type}) : {borderRadius: '50%'}),
+    }
+
+    if (!src) {
+      return <div style={{...style, background: this.subBackgroundColor}} />
+    }
+
+    return <img alt={alt} src={src} style={style} />
   }
 
   userOrNullConverter = (userResults: UserUnion): User | undefined => {
@@ -575,7 +599,8 @@ export class RenderTweetImage {
   }
 
   username: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
-    const {name, verified} = data.user.legacy
+    const verified = data.user.legacy.verified
+    const name = getUserName(data.user)
     const label = data.user.affiliatesHighlightedLabel?.label?.badge?.url
     return (
       <div
@@ -612,8 +637,8 @@ export class RenderTweetImage {
 
   userRender: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
     const reg = [/_[a-z]+\.([a-z]+)$/, '.$1'] as const
-    const icon = data.user.legacy.profileImageUrlHttps.replace(...reg)
-    const id = data.user.legacy.screenName
+    const icon = getUserAvatarUrl(data.user)?.replace(...reg)
+    const id = getUserScreenName(data.user)
     const legacy = data.tweet.legacy!
     const extEntities = legacy.extendedEntities
 
@@ -652,15 +677,11 @@ export class RenderTweetImage {
             alignItems: 'center',
           }}
         >
-          <img
+          <this.icon
             alt="icon"
+            size={40}
             src={icon}
-            style={{
-              width: this.utils.element.applyScale(40),
-              height: this.utils.element.applyScale(40),
-              margin: this.utils.element.applyScale(4),
-              ...this.getIconShapeWidget({type: data.user.profileImageShape}),
-            }}
+            type={data.user.profileImageShape}
           />
           <div style={{display: 'flex', flexDirection: 'column'}}>
             {this.username({data})}
@@ -694,9 +715,8 @@ export class RenderTweetImage {
   }
 
   quotedRender: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
-    const icon = data.user.legacy.profileImageUrlHttps
-    const {name, screenName} = data.user.legacy
-    const id = screenName
+    const icon = getUserAvatarUrl(data.user)
+    const id = getUserScreenName(data.user)
     return (
       <div
         style={{
@@ -706,15 +726,11 @@ export class RenderTweetImage {
         }}
       >
         <div style={{display: 'flex', gap: this.utils.element.applyScale(2)}}>
-          <img
+          <this.icon
             alt="icon"
+            size={24}
             src={icon}
-            style={{
-              width: this.utils.element.applyScale(24),
-              height: this.utils.element.applyScale(24),
-              margin: this.utils.element.applyScale(4),
-              ...this.getIconShapeWidget({type: data.user.profileImageShape}),
-            }}
+            type={data.user.profileImageShape}
           />
           <div
             style={{
@@ -1119,7 +1135,7 @@ export class RenderTweetImage {
                 fontWeight: '700',
               }}
             >
-              {mediaSource.map((user) => user.legacy.name).join(', ')}
+              {mediaSource.map((user) => getUserName(user)).join(', ')}
             </span>
           </p>
         )}
