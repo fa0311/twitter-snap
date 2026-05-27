@@ -91,6 +91,11 @@ export default class Default extends Command {
       default: false,
       description: 'Cleanup',
     }),
+    outputPrefix: Flags.string({
+      aliases: ['output-prefix'],
+      default: '',
+      description: 'Output file name prefix',
+    }),
     output: Flags.string({
       char: 'o',
       default: '{id}-{count}.{if-type:png:mp4:json:}',
@@ -188,7 +193,7 @@ export default class Default extends Command {
               font,
               scale: flags.scale,
               theme: flags.theme,
-              output: flags.output,
+              output: `${flags.outputPrefix}${flags.output}`,
               ffmpegPath: flags.ffmpegPath,
               ffprobePath: flags.ffprobePath,
               ffmpegAdditonalOption: ffmpegOption,
