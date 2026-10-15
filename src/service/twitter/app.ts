@@ -217,7 +217,7 @@ app.call(`/i/lists/(?<id>[0-9]+)`, async (utils, api, {id}) => {
 app.call(`/(?<user>[a-zA-Z0-9_]+)/with_replies`, async (utils, api, {user}) => {
   const id = await getUserId(api, user)
   const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getUserTweetsAndReplies({userId: id, cursor})
+    return api.getTweetApi().getUserRepliesTimeline({userId: id, cursor})
   })
   return render.run(fn)
 })
@@ -225,7 +225,7 @@ app.call(`/(?<user>[a-zA-Z0-9_]+)/with_replies`, async (utils, api, {user}) => {
 app.call(`/(?<user>[a-zA-Z0-9_]+)/media`, async (utils, api, {user}) => {
   const id = await getUserId(api, user)
   const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getUserMedia({userId: id, cursor})
+    return api.getTweetApi().getUserVideoTimeline({userId: id, cursor})
   })
   return render.run(fn)
 })
@@ -255,7 +255,7 @@ app.call(`/i/communities/(?<id>[0-9]+)`, async (utils, api, {id}) => {
 app.call(`/(?<user>[a-zA-Z0-9_]+)`, async (utils, api, {user}) => {
   const id = await getUserId(api, user)
   const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getUserTweets({userId: id, cursor})
+    return api.getTweetApi().getUserOriginalsTimeline({userId: id, cursor})
   })
   return render.run(fn)
 })
