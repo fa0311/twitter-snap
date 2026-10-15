@@ -1,3 +1,4 @@
+import os from 'node:os'
 import {sep} from 'node:path'
 import {describe, expect, it} from 'vitest'
 
@@ -62,7 +63,7 @@ describe('Utils test', () => {
 
   it('directory path from', async () => {
     const path = DirectoryPath.from('~/test')
-    const home = process.env.HOME!.replaceAll(sep, '/')
+    const home = os.homedir().replaceAll(sep, '/')
     expect(path.path).toBe(`${home}/test`)
     expect(path.toString()).toBe(`${home}/test`)
 
@@ -85,7 +86,7 @@ describe('Utils test', () => {
 
   it('file path from', async () => {
     const path = FilePath.from('~/test.txt')
-    const home = process.env.HOME!.replaceAll(sep, '/')
+    const home = os.homedir().replaceAll(sep, '/')
     expect(path.dir).toBe(home)
     expect(path.name).toBe('test')
     expect(path.extension).toBe('txt')
@@ -118,7 +119,7 @@ describe('Utils test', () => {
 
   it('file path fromDirectory', async () => {
     const path = FilePath.fromDirectory('~/test', 'test.txt')
-    const home = process.env.HOME!.replaceAll(sep, '/')
+    const home = os.homedir().replaceAll(sep, '/')
     expect(path.dir).toBe(`${home}/test`)
     expect(path.name).toBe('test')
     expect(path.extension).toBe('txt')
@@ -152,7 +153,7 @@ describe('Utils test', () => {
   it('file path update', async () => {
     const path = FilePath.from('~/test.txt')
     const path2 = path.update({dir: 'test', name: 'test', extension: 'txt'})
-    const home = process.env.HOME!.replaceAll(sep, '/')
+    const home = os.homedir().replaceAll(sep, '/')
     expect(path2.dir).toBe('test')
     expect(path2.name).toBe('test')
     expect(path2.extension).toBe('txt')

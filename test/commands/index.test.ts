@@ -1,16 +1,17 @@
 import * as fs from 'node:fs/promises'
+import os from 'node:os'
 import {afterAll, beforeAll, describe, expect, it} from 'vitest'
 
 import {access, count, run} from './utils.js'
 
 describe('Command test', () => {
   beforeAll(async () => {
-    await fs.rm(`${process.env.HOME}/twitter_snap_temp`, {recursive: true}).catch(() => {})
+    await fs.rm(`${os.homedir()}/twitter_snap_temp`, {recursive: true}).catch(() => {})
     await fs.rm('temp', {recursive: true}).catch(() => {})
   })
 
   afterAll(async () => {
-    await fs.rm(`${process.env.HOME}/twitter_snap_temp`, {recursive: true}).catch(() => {})
+    await fs.rm(`${os.homedir()}/twitter_snap_temp`, {recursive: true}).catch(() => {})
     await fs.rm('temp', {recursive: true}).catch(() => {})
   })
 
@@ -41,8 +42,8 @@ describe('Command test', () => {
       'https://x.com/elonmusk/status/1349129669258448897',
       '~/twitter_snap_temp/absolute_path_test/{count}.png',
     )
-    await count(`${process.env.HOME}/twitter_snap_temp/absolute_path_test`, 1)
-    await access(`${process.env.HOME}/twitter_snap_temp/absolute_path_test/0.png`)
+    await count(`${os.homedir()}/twitter_snap_temp/absolute_path_test`, 1)
+    await access(`${os.homedir()}/twitter_snap_temp/absolute_path_test/0.png`)
 
     expect(stderr).toBe('')
     expect(error).toBeUndefined()
@@ -52,10 +53,10 @@ describe('Command test', () => {
   it('absolute_path_test', async () => {
     const {error, result, stderr} = await run(
       'https://x.com/elonmusk/status/1349129669258448897',
-      `${process.env.HOME}/twitter_snap_temp/absolute_path_test/{count}.png`,
+      `${os.homedir()}/twitter_snap_temp/absolute_path_test/{count}.png`,
     )
-    await count(`${process.env.HOME}/twitter_snap_temp/absolute_path_test`, 1)
-    await access(`${process.env.HOME}/twitter_snap_temp/absolute_path_test/0.png`)
+    await count(`${os.homedir()}/twitter_snap_temp/absolute_path_test`, 1)
+    await access(`${os.homedir()}/twitter_snap_temp/absolute_path_test/0.png`)
 
     expect(stderr).toBe('')
     expect(error).toBeUndefined()
