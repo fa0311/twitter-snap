@@ -17,13 +17,16 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node_version }}
-          cache: npm
+          cache: pnpm
       - uses: FedericoCarboni/setup-ffmpeg@v3
         id: setup-ffmpeg
-      - run: npm install
-      - run: npm run build
-      - run: npm run test
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - run: pnpm run lint
+      - run: pnpm run typecheck
+      - run: pnpm run test

@@ -1,21 +1,19 @@
-import {expect} from 'chai'
 import fs from 'node:fs/promises'
+import {beforeAll, describe, expect, it} from 'vitest'
 
 import {getSnapAppRender} from '../../src/main.js'
 import {getSnapAppRenderWithCache} from '../../src/service/core.js'
+
 const access = async (path: string) => {
-  await fs
-    .access(path)
-    .then(() => expect(true).to.equal(true))
-    .catch(() => expect(false).to.equal(true))
+  await expect(fs.access(path)).resolves.toBeUndefined()
 }
 
 describe('Package test', () => {
-  before(async () => {
+  beforeAll(async () => {
     await fs.rm('temp', {recursive: true}).catch(() => {})
   })
 
-  // after(async () => {
+  // afterAll(async () => {
   //   await fs.rm('temp', {recursive: true}).catch(() => {})
   // })
 
@@ -39,14 +37,14 @@ describe('Package test', () => {
     await fs.writeFile('temp/1349129669258448897-1.png', a)
     await new Promise((resolve) => setTimeout(resolve, 1000))
     const b = await fs.readFile('temp/1349129669258448897-0.png')
-    expect(a).to.deep.equal(b)
+    expect(a).toEqual(b)
 
     await access('temp/1349129669258448897-0.png')
   })
 
   it('README example with cache', async () => {
     const snap = getSnapAppRenderWithCache({})
-    const res = await snap({
+    await snap({
       url: 'https://x.com/elonmusk/status/1349129669258448897',
       callback: async (run) => {
         const res = await run({
@@ -63,7 +61,7 @@ describe('Package test', () => {
     await fs.writeFile('temp/1349129669258448897-1.png', a)
     await new Promise((resolve) => setTimeout(resolve, 1000))
     const b = await fs.readFile('temp/1349129669258448897-0.png')
-    expect(a).to.deep.equal(b)
+    expect(a).toEqual(b)
 
     await access('temp/1349129669258448897-0.png')
   })

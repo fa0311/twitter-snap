@@ -1,18 +1,13 @@
-import {runCommand} from '@oclif/test'
-import {expect} from 'chai'
 import * as fs from 'node:fs/promises'
+import {runCommand} from '@oclif/test'
+import {expect} from 'vitest'
 
 export const access = async (path: string) => {
-  await fs
-    .access(path)
-    .then(() => expect(true).to.equal(true))
-    .catch(() => expect(false).to.equal(true))
+  await expect(fs.access(path)).resolves.toBeUndefined()
 }
 
 export const count = async (path: string, length: number) => {
-  return fs.readdir(path).then((files) => {
-    expect(files.length).to.equal(length)
-  })
+  await expect(fs.readdir(path)).resolves.toHaveLength(length)
 }
 
 export const run = (url: string, output: string, ...args: string[]) => {

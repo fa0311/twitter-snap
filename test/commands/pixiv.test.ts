@@ -1,25 +1,25 @@
-import { expect } from 'chai'
 import * as fs from 'node:fs/promises'
+import {afterAll, beforeAll, describe, expect, it} from 'vitest'
 
-import { access, count, run } from './utils'
+import {access, count, run} from './utils.js'
 
 describe('Pixiv test', () => {
-  before(async () => {
+  beforeAll(async () => {
     await fs.rm('temp', {recursive: true}).catch(() => {})
   })
 
-  after(async () => {
+  afterAll(async () => {
     await fs.rm('temp', {recursive: true}).catch(() => {})
   })
 
   it('run command', async () => {
-    const {stderr, error, result, stdout} = await run('https://www.pixiv.net/artworks/0', 'temp/aa.png')
+    const {stderr, stdout} = await run('https://www.pixiv.net/artworks/0', 'temp/aa.png')
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
 
-    expect(stderr).to.contain("TypeError: Failed to parse URL from undefined")
+    expect(stderr).toContain('TypeError: Failed to parse URL from undefined')
   })
 
   it('single_illust_to_image', async () => {
@@ -30,15 +30,15 @@ describe('Pixiv test', () => {
     await count('temp/single_illust_to_image', 1)
     await access('temp/single_illust_to_image/0.png')
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
-    expect(stdout).to.contain('Initializing render')
-    expect(stdout).to.contain('Rendering')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
+    expect(stdout).toContain('Initializing render')
+    expect(stdout).toContain('Rendering')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('single_illust_to_video', async () => {
@@ -49,15 +49,15 @@ describe('Pixiv test', () => {
     await count('temp/single_illust_to_video', 1)
     await access('temp/single_illust_to_video/0.mp4')
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
-    expect(stdout).to.contain('Initializing render')
-    expect(stdout).to.contain('Rendering')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
+    expect(stdout).toContain('Initializing render')
+    expect(stdout).toContain('Rendering')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('single_ugoira_to_image', async () => {
@@ -68,15 +68,15 @@ describe('Pixiv test', () => {
     await count('temp/single_ugoira_to_image', 1)
     await access('temp/single_ugoira_to_image/0.png')
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
-    expect(stdout).to.contain('Initializing render')
-    expect(stdout).to.contain('Rendering')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
+    expect(stdout).toContain('Initializing render')
+    expect(stdout).toContain('Rendering')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('single_ugoira_to_video', async () => {
@@ -87,15 +87,15 @@ describe('Pixiv test', () => {
     await count('temp/single_ugoira_to_video', 1)
     await access('temp/single_ugoira_to_video/0.mp4')
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
-    expect(stdout).to.contain('Initializing render')
-    expect(stdout).to.contain('Rendering')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
+    expect(stdout).toContain('Initializing render')
+    expect(stdout).toContain('Rendering')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('single_ugoira_to_video_no_cleanup', async () => {
@@ -111,15 +111,15 @@ describe('Pixiv test', () => {
     await access('temp/single_ugoira_to_video_no_cleanup/temp-2-0.txt')
     await count('temp/single_ugoira_to_video_no_cleanup/temp-3-0', 12)
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
-    expect(stdout).to.contain('Initializing render')
-    expect(stdout).to.contain('Rendering')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
+    expect(stdout).toContain('Initializing render')
+    expect(stdout).toContain('Rendering')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('media_theme_image', async () => {
@@ -132,9 +132,9 @@ describe('Pixiv test', () => {
     await count('temp/media_theme_image', 1)
     await access('temp/media_theme_image/0.mp4')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('media_theme_video', async () => {
@@ -148,8 +148,8 @@ describe('Pixiv test', () => {
     await count('temp/media_theme_video', 1)
     await access('temp/media_theme_video/0.mp4')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 })

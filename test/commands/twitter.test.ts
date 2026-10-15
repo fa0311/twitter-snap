@@ -1,26 +1,26 @@
-import {expect} from 'chai'
 import * as fs from 'node:fs/promises'
+import {afterAll, beforeAll, describe, expect, it} from 'vitest'
 
-import {access, count, run} from './utils'
+import {access, count, run} from './utils.js'
 
 describe('Twitter test', () => {
-  before(async () => {
+  beforeAll(async () => {
     await fs.rm('temp', {recursive: true}).catch(() => {})
   })
 
-  after(async () => {
+  afterAll(async () => {
     await fs.rm('temp', {recursive: true}).catch(() => {})
   })
 
   it('run command', async () => {
-    const {stderr, error, result, stdout} = await run('https://x.com/elonmusk/status/114514', 'temp/aa.png')
+    const {stderr, stdout} = await run('https://x.com/elonmusk/status/114514', 'temp/aa.png')
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
-    expect(stdout).to.contain('Initializing render')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
+    expect(stdout).toContain('Initializing render')
 
-    expect(stderr).to.contain('Error: No data')
+    expect(stderr).toContain('Error: No data')
   })
 
   it('single_text_tweet_to_image', async () => {
@@ -31,15 +31,15 @@ describe('Twitter test', () => {
     await count('temp/single_text_tweet_to_image', 1)
     await access('temp/single_text_tweet_to_image/0.png')
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
-    expect(stdout).to.contain('Initializing render')
-    expect(stdout).to.contain('Rendering')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
+    expect(stdout).toContain('Initializing render')
+    expect(stdout).toContain('Rendering')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('single_text_tweet_to_video', async () => {
@@ -50,15 +50,15 @@ describe('Twitter test', () => {
     await count('temp/single_text_tweet_to_video', 1)
     await access('temp/single_text_tweet_to_video/0.mp4')
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
-    expect(stdout).to.contain('Initializing render')
-    expect(stdout).to.contain('Rendering')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
+    expect(stdout).toContain('Initializing render')
+    expect(stdout).toContain('Rendering')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('single_video_tweet_to_image', async () => {
@@ -69,15 +69,15 @@ describe('Twitter test', () => {
     await count('temp/single_video_tweet_to_image', 1)
     await access('temp/single_video_tweet_to_image/0.png')
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
-    expect(stdout).to.contain('Initializing render')
-    expect(stdout).to.contain('Rendering')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
+    expect(stdout).toContain('Initializing render')
+    expect(stdout).toContain('Rendering')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('single_video_tweet_to_video', async () => {
@@ -88,15 +88,15 @@ describe('Twitter test', () => {
     await count('temp/single_video_tweet_to_video', 1)
     await access('temp/single_video_tweet_to_video/0.mp4')
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
-    expect(stdout).to.contain('Initializing render')
-    expect(stdout).to.contain('Rendering')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
+    expect(stdout).toContain('Initializing render')
+    expect(stdout).toContain('Rendering')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('single_video_tweet_to_video_no_cleanup', async () => {
@@ -110,15 +110,15 @@ describe('Twitter test', () => {
     await access('temp/single_video_tweet_to_video_no_cleanup/temp-0-0.png')
     await access('temp/single_video_tweet_to_video_no_cleanup/temp-1-0.mp4')
 
-    expect(stdout).to.contain('Initializing API')
-    expect(stdout).to.contain('Loading font')
-    expect(stdout).to.contain('Logging in')
-    expect(stdout).to.contain('Initializing render')
-    expect(stdout).to.contain('Rendering')
+    expect(stdout).toContain('Initializing API')
+    expect(stdout).toContain('Loading font')
+    expect(stdout).toContain('Logging in')
+    expect(stdout).toContain('Initializing render')
+    expect(stdout).toContain('Rendering')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   // it('multiple_tweets_to_image', async () => {
@@ -130,9 +130,9 @@ describe('Twitter test', () => {
   //   )
   //   await count('temp/multiple_tweets_to_image', 10)
 
-  //   expect(stderr).to.be.empty
-  //   expect(error).to.be.undefined
-  //   expect(result).to.be.undefined
+  //   expect(stderr).toBe('')
+  //   expect(error).toBeUndefined()
+  //   expect(result).toBeUndefined()
   // })
 
   it('media_theme_image', async () => {
@@ -147,9 +147,9 @@ describe('Twitter test', () => {
     await access('temp/media_theme_image/1.jpg')
     await access('temp/media_theme_image/2.jpg')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('media_theme_video', async () => {
@@ -163,9 +163,9 @@ describe('Twitter test', () => {
     await count('temp/media_theme_video', 1)
     await access('temp/media_theme_video/0.mp4')
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('json_theme', async () => {
@@ -177,10 +177,10 @@ describe('Twitter test', () => {
     )
     await count('temp/json_theme', 1)
     await access('temp/json_theme/0.json')
-    expect(stdout).not.to.contain('SpaceX')
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stdout).not.toContain('SpaceX')
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('json_theme_stdout', async () => {
@@ -190,9 +190,9 @@ describe('Twitter test', () => {
       '--theme',
       'Json',
     )
-    expect(stdout).to.contain('SpaceX')
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stdout).toContain('SpaceX')
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 })

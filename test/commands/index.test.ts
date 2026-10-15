@@ -1,22 +1,22 @@
-import {expect} from 'chai'
 import * as fs from 'node:fs/promises'
+import {afterAll, beforeAll, describe, expect, it} from 'vitest'
 
-import {access, count, run} from './utils'
+import {access, count, run} from './utils.js'
 
 describe('Command test', () => {
-  before(async () => {
+  beforeAll(async () => {
     await fs.rm(`${process.env.HOME}/twitter_snap_temp`, {recursive: true}).catch(() => {})
     await fs.rm('temp', {recursive: true}).catch(() => {})
   })
 
-  after(async () => {
+  afterAll(async () => {
     await fs.rm(`${process.env.HOME}/twitter_snap_temp`, {recursive: true}).catch(() => {})
     await fs.rm('temp', {recursive: true}).catch(() => {})
   })
 
   it('run command', async () => {
-    const {stderr, error, result, stdout} = await run('aa', 'temp/aa.png')
-    expect(stderr).to.contain('Unsupported URL')
+    const {stderr} = await run('aa', 'temp/aa.png')
+    expect(stderr).toContain('Unsupported URL')
   })
 
   it('placeholder_test', async () => {
@@ -24,12 +24,16 @@ describe('Command test', () => {
       'https://x.com/elonmusk/status/1349129669258448897',
       'temp/placeholder_test/{time-yyyy}/{time-mm}/{time-dd}/{time-hh}-{time-mi}-{time-ss}.png',
     )
-    await count('temp/placeholder_test', 1)
-    await access('temp/placeholder_test/2021/01/13/08-02-33.png')
+    // 2021-01-12T23:02:33Z rendered with the local timezone, as the {time-*} placeholders do
+    const t = new Date('2021-01-12T23:02:33Z')
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    const dir = `temp/placeholder_test/${t.getFullYear()}/${pad(t.getMonth() + 1)}/${pad(t.getDate())}`
+    await count(dir, 1)
+    await access(`${dir}/${pad(t.getHours())}-${pad(t.getMinutes())}-${pad(t.getSeconds())}.png`)
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('home_path_test', async () => {
@@ -40,9 +44,9 @@ describe('Command test', () => {
     await count(`${process.env.HOME}/twitter_snap_temp/absolute_path_test`, 1)
     await access(`${process.env.HOME}/twitter_snap_temp/absolute_path_test/0.png`)
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 
   it('absolute_path_test', async () => {
@@ -53,8 +57,8 @@ describe('Command test', () => {
     await count(`${process.env.HOME}/twitter_snap_temp/absolute_path_test`, 1)
     await access(`${process.env.HOME}/twitter_snap_temp/absolute_path_test/0.png`)
 
-    expect(stderr).to.be.empty
-    expect(error).to.be.undefined
-    expect(result).to.be.undefined
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
   })
 })
