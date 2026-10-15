@@ -23,8 +23,7 @@ jobs:
         with:
           node-version: ${{ matrix.node_version }}
           cache: pnpm
-      - uses: FedericoCarboni/setup-ffmpeg@v3
-        id: setup-ffmpeg
+      - uses: AnimMouse/setup-ffmpeg@v1
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - run: pnpm run lint
