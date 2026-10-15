@@ -1,10 +1,10 @@
 import fs from 'node:fs/promises'
-import { launch } from 'puppeteer'
+import {launch} from 'puppeteer'
 
-import { Cookie, SnapAppCookies } from './cookies.js'
-import { DirectoryPath, FilePath } from './path.js'
+import {type Cookie, SnapAppCookies} from './cookies.js'
+import {DirectoryPath, FilePath} from './path.js'
 
-export class SnapAppBrowserUtilsParams {
+export type SnapAppBrowserUtilsParams = {
   sessionType?: 'browser' | 'file' | 'guest'
   browserProfile?: string
   browserHeadless?: boolean
@@ -38,16 +38,13 @@ export class SnapAppBrowserUtils {
   fileLogin = async () => {
     const data = await fs.readFile(FilePath.from(this.flags.cookiesFile).toString(), 'utf8')
 
-    const parsed = JSON.parse(data)
+    // Either a browser extension export (array of cookies) or a plain {name: value} object.
+    const parsed = JSON.parse(data) as Cookie[] | Record<string, string>
     if (Array.isArray(parsed)) {
-      return new SnapAppCookies(parsed.map(({name, value, domain}: Cookie) => ({name, value, domain})) as Cookie[])
+      return new SnapAppCookies(parsed.map(({name, value, domain}) => ({name, value, domain})))
     }
 
-    if (typeof parsed === 'object') {
-      return new SnapAppCookies(Object.entries(parsed).map(([name, value]) => ({name, value})) as Cookie[])
-    }
-
-    throw new Error('Invalid cookies')
+    return new SnapAppCookies(Object.entries(parsed).map(([name, value]) => ({name, value})))
   }
 
   puppeteerLogin = async (url: string, pattern: string) => {

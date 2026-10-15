@@ -1,4 +1,4 @@
-import {TimelineApiUtilsResponse, TweetApiUtilsData, TwitterApiUtilsResponse} from 'twitter-openapi-typescript'
+import type {TimelineApiUtilsResponse, TweetApiUtilsData, TwitterApiUtilsResponse} from 'twitter-openapi-typescript'
 
 type tweetApiSnapParam = {
   id?: string

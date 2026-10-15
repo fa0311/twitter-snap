@@ -1,17 +1,10 @@
-import {Args, Command, Flags} from '@oclif/core'
 import {stdout} from 'node:process'
+import {Args, Command, Flags, type Interfaces} from '@oclif/core'
 
-import {ThemeNameType, themeList} from '../config.js'
+import {type ThemeNameType, themeNameList} from '../config.js'
 import {getSnapAppRender} from '../service/core.js'
 import {Logger, LoggerSimple} from '../utils/logger.js'
 import {sleepLoop} from '../utils/sleep.js'
-
-export abstract class DefaultCommand extends Command {
-  public getDefault() {
-    return this.parse(Default)
-  }
-}
-export type DefaultCommandType = Awaited<ReturnType<typeof DefaultCommand.prototype.getDefault>>
 
 const sessionType = ['browser', 'file', 'guest'] as const
 type SessionType = (typeof sessionType)[number]
@@ -119,7 +112,7 @@ export default class Default extends Command {
     theme: Flags.custom<ThemeNameType>({
       default: 'RenderOceanBlueColor',
       description: 'Theme type',
-      options: Object.keys(themeList),
+      options: themeNameList,
     })(),
     width: Flags.integer({
       default: 650,
@@ -128,6 +121,7 @@ export default class Default extends Command {
     scale: Flags.custom<number>({
       default: 1,
       description: 'Scale',
+      parse: async (input) => Number(input),
     })(),
   }
 
@@ -141,10 +135,10 @@ export default class Default extends Command {
 
     try {
       if (flags.simpleLog) {
-        console.debug = flags.debug ? console.debug : (_) => {}
+        console.debug = flags.debug ? console.debug : () => {}
       } else {
-        console.log = flags.debug ? logger.log.bind(logger) : (_) => {}
-        console.debug = flags.debug ? logger.log.bind(logger) : (_) => {}
+        console.log = flags.debug ? logger.log.bind(logger) : () => {}
+        console.debug = flags.debug ? logger.log.bind(logger) : () => {}
         console.warn = logger.warn.bind(logger)
         console.error = logger.error.bind(logger)
       }
@@ -152,33 +146,25 @@ export default class Default extends Command {
       const app = getSnapAppRender({url: args.url, logger})
       await logger.guard({
         text: 'Initializing API',
-        callback: (async () => {
-          return app.init()
-        })(),
+        callback: app.init(),
       })
       const font = await logger.guard({
         text: 'Loading font',
-        callback: (async () => {
-          return app.getFont({cachePath: flags.fontPath})
-        })(),
+        callback: app.getFont({cachePath: flags.fontPath}),
       })
       const session = await logger.guard({
         text: 'Logging in',
-        callback: (() => {
-          return app.login({
-            sessionType: flags.sessionType,
-            browserProfile: flags.browserProfile,
-            browserHeadless: flags.browserHeadless,
-            cookiesFile: flags.cookiesFile,
-          })
-        })(),
+        callback: app.login({
+          sessionType: flags.sessionType,
+          browserProfile: flags.browserProfile,
+          browserHeadless: flags.browserHeadless,
+          cookiesFile: flags.cookiesFile,
+        }),
       })
 
       const render = await logger.guard({
         text: 'Initializing render',
-        callback: (async () => {
-          return app.getRender({limit: flags.limit, session})
-        })(),
+        callback: app.getRender({limit: flags.limit, session}),
       })
 
       const ffmpegOption = flags.ffmpegAdditonalOption?.split(' ') || []
@@ -215,8 +201,8 @@ export default class Default extends Command {
       })
 
       if (flags.output === '{stdout}') {
-        const utils = utilsList?.filter((data) => data !== undefined)
-        stdout.write(JSON.stringify(utils!.map((utils) => utils.stdout)))
+        const utils = utilsList?.filter((data) => data !== undefined) ?? []
+        stdout.write(JSON.stringify(utils.map((utils) => utils.stdout)))
       }
     } catch (error) {
       if (typeof error === 'string') {
@@ -229,3 +215,5 @@ export default class Default extends Command {
     }
   }
 }
+
+export type DefaultFlags = Interfaces.InferredFlags<typeof Default.flags>

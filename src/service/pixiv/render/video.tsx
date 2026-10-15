@@ -1,8 +1,8 @@
 import * as fflate from 'fflate'
 
-import {FilePath} from '../../../utils/path.js'
-import {SnapRenderColorUtils, SnapRenderUtils} from '../../../utils/render.js'
-import {PixivData, UgoiraBody} from '../type.js'
+import type {FilePath} from '../../../utils/path.js'
+import type {SnapRenderColorUtils, SnapRenderUtils} from '../../../utils/render.js'
+import type {PixivData, UgoiraBody} from '../type.js'
 
 export const ugoiraEncode = async (utils: SnapRenderUtils, ugoira: UgoiraBody, output: FilePath) => {
   const imagesTemp = utils.file.getTemp('txt')

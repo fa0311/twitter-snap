@@ -1,22 +1,34 @@
 import split from 'graphemesplit'
-import * as React from 'react'
+import type {CSSProperties, ReactElement} from 'react'
 
-import {SnapRenderColorUtils} from '../../../utils/render.js'
-import {PixivData} from '../type.js'
-
-type ExtractGroups<T extends string> = T extends `${infer _Start}(?<${infer GroupName}>${infer _Rest})${infer Tail}`
-  ? {[K in GroupName | keyof ExtractGroups<Tail>]: string}
-  : {}
+import type {ExtractGroups} from '../../../app.js'
+import type {SnapRenderColorUtils} from '../../../utils/render.js'
+import type {PixivData} from '../type.js'
 
 const htmlReplace = (text: string): string => {
   return text.replaceAll('&lt;', '<').replaceAll('&gt;', '>').replaceAll('&amp;#44;', ',')
 }
 
-const match = <T extends string>(text: T, callback: (groups: ExtractGroups<T>) => React.ReactElement[]) => {
-  return [text, callback] as const
+type Matcher = {
+  text: string
+  reg: RegExp
+  render: (item: string) => ReactElement[] | undefined
 }
 
-const textWrap = (text: string, style: React.CSSProperties) => {
+const match = <T extends string>(text: T, callback: (groups: ExtractGroups<T>) => ReactElement[]): Matcher => {
+  const reg = new RegExp(text)
+  return {
+    text,
+    reg,
+    render: (item) => {
+      const groups = reg.exec(item)?.groups
+      // Named capture groups are only known statically through the pattern literal.
+      return groups && callback(groups as ExtractGroups<T>)
+    },
+  }
+}
+
+const textWrap = (text: string, style: CSSProperties) => {
   const trueSplit = split(text).map((char, index) => ({char, index}))
   const splitText = trueSplit.map((item, index) => {
     return (
@@ -28,7 +40,7 @@ const textWrap = (text: string, style: React.CSSProperties) => {
   return splitText
 }
 
-const htmlParse = (text: string): React.ReactElement[] => {
+const htmlParse = (text: string): ReactElement[] => {
   const replace = [
     match('<a href="(?<url>.*?)" target="_blank">(?<text>.*?)</a>', ({text}) => {
       return textWrap(text, {color: '#3d7699'})
@@ -42,15 +54,9 @@ const htmlParse = (text: string): React.ReactElement[] => {
     if (item === '') {
       return <div key={index} style={{height: '1em'}}></div>
     } else {
-      const data = replace.reduce((acc, e) => acc.flatMap((item) => item.split(e[0])), [item])
+      const data = replace.reduce((acc, e) => acc.flatMap((item) => item.split(e.text)), [item])
       const child = data.map((item) => {
-        if (replace.some((e) => new RegExp(e[0]).test(item))) {
-          const match = replace.find((e) => new RegExp(e[0]).test(item))
-          const groups = new RegExp(match![0]).exec(item)!.groups!
-          return match![1](groups as any)
-        } else {
-          return textWrap(item, {color: '#474747'})
-        }
+        return replace.find((e) => e.reg.test(item))?.render(item) ?? textWrap(item, {color: '#474747'})
       })
 
       return (
@@ -64,7 +70,7 @@ const htmlParse = (text: string): React.ReactElement[] => {
   return parsedText
 }
 
-export const pixivRender = async (data: PixivData, utils: SnapRenderColorUtils, video: boolean) => {
+export const pixivRender = async (data: PixivData, utils: SnapRenderColorUtils) => {
   const margin: number = 30
   const padding: number = 12
   const rawAssetsUrl = 'https://raw.githubusercontent.com/fa0311/twitter-snap-core/main/assets'

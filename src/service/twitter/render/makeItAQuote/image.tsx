@@ -1,10 +1,9 @@
 import split from 'graphemesplit'
-import * as React from 'react'
-import {TweetApiUtilsData} from 'twitter-openapi-typescript'
-import {Tweet} from 'twitter-openapi-typescript-generated'
+import type {TweetApiUtilsData} from 'twitter-openapi-typescript'
+import type {Tweet} from 'twitter-openapi-typescript-generated'
 
-import {SnapRenderUtils} from '../../../../utils/render.js'
-import {RenderWidgetType, getUserAvatarUrl, getUserName, getUserScreenName} from '../utils/utils.js'
+import type {SnapRenderUtils} from '../../../../utils/render.js'
+import {getUserAvatarUrl, getUserName, getUserScreenName, type RenderWidgetType} from '../utils/utils.js'
 
 export class RenderMakeItAQuoteImage {
   constructor(public utils: SnapRenderUtils) {}
@@ -37,8 +36,6 @@ export class RenderMakeItAQuoteImage {
   render: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
     const reg = [/_[a-z]+\.([a-z]+)$/, '.$1'] as const
     const icon = getUserAvatarUrl(data.user)?.replace(...reg)
-    const note = data.tweet.noteTweet?.noteTweetResults.result
-    const legacy = data.tweet.legacy!
     const name = getUserName(data.user)
     const id = getUserScreenName(data.user)
     return (
@@ -100,8 +97,6 @@ export class RenderMakeItAQuoteImage {
   }
 
   tweetRender: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
-    const note = data.tweet.noteTweet?.noteTweetResults.result
-    const legacy = data.tweet.legacy!
     const text = this.tweetNormalize(data.tweet)
     const trueSplit = split(text).map((char, index) => ({char, index}))
 

@@ -1,13 +1,14 @@
 import {ImageResponse} from '@vercel/og'
+import type {ReactElement} from 'react'
 
-import {ElementColorUtils, ElementUtils} from './element.js'
-import {FileUtils} from './file.js'
-import {FontOptions} from './font.js'
-import {Logger} from './logger.js'
-import {VideoUtils} from './video.js'
+import type {ElementColorUtils, ElementUtils} from './element.js'
+import type {FileUtils} from './file.js'
+import type {FontOptions} from './font.js'
+import type {Logger} from './logger.js'
+import type {VideoUtils} from './video.js'
 
 export class SnapRenderBaseUtils {
-  public stdout: any = undefined
+  public stdout: unknown = undefined
   constructor(
     public logger: Logger,
     public file: FileUtils,
@@ -16,7 +17,7 @@ export class SnapRenderBaseUtils {
     public width: number,
   ) {}
 
-  render = async (element: React.ReactElement) => {
+  render = async (element: ReactElement) => {
     return new ImageResponse(element, {
       emoji: this.font.emoji,
       fonts: this.font.text,
@@ -37,15 +38,6 @@ export class SnapRenderUtils extends SnapRenderBaseUtils {
   ) {
     super(logger, file, video, font, width)
   }
-
-  render = async (element: React.ReactElement) => {
-    return new ImageResponse(element, {
-      emoji: this.font.emoji,
-      fonts: this.font.text,
-      height: undefined,
-      width: this.width,
-    })
-  }
 }
 
 export class SnapRenderColorUtils extends SnapRenderBaseUtils {
@@ -58,14 +50,5 @@ export class SnapRenderColorUtils extends SnapRenderBaseUtils {
     public element: ElementColorUtils,
   ) {
     super(logger, file, video, font, width)
-  }
-
-  render = async (element: React.ReactElement) => {
-    return new ImageResponse(element, {
-      emoji: this.font.emoji,
-      fonts: this.font.text,
-      height: undefined,
-      width: this.width,
-    })
   }
 }

@@ -1,17 +1,39 @@
 import split from 'graphemesplit'
-import * as React from 'react'
-import {TweetApiUtilsData} from 'twitter-openapi-typescript'
+import type {CSSProperties, ReactElement} from 'react'
+import {type TweetApiUtilsData, userOrNullConverter} from 'twitter-openapi-typescript'
 import {
   NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum,
-  TypeName,
-  User,
   type UserProfileImageShapeEnum,
-  UserUnion,
 } from 'twitter-openapi-typescript-generated'
 
-import {SnapRenderColorUtils} from '../../../../utils/render.js'
+import type {SnapRenderColorUtils} from '../../../../utils/render.js'
 import {getResizedMediaByWidth} from '../../../../utils/video.js'
-import {RenderCssType, RenderWidgetType, getBiggerMedia, getUserAvatarUrl, getUserName, getUserScreenName} from '../utils/utils.js'
+import {
+  getBiggerMedia,
+  getUserAvatarUrl,
+  getUserName,
+  getUserScreenName,
+  type RenderCssType,
+  type RenderWidgetType,
+} from '../utils/utils.js'
+
+type UnifiedCardDetails = {
+  type: 'details'
+  data: {title: {content: string}; subtitle: {content: string}}
+}
+
+type UnifiedCardGrokShare = {
+  type: 'grok_share'
+  data: {conversation_preview: {message: string; mediaUrls: string[]}[]}
+}
+
+type UnifiedCard = {
+  component_objects: Record<string, {type: string}>
+  media_entities: Record<string, {media_url_https: string}>
+}
+
+const isDetails = (e: {type: string}): e is UnifiedCardDetails => e.type === 'details'
+const isGrokShare = (e: {type: string}): e is UnifiedCardGrokShare => e.type === 'grok_share'
 
 export class RenderTweetImage {
   backgroundColor: string
@@ -72,7 +94,7 @@ export class RenderTweetImage {
   removeUnsupportChar = (text: string): string => {
     return [...text]
       .map((c) => {
-        const code = c.codePointAt(0)!
+        const code = c.codePointAt(0) ?? 0
         if (code >= 0x0600 && code <= 0x06ff) {
           return ''
         }
@@ -90,7 +112,7 @@ export class RenderTweetImage {
       .join('')
   }
 
-  getIconShapeWidget: (props: {type: UserProfileImageShapeEnum}) => React.CSSProperties = ({type}) => {
+  getIconShapeWidget: (props: {type: UserProfileImageShapeEnum}) => CSSProperties = ({type}) => {
     switch (type) {
       case 'Square': {
         return {
@@ -138,12 +160,6 @@ export class RenderTweetImage {
     return <img alt={alt} src={src} style={style} />
   }
 
-  userOrNullConverter = (userResults: UserUnion): User | undefined => {
-    if (userResults.typename === TypeName.User) {
-      return userResults as User
-    }
-  }
-
   textOverFlowCSS: RenderCssType<{lineClamp: number}> = ({lineClamp}) => {
     return {
       display: this.utils.element.window ? '-webkit-box' : 'block',
@@ -160,10 +176,10 @@ export class RenderTweetImage {
     }
 
     if (num < 1000000) {
-      return (num / 1000).toFixed(1) + 'K'
+      return `${(num / 1000).toFixed(1)}K`
     }
 
-    return (num / 1000000).toFixed(1) + 'M'
+    return `${(num / 1000000).toFixed(1)}M`
   }
 
   toOriginal = (url: URL): URL => {
@@ -294,11 +310,9 @@ export class RenderTweetImage {
     const summary = legacy?.bindingValues.find((v) => v.key === 'summary_photo_image_original')?.value.imageValue
     const player = legacy?.bindingValues.find((v) => v.key === 'player_image_large')?.value.imageValue
     const title = legacy?.bindingValues.find((v) => v.key === 'title')?.value.stringValue
-    const domain = legacy?.bindingValues.find((v) => v.key === 'domain')?.value.stringValue
     const vanityUrl = legacy?.bindingValues.find((v) => v.key === 'vanity_url')?.value.stringValue
     const description = legacy?.bindingValues.find((v) => v.key === 'description')?.value.stringValue
     const unifiedCard = legacy?.bindingValues.find((v) => v.key === 'unified_card')?.value.stringValue
-    const cardUrl = legacy?.bindingValues.find((v) => v.key === 'card_url')?.value.stringValue
 
     // data.tweet.card?.legacy?.bindingValues.forEach((v) => {
     //     console.log(v.key, v.value);
@@ -353,12 +367,13 @@ export class RenderTweetImage {
     }
 
     if (unifiedCard) {
-      const unifiedCardData = JSON.parse(unifiedCard!)
-      const detailsData: any = Object.values(unifiedCardData.component_objects).find((e: any) => e.type === 'details')
-      const grokData: any = Object.values(unifiedCardData.component_objects).find((e: any) => e.type === 'grok_share')
+      const unifiedCardData = JSON.parse(unifiedCard) as UnifiedCard
+      const components = Object.values(unifiedCardData.component_objects)
+      const detailsData = components.find(isDetails)
+      const grokData = components.find(isGrokShare)
 
       if (detailsData) {
-        const imgData: any = Object.values(unifiedCardData.media_entities)[0] // MediaExtended
+        const imgData = Object.values(unifiedCardData.media_entities)[0] // MediaExtended
 
         return (
           <div style={{display: 'flex', flexDirection: 'column'}}>
@@ -643,7 +658,7 @@ export class RenderTweetImage {
     const extEntities = legacy.extendedEntities
 
     const videoBlank = (() => {
-      const [i, blank] = getBiggerMedia(extEntities?.media ?? [])
+      const [, blank] = getBiggerMedia(extEntities?.media ?? [])
       if (blank && this.video) {
         const resizedMedia = getResizedMediaByWidth(
           blank.videoInfo!.aspectRatio[0],
@@ -677,12 +692,7 @@ export class RenderTweetImage {
             alignItems: 'center',
           }}
         >
-          <this.icon
-            alt="icon"
-            size={40}
-            src={icon}
-            type={data.user.profileImageShape}
-          />
+          <this.icon alt="icon" size={40} src={icon} type={data.user.profileImageShape} />
           <div style={{display: 'flex', flexDirection: 'column'}}>
             {this.username({data})}
             <p
@@ -726,12 +736,7 @@ export class RenderTweetImage {
         }}
       >
         <div style={{display: 'flex', gap: this.utils.element.applyScale(2)}}>
-          <this.icon
-            alt="icon"
-            size={24}
-            src={icon}
-            type={data.user.profileImageShape}
-          />
+          <this.icon alt="icon" size={24} src={icon} type={data.user.profileImageShape} />
           <div
             style={{
               display: 'flex',
@@ -816,14 +821,6 @@ export class RenderTweetImage {
       mediaUrlHttps,
     }))
 
-    const normalizeNoteMedia = [...(noteEntity?.media ?? [])].map(({indices, idStr, mediaUrlHttps, type}) => ({
-      start: normalizeMap.findIndex(({array}) => array === indices[0]),
-      end: normalizeMap.findIndex(({array}) => array === indices[1]),
-      remove: video && type !== 'photo',
-      idStr,
-      mediaUrlHttps,
-    }))
-
     const normalizeUrls = [...(noteEntity?.urls ?? []), ...(legacySet?.urls ?? [])].map(({indices, displayUrl}) => ({
       start: normalizeMap.findIndex(({array}) => array === indices[0]),
       end: normalizeMap.findIndex(({array}) => array === indices[1]),
@@ -845,7 +842,7 @@ export class RenderTweetImage {
     }[] = []
 
     const insert: {
-      fn: () => React.ReactElement
+      fn: () => ReactElement
       index: number
     }[] = []
 
@@ -931,15 +928,15 @@ export class RenderTweetImage {
       '&apos;': "'",
     }
 
-    for (const {char, index} of trueSplit) {
-      const escape = Object.entries(htmlEscape).find(([key, _]) => {
+    for (const {index} of trueSplit) {
+      const escaped = Object.entries(htmlEscape).find(([key]) => {
         return [...key].every((c, i) => c === trueSplit[index + i].char)
       })
-      if (escape) {
+      if (escaped) {
         charIndices.push({
           start: index,
-          end: index + escape[0].length,
-          chars: [...escape[1]],
+          end: index + escaped[0].length,
+          chars: [...escaped[1]],
         })
       }
     }
@@ -965,7 +962,7 @@ export class RenderTweetImage {
       const italic = normalizeRichtextTags.some(
         ({start, end, type}) => start <= index && index < end && type.includes(RichtextTypesEnum.Italic),
       )
-      const properties: React.CSSProperties = {
+      const properties: CSSProperties = {
         ...(link ? {color: '#1d9bf0'} : {}),
         ...(bold ? {fontWeight: '700'} : {}),
         ...(italic ? {fontStyle: 'italic'} : {}),
@@ -978,7 +975,7 @@ export class RenderTweetImage {
     })
 
     const textDataList: {
-      data: {char: string; properties: React.CSSProperties}[][]
+      data: {char: string; properties: CSSProperties}[][]
       end: number
       start: number
     }[] = []
@@ -1033,7 +1030,7 @@ export class RenderTweetImage {
     //     console.log("end", e.end);
     // });
 
-    const textElement: React.ReactElement[] = []
+    const textElement: ReactElement[] = []
 
     for (const {fn} of insert.filter(({index}) => index === 0)) textElement.push(fn())
 
@@ -1097,7 +1094,7 @@ export class RenderTweetImage {
     const mediaSource = [...(extEntities?.media ?? [])]
       .map((e) => e.additionalMediaInfo?.sourceUser?.userResults.result)
       .filter((e): e is NonNullable<typeof e> => e !== undefined)
-      .map((user) => this.userOrNullConverter(user))
+      .map((user) => userOrNullConverter(user))
       .filter((e): e is NonNullable<typeof e> => e !== undefined)
 
     return (

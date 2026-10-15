@@ -29,3 +29,5 @@ export type ColorThemeType = keyof typeof colorThemeList
 export type ThemeNameType = keyof typeof themeList
 
 export type ThemeFeatureType = (typeof themeList)[ThemeNameType]
+
+export const themeNameList = Object.keys(themeList) as ThemeNameType[]
