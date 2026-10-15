@@ -13,6 +13,8 @@ import {
   getUserAvatarUrl,
   getUserName,
   getUserScreenName,
+  getUserVerified,
+  getUserVerifiedType,
   type RenderCssType,
   type RenderWidgetType,
 } from '../utils/utils.js'
@@ -65,11 +67,11 @@ export class RenderTweetImage {
 
   getBadgeWidget: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
     const src = (() => {
-      if (data.user.legacy.verifiedType === 'Business') {
+      if (getUserVerifiedType(data.user) === 'Business') {
         return `${this.rawAssetsUrl}/twitter/gold-badge.png`
       }
 
-      if (data.user.legacy.verifiedType === 'Government') {
+      if (getUserVerifiedType(data.user) === 'Government') {
         return `${this.rawAssetsUrl}/twitter/gray-badge.png`
       }
 
@@ -614,7 +616,7 @@ export class RenderTweetImage {
   }
 
   username: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
-    const verified = data.user.legacy.verified
+    const verified = getUserVerified(data.user)
     const name = getUserName(data.user)
     const label = data.user.affiliatesHighlightedLabel?.label?.badge?.url
     return (
