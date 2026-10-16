@@ -1,4 +1,4 @@
-import {Session, SnapApp, SnapRender} from '../../app.js'
+import {mediaCallback, Session, SnapApp, SnapRender} from '../../app.js'
 import {SnapAppCookies} from '../../utils/cookies.js'
 import {URLPath} from '../../utils/path.js'
 import {pixivRender} from './render/image.js'
@@ -68,11 +68,13 @@ const app = new SnapApp(
   async () => {},
 )
 
-const render = new SnapRender<PixivData>(
-  (data) => {
+type MediaResponse = {data: IllustBody; ugoira?: UgoiraBody}
+
+const render = new SnapRender<PixivData>({
+  isImage: (data) => {
     return data.ugoira === undefined
   },
-  (data) => {
+  placeholder: (data) => {
     const createDate = new Date(data.meta.illust.createDate)
     return [
       ['{id}', data.meta.illust.illustId],
@@ -85,65 +87,66 @@ const render = new SnapRender<PixivData>(
       ['{time-ss}', createDate.getSeconds().toString().padStart(2, '0')],
     ]
   },
-  async (data, utils) => {
-    utils.logger.update(`Rendering image ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
-    return pixivRender(data, utils)
+  color: {
+    image: async (data, utils) => {
+      utils.logger.update(`Rendering image ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
+      return pixivRender(data, utils)
+    },
+    video: async (data, utils) => {
+      utils.logger.update(`Rendering image ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
+      const element = await pixivRender(data, utils)
+      utils.logger.update(`Rendering video ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
+      const input = await utils.file.tempImg(await utils.render(element))
+      await pixivVideoRender(data, utils, input)
+    },
   },
-  async (data, utils) => {
-    utils.logger.update(`Rendering image ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
-    const element = await pixivRender(data, utils)
-    utils.logger.update(`Rendering video ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
-    const input = await utils.file.tempImg(await utils.render(element))
-    await pixivVideoRender(data, utils, input)
+  json: {
+    Json: async (data, utils) => {
+      utils.logger.update(`Parsing ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
+      return data
+    },
   },
-)
+  other: {
+    Media: mediaCallback<PixivData, MediaResponse>(
+      (data) => {
+        if (data.ugoira) {
+          return [{ugoira: data.ugoira, data: data.illust[0]}]
+        } else {
+          return data.illust.map((illust) => ({data: illust}))
+        }
+      },
+      () => {
+        return []
+      },
+      async (data, utils) => {
+        if (data.ugoira === undefined) {
+          const url = URLPath.fromURL(data.data.urls.original)
+          if (!utils.file.path.isExtension(url.extension)) {
+            utils.logger.hint(`Extension is ignored, saving as ${url.extension}`)
+          }
 
-type MediaResponse = {data: IllustBody; ugoira?: UgoiraBody}
-
-render.media<MediaResponse>(
-  'Media',
-  (data) => {
-    if (data.ugoira) {
-      return [{ugoira: data.ugoira, data: data.illust[0]}]
-    } else {
-      return data.illust.map((illust) => ({data: illust}))
-    }
+          utils.logger.update(`Downloading image`)
+          await utils.file.saveFetch(url, {headers: {referer: 'https://www.pixiv.net/'}})
+        } else {
+          const url = URLPath.fromURL(data.data.urls.original)
+          if (utils.file.path.isExtension(url.extension)) {
+            utils.logger.update(`Downloading image`)
+            await utils.file.saveFetch(url, {headers: {referer: 'https://www.pixiv.net/'}})
+          } else if (utils.file.path.isImage()) {
+            utils.logger.hint(`Unsupported format: ${utils.file.path.extension}, output as mp4`)
+            utils.logger.update(`Downloading ugoira`)
+            await ugoiraEncode(utils, data.ugoira, utils.file.path.update({extension: 'mp4'}))
+          } else if (utils.file.path.isExtension('')) {
+            utils.logger.update(`Downloading ugoira`)
+            await ugoiraEncode(utils, data.ugoira, utils.file.path.update({extension: 'mp4'}))
+          } else {
+            utils.logger.update(`Downloading ugoira`)
+            await ugoiraEncode(utils, data.ugoira, utils.file.path)
+          }
+        }
+      },
+    ),
   },
-  () => {
-    return []
-  },
-  async (data, utils) => {
-    if (data.ugoira === undefined) {
-      const url = URLPath.fromURL(data.data.urls.original)
-      if (!utils.file.path.isExtension(url.extension)) {
-        utils.logger.hint(`Extension is ignored, saving as ${url.extension}`)
-      }
-
-      utils.logger.update(`Downloading image`)
-      await utils.file.saveFetch(url, {headers: {referer: 'https://www.pixiv.net/'}})
-    } else {
-      const url = URLPath.fromURL(data.data.urls.original)
-      if (utils.file.path.isExtension(url.extension)) {
-        utils.logger.update(`Downloading image`)
-        await utils.file.saveFetch(url, {headers: {referer: 'https://www.pixiv.net/'}})
-      } else if (utils.file.path.isImage()) {
-        utils.logger.hint(`Unsupported format: ${utils.file.path.extension}, output as mp4`)
-        utils.logger.update(`Downloading ugoira`)
-        await ugoiraEncode(utils, data.ugoira, utils.file.path.update({extension: 'mp4'}))
-      } else if (utils.file.path.isExtension('')) {
-        utils.logger.update(`Downloading ugoira`)
-        await ugoiraEncode(utils, data.ugoira, utils.file.path.update({extension: 'mp4'}))
-      } else {
-        utils.logger.update(`Downloading ugoira`)
-        await ugoiraEncode(utils, data.ugoira, utils.file.path)
-      }
-    }
-  },
-)
-
-render.json('Json', async (data, utils) => {
-  utils.logger.update(`Parsing ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
-  return data
 })
 
 app.call('/artworks/(?<id>[0-9]+)', async (_utils, cookie, {id}) => {

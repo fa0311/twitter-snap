@@ -1,5 +1,5 @@
 import {type TweetApiUtilsData, TwitterOpenApi, type TwitterOpenApiClient} from 'twitter-openapi-typescript'
-import {Session, SnapApp, SnapRender} from './../../app.js'
+import {mediaCallback, Session, SnapApp, SnapRender} from './../../app.js'
 import {URLPath} from '../../utils/path.js'
 import {sleepLoop} from '../../utils/sleep.js'
 import {RenderTweetImage} from './render/basic/image.js'
@@ -74,13 +74,13 @@ const app = new SnapApp(
 
 const pad = (value: number, length: number) => value.toString().padStart(length, '0')
 
-const render = new SnapRender<TweetApiUtilsData>(
-  (data) => {
+const render = new SnapRender<TweetApiUtilsData>({
+  isImage: (data) => {
     const extEntities = data.tweet.legacy?.extendedEntities
     const extMedia = extEntities?.media ?? []
     return extMedia.every((media) => media.type === 'photo')
   },
-  (data) => {
+  placeholder: (data) => {
     const createdAt = new Date(data.tweet.legacy?.createdAt ?? 0)
     return [
       ['{id}', data.tweet.restId],
@@ -94,76 +94,74 @@ const render = new SnapRender<TweetApiUtilsData>(
       ['{time-ss}', pad(createdAt.getSeconds(), 2)],
     ]
   },
-  async (data, utils) => {
-    utils.logger.update(`Rendering image ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-    return new RenderTweetImage(utils, false).render({data})
+  color: {
+    image: async (data, utils) => {
+      utils.logger.update(`Rendering image ${getUserScreenName(data.user)} ${data.tweet.restId}`)
+      return new RenderTweetImage(utils, false).render({data})
+    },
+    video: async (data, utils) => {
+      utils.logger.update(`Rendering image ${getUserScreenName(data.user)} ${data.tweet.restId}`)
+      const element = new RenderTweetImage(utils, true).render({data})
+      const input = await utils.file.tempImg(await utils.render(element))
+      utils.logger.update(`Rendering video ${getUserScreenName(data.user)} ${data.tweet.restId}`)
+      await new RenderBasicVideo(utils).render({data, input})
+    },
   },
-  async (data, utils) => {
-    utils.logger.update(`Rendering image ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-    const element = new RenderTweetImage(utils, true).render({data})
-    const input = await utils.file.tempImg(await utils.render(element))
-    utils.logger.update(`Rendering video ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-    await new RenderBasicVideo(utils).render({data, input})
+  element: {
+    RenderMakeItAQuote: {
+      image: async (data, utils) => {
+        utils.logger.update(`Rendering ${getUserScreenName(data.user)} ${data.tweet.restId}`)
+        return new RenderMakeItAQuoteImage(utils).render({data})
+      },
+      video: async (data, utils) => {
+        utils.logger.update(`Rendering ${getUserScreenName(data.user)} ${data.tweet.restId}`)
+        const element = new RenderMakeItAQuoteImage(utils).render({data})
+        const input = await utils.file.tempImg(await utils.render(element))
+        await utils.video.fromImage(
+          input.toString(),
+          utils.file.path.toString(),
+          `https://twitter.com/${getUserScreenName(data.user)}/status/${data.tweet.restId}`,
+        )
+      },
+    },
   },
-)
-
-render.media(
-  'Media',
-  (data) => {
-    const extEntities = data.tweet.legacy?.extendedEntities
-    const extMedia = extEntities?.media ?? []
-    return extMedia
+  json: {
+    Json: async (data, utils) => {
+      utils.logger.update(`Parsing ${getUserScreenName(data.user)} ${data.tweet.restId}`)
+      return data
+    },
+    LiteJson: async (data, utils) => {
+      utils.logger.update(`Parsing ${getUserScreenName(data.user)} ${data.tweet.restId}`)
+      return toLiteJson(data)
+    },
   },
-  (data) => {
-    const videoInfo = data.videoInfo && getVideo(data.videoInfo)
-    return [
-      ['{media-id}', data.idStr],
-      ['{media-video-variants-id}', videoInfo?.url.split('/').pop()?.split('.')[0]],
-      ['{media-video-bitrate}', videoInfo?.bitrate],
-    ]
+  other: {
+    Media: mediaCallback(
+      (data: TweetApiUtilsData) => data.tweet.legacy?.extendedEntities?.media ?? [],
+      (data) => {
+        const videoInfo = data.videoInfo && getVideo(data.videoInfo)
+        return [
+          ['{media-id}', data.idStr],
+          ['{media-video-variants-id}', videoInfo?.url.split('/').pop()?.split('.')[0]],
+          ['{media-video-bitrate}', videoInfo?.bitrate],
+        ]
+      },
+      async (data, utils) => {
+        const isVideo = data.videoInfo !== undefined && data.type !== 'photo'
+        utils.logger.update(`Downloading ${isVideo ? 'video' : 'image'} ${data.idStr}`)
+        const mediaUrl = data.videoInfo && data.type !== 'photo' ? getVideo(data.videoInfo).url : data.mediaUrlHttps
+
+        const url = URLPath.fromURL(mediaUrl)
+
+        if (!utils.file.path.isExtension('') && !utils.file.path.isExtension(url.extension)) {
+          utils.logger.hint(`Extension is ignored, saving as ${url.extension}`)
+        }
+
+        await utils.file.saveFetch(url)
+      },
+    ),
   },
-  async (data, utils) => {
-    const isVideo = data.videoInfo !== undefined && data.type !== 'photo'
-    utils.logger.update(`Downloading ${isVideo ? 'video' : 'image'} ${data.idStr}`)
-    const mediaUrl = data.videoInfo && data.type !== 'photo' ? getVideo(data.videoInfo).url : data.mediaUrlHttps
-
-    const url = URLPath.fromURL(mediaUrl)
-
-    if (!utils.file.path.isExtension('') && !utils.file.path.isExtension(url.extension)) {
-      utils.logger.hint(`Extension is ignored, saving as ${url.extension}`)
-    }
-
-    await utils.file.saveFetch(url)
-  },
-)
-
-render.json('Json', async (data, utils) => {
-  utils.logger.update(`Parsing ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-  return data
 })
-
-render.json('LiteJson', async (data, utils) => {
-  utils.logger.update(`Parsing ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-  return toLiteJson(data)
-})
-
-render.add(
-  'RenderMakeItAQuote',
-  async (data, utils) => {
-    utils.logger.update(`Rendering ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-    return new RenderMakeItAQuoteImage(utils).render({data})
-  },
-  async (data, utils) => {
-    utils.logger.update(`Rendering ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-    const element = new RenderMakeItAQuoteImage(utils).render({data})
-    const input = await utils.file.tempImg(await utils.render(element))
-    await utils.video.fromImage(
-      input.toString(),
-      utils.file.path.toString(),
-      `https://twitter.com/${getUserScreenName(data.user)}/status/${data.tweet.restId}`,
-    )
-  },
-)
 
 const getUserId = async (api: TwitterOpenApiClient, screenName: string) => {
   const userData = await api.getUserApi().getUserByScreenName({screenName})
