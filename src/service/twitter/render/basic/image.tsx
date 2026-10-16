@@ -185,14 +185,8 @@ export class RenderTweetImage {
   }
 
   toOriginal = (url: URL): URL => {
-    const params = {
-      format: 'jpg',
-      name: '4096x4096', // orig
-    }
-    for (const [key, value] of Object.entries(params)) {
-      url.searchParams.set(key, value)
-    }
-
+    // name=orig is the only variant the CDN serves for every photo; format=jpg&name=4096x4096 answers 404 for some
+    url.searchParams.set('name', 'orig')
     return url
   }
 
