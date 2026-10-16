@@ -1,0 +1,42 @@
+name: publish
+
+# Publishes twitter-snap to npm when the version in package.json is not on npm
+# yet (npm trusted publishing, no token). Bump the version to release.
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+      - id: version
+        run: |
+          spec="$(jq -r '"\(.name)@\(.version)"' package.json)"
+          if npm view "$spec" version > /dev/null 2>&1; then
+            echo "$spec is already on npm"
+          else
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.version.outputs.publish == 'true'
+        run: pnpm install --frozen-lockfile
+      - if: steps.version.outputs.publish == 'true'
+        run: pnpm run build
+      - if: steps.version.outputs.publish == 'true'
+        run: pnpm publish --access public --provenance --no-git-checks
