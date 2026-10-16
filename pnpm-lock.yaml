@@ -212,11 +212,11 @@ importers:
         specifier: ^19.3.1
         version: 19.3.1
       twitter-openapi-typescript:
-        specifier: ^0.0.57
-        version: 0.0.57
+        specifier: ^0.1.0
+        version: 0.1.0
       twitter-openapi-typescript-generated:
-        specifier: ^0.0.41
-        version: 0.0.41
+        specifier: ^0.1.0
+        version: 0.1.0
     devDependencies:
       '@biomejs/biome':
         specifier: ^2.5.15
@@ -2340,11 +2340,11 @@ packages:
   tunnel-agent@0.6.0:
     resolution: {integrity: sha512-McnNiV1l8RYeY8tBgEpuodCC1mLUdbSN+CYBL7kJsJNInOP8UjDDEwdk6Mw60vdLLrr5NHKZhMAOSrR2NZuQ+w==}
 
-  twitter-openapi-typescript-generated@0.0.41:
-    resolution: {integrity: sha512-oO4mQrWGzMM2MjXFp8oUlI5JW8iHMvuQ/HsPbLE0nY/9WjjBQjMEKgy/RqrM6Okc7WgWlIqzQSrzCyg/jUk3Wg==}
+  twitter-openapi-typescript-generated@0.1.0:
+    resolution: {integrity: sha512-KJEO2W66beQKDa9T0LUo8qto4+xXWzy+77wsU1pUpGtSH8LUT/sKOpif2kEDFhyIycthZMcR2FXjhKufOkbBYQ==}
 
-  twitter-openapi-typescript@0.0.57:
-    resolution: {integrity: sha512-/XywvQ11neQJ4c1SsnhOtUUJC3BSI0c+t1MF2dMkiVGbpwyGUx3OfXEIGF7kA8IwnAdDEhqMO9g65mYyTLlA8Q==}
+  twitter-openapi-typescript@0.1.0:
+    resolution: {integrity: sha512-qZRLeMjZodCaxgpIUagHjvWA6RQwjEcuIi2u8mMTld6S2LbYxQItW3uiewEue6ZOlB/nRLEhZYkMLn3K9dwVhg==}
 
   type-fest@0.21.3:
     resolution: {integrity: sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==}
@@ -4481,11 +4481,11 @@ snapshots:
     dependencies:
       safe-buffer: 5.2.1
 
-  twitter-openapi-typescript-generated@0.0.41: {}
+  twitter-openapi-typescript-generated@0.1.0: {}
 
-  twitter-openapi-typescript@0.0.57:
+  twitter-openapi-typescript@0.1.0:
     dependencies:
-      twitter-openapi-typescript-generated: 0.0.41
+      twitter-openapi-typescript-generated: 0.1.0
       x-client-transaction-id-generater: 0.0.7
 
   type-fest@0.21.3: {}

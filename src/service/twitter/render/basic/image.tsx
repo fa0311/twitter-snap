@@ -807,13 +807,10 @@ export class RenderTweetImage {
       mediaId,
     }))
 
-    const normalizeHashtags = [...(noteEntity?.hashtags ?? []), ...(legacySet?.hashtags ?? [])].map(
-      ({indices, tag}) => ({
-        start: normalizeMap.findIndex(({array}) => array === indices[0]),
-        end: normalizeMap.findIndex(({array}) => array === indices[1]),
-        tag,
-      }),
-    )
+    const normalizeHashtags = [...(noteEntity?.hashtags ?? []), ...(legacySet?.hashtags ?? [])].map(({indices}) => ({
+      start: normalizeMap.findIndex(({array}) => array === indices[0]),
+      end: normalizeMap.findIndex(({array}) => array === indices[1]),
+    }))
 
     const normalizeMedia = [...(extEntities?.media ?? [])].map(({indices, idStr, mediaUrlHttps, type}) => ({
       start: normalizeMap.findIndex(({array}) => array === indices[0]),
