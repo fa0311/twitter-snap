@@ -1,9 +1,9 @@
 import fs from 'node:fs/promises'
 import {Hono} from 'hono'
 
-import type {SnapRenderItem, SnapSession} from '../src/app.js'
+import {includeTheme, type SnapRenderItem, type SnapSession} from '../src/app.js'
 
-import {themeList} from '../src/config.js'
+import {hasKind, themeList} from '../src/config.js'
 import {apps} from '../src/service/core.js'
 import simpleCache from '../src/utils/cache.js'
 import {ElementColorUtils} from '../src/utils/element.js'
@@ -67,9 +67,14 @@ const getUtils = (font: FontOptions, name: string, theme: string, width: number,
 }
 
 const getQuery = (c: {req: {query: (key: string) => string | undefined}}) => {
+  const theme = c.req.query('theme') ?? 'RenderOceanBlueColor'
+  if (!includeTheme(theme) || !hasKind(theme, 'element')) {
+    throw new Error(`${theme} is not an element theme`)
+  }
+
   return {
     url: c.req.query('url') ?? '',
-    theme: c.req.query('theme') ?? 'RenderOceanBlueColor',
+    theme,
     width: Number(c.req.query('width') ?? 650),
     scale: Number(c.req.query('scale') ?? 1),
   }

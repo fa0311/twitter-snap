@@ -31,3 +31,11 @@ export type ThemeNameType = keyof typeof themeList
 export type ThemeFeatureType = (typeof themeList)[ThemeNameType]
 
 export const themeNameList = Object.keys(themeList) as ThemeNameType[]
+
+// Theme names of one kind: ThemeOf<'json'> is 'Json' | 'LiteJson'
+export type ThemeOf<K extends ThemeFeatureType> = {
+  [N in ThemeNameType]: (typeof themeList)[N] extends K ? N : never
+}[ThemeNameType]
+
+export const hasKind = <K extends ThemeFeatureType>(theme: ThemeNameType, kind: K): theme is ThemeOf<K> =>
+  themeList[theme] === kind
