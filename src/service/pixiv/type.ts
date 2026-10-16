@@ -68,8 +68,8 @@ export type PixivBody = {
   bookStyle: string
   isHowto: boolean
   isOriginal: boolean
-  imageResponseOutData: any[]
-  imageResponseData: any[]
+  imageResponseOutData: unknown[]
+  imageResponseData: unknown[]
   imageResponseCount: number
   pollData: null
   seriesNavData: null
@@ -77,7 +77,7 @@ export type PixivBody = {
   descriptionYoutubeId: null
   comicPromotion: null
   fanboxPromotion: null
-  contestBanners: any[]
+  contestBanners: unknown[]
   isBookmarkable: boolean
   bookmarkData: null
   contestData: null
@@ -207,8 +207,8 @@ export type UserProfile = {
   background: string | null
   sketchLiveId: string | null
   partial: number
-  sketchLives: any[]
-  commission: any | null
+  sketchLives: unknown[]
+  commission: unknown
   following: number
   mypixivCount: number
   followedBack: boolean

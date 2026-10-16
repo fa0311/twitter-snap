@@ -1,4 +1,4 @@
-const simpleCache = <T extends unknown[]>() => {
+const simpleCache = <T>() => {
   const cache: {[key: string]: T} = {}
   return async (key: string, callback: () => Promise<T>) => {
     if (cache[key] === undefined) {

@@ -1,12 +1,14 @@
-import {ColorThemeType, colorThemeList, themeList} from './config.js'
+import type {ReactElement} from 'react'
+
+import {type ColorThemeType, colorThemeList, themeList} from './config.js'
 import {ElementColorUtils, ElementUtils} from './utils/element.js'
 import {FileUtils} from './utils/file.js'
-import {FontOptions, FontUtils} from './utils/font.js'
-import {Logger} from './utils/logger.js'
-import {SnapAppBrowserUtils} from './utils/login.js'
-import {FilePath} from './utils/path.js'
-import {SnapRenderBaseUtils, SnapRenderColorUtils, SnapRenderUtils} from './utils/render.js'
-import {FileReplace, getName} from './utils/replace.js'
+import type {FontOptions, FontUtils} from './utils/font.js'
+import type {Logger} from './utils/logger.js'
+import type {SnapAppBrowserUtils} from './utils/login.js'
+import type {FilePath} from './utils/path.js'
+import {type SnapRenderBaseUtils, SnapRenderColorUtils, SnapRenderUtils} from './utils/render.js'
+import {type FileReplace, getName} from './utils/replace.js'
 import {VideoUtils} from './utils/video.js'
 
 export const includeColorTheme = (theme: string): theme is ColorThemeType => {
@@ -17,23 +19,41 @@ export const includeTheme = (theme: string): theme is keyof typeof themeList => 
   return theme in themeList
 }
 
-type ExtractGroups<T extends string> = T extends `${infer _Start}(?<${infer GroupName}>${infer _Rest})${infer Tail}`
-  ? {[K in GroupName | keyof ExtractGroups<Tail>]: string}
-  : {}
+export type ExtractGroups<T extends string> =
+  T extends `${infer _Start}(?<${infer GroupName}>${infer _Rest})${infer Tail}`
+    ? {[K in GroupName | keyof ExtractGroups<Tail>]: string}
+    : Record<never, never>
 
-type SnapAppCallback<T1, V1 extends string, V2> = (
+type SnapAppCallback<T1, V1 extends string> = (
   utils: {limit: number},
   api: T1,
   match: ExtractGroups<V1>,
-) => Promise<SnapRenderChild<V2>>
+) => Promise<SnapRenderStream>
+
+type SnapAppRoute<T1> = (utils: {limit: number}, api: T1, match: RegExpExecArray) => Promise<SnapRenderStream>
 
 export class Session<T1> {
   constructor(public api: T1) {}
 }
 
-export class SnapApp<T1> {
+export type SnapSession = {
+  render: (url: string, utils: {limit: number}) => Promise<SnapRenderStream>
+}
+
+export type SnapAppInfo = {
+  name: string
   pattern: RegExp
-  callbackList: [RegExp, SnapAppCallback<T1, string, any>][] = []
+  routes: RegExp[]
+  fonts: (utils: FontUtils) => Promise<FontOptions>
+  init: ({logger}: {logger: Logger}) => Promise<void>
+  test: (url: string) => boolean
+  login: (utils: SnapAppBrowserUtils) => Promise<SnapSession>
+}
+
+export class SnapApp<T1> implements SnapAppInfo {
+  pattern: RegExp
+  routes: RegExp[] = []
+  private callbackList: SnapAppRoute<T1>[] = []
 
   constructor(
     public name: string,
@@ -45,15 +65,44 @@ export class SnapApp<T1> {
     this.pattern = new RegExp(pattern)
   }
 
-  call<V1 extends string, V2>(pattern: V1, callback: SnapAppCallback<T1, V1, V2>) {
-    this.callbackList.push([new RegExp(pattern), callback])
+  call<V1 extends string>(pattern: V1, callback: SnapAppCallback<T1, V1>) {
+    this.routes.push(new RegExp(pattern))
+    // Named capture groups are only known statically through the pattern literal.
+    this.callbackList.push((utils, api, match) => callback(utils, api, (match.groups ?? {}) as ExtractGroups<V1>))
+  }
+
+  test(url: string) {
+    return this.pattern.test(url) && this.route(url) !== undefined
+  }
+
+  private route(url: string) {
+    const prefix = this.pattern.exec(url)
+    if (!prefix) return undefined
+    const path = url.slice(prefix[0].length)
+    for (const [i, reg] of this.routes.entries()) {
+      const match = reg.exec(path)
+      if (match) return {callback: this.callbackList[i], match}
+    }
+
+    return undefined
+  }
+
+  async login(utils: SnapAppBrowserUtils): Promise<SnapSession> {
+    const session = await this.callback(utils)
+    return {
+      render: (url, param) => {
+        const route = this.route(url)
+        if (!route) throw new Error('Unsupported URL')
+        return route.callback(param, session.api, route.match)
+      },
+    }
   }
 }
 
-type CallbackImage<T1> = (data: T1, utils: SnapRenderColorUtils) => Promise<React.ReactElement>
+type CallbackImage<T1> = (data: T1, utils: SnapRenderColorUtils) => Promise<ReactElement>
 type CallbackVideo<T1> = (data: T1, utils: SnapRenderColorUtils) => Promise<void>
 type CallbackOther<T1> = (data: T1, utils: SnapRenderUtils, placeholder: FileReplace[], output: string) => Promise<void>
-type CallbackJson<T1> = (data: T1, utils: SnapRenderUtils) => Promise<any>
+type CallbackJson<T1> = (data: T1, utils: SnapRenderUtils) => Promise<unknown>
 type CallbackMedia<T1> = (data: T1, utils: SnapRenderUtils) => Promise<void>
 
 export class SnapRender<T1> {
@@ -74,7 +123,7 @@ export class SnapRender<T1> {
     }
   }
 
-  run = (data: AsyncGenerator<T1, any, any>) => {
+  run = (data: AsyncGenerator<T1>) => {
     return new SnapRenderChild(
       this.isImage,
       this.placeholder,
@@ -109,7 +158,7 @@ export class SnapRender<T1> {
       const list = media(data)
 
       for (const [i, item] of list.entries()) {
-        const p = [...placeholder, ...mediaPlaceholder(item), ['{media-count}', i]] as FileReplace[]
+        const p: FileReplace[] = [...placeholder, ...mediaPlaceholder(item), ['{media-count}', i]]
         utils.file.path = getName('other', p, output, i)
         await callback(item, utils)
       }
@@ -119,8 +168,7 @@ export class SnapRender<T1> {
   }
 }
 
-export type SnapRenderChildNextParam<T1> = {
-  data: T1
+export type SnapRenderNextParam = {
   ffmpegAdditonalOption?: string[]
   ffmpegPath?: string
   ffmpegTimeout?: number
@@ -135,8 +183,25 @@ export type SnapRenderChildNextParam<T1> = {
   width: number
 }
 
-export class SnapRenderChild<T1> {
-  count: number
+export type SnapRenderItem = {
+  next: (param: SnapRenderNextParam) => Promise<SnapRenderBaseUtils>
+  image: (theme: string, utils: SnapRenderColorUtils) => Promise<ReactElement>
+  video: (theme: string, utils: SnapRenderColorUtils) => Promise<void>
+}
+
+export type SnapRenderStream = AsyncIterable<SnapRenderItem>
+
+const findTheme = <T>(list: [string, T][], theme: string) => {
+  const callback = list.find(([t]) => t === theme)
+  if (!callback) {
+    throw new Error('No theme found')
+  }
+
+  return callback[1]
+}
+
+export class SnapRenderChild<T1> implements SnapRenderStream {
+  count = 0
 
   constructor(
     public isImage: (data: T1) => boolean,
@@ -145,61 +210,31 @@ export class SnapRenderChild<T1> {
     public videoCallback: [string, CallbackVideo<T1>][],
     public otherCallback: [string, CallbackOther<T1>][],
     public jsonCallback: [string, CallbackJson<T1>][],
-    public data: AsyncGenerator<T1, any, any>,
-  ) {
-    this.count = 0
-  }
+    public data: AsyncGenerator<T1>,
+  ) {}
 
-  image = (theme: string) => {
-    const callback = this.imageCallback.find(([t]) => t === theme)
-    if (!callback) {
-      throw new Error('No theme found')
+  async *[Symbol.asyncIterator]() {
+    for await (const data of this.data) {
+      yield this.item(data)
     }
-
-    return callback[1]
   }
 
-  video = (theme: string) => {
-    const callback = this.videoCallback.find(([t]) => t === theme)
-    if (!callback) {
-      throw new Error('No theme found')
+  item = (data: T1): SnapRenderItem => {
+    return {
+      next: (param) => this.next(data, param),
+      image: (theme, utils) => this.image(theme)(data, utils),
+      video: (theme, utils) => this.video(theme)(data, utils),
     }
-
-    return callback[1]
   }
 
-  other = (theme: string) => {
-    const callback = this.otherCallback.find(([t]) => t === theme)
-    if (!callback) {
-      throw new Error('No theme found')
-    }
+  image = (theme: string) => findTheme(this.imageCallback, theme)
+  video = (theme: string) => findTheme(this.videoCallback, theme)
+  other = (theme: string) => findTheme(this.otherCallback, theme)
+  json = (theme: string) => findTheme(this.jsonCallback, theme)
 
-    return callback[1]
-  }
-
-  json = (theme: string) => {
-    const callback = this.jsonCallback.find(([t]) => t === theme)
-    if (!callback) {
-      throw new Error('No theme found')
-    }
-
-    return callback[1]
-  }
-
-  next = async (flag: SnapRenderChildNextParam<T1>): Promise<SnapRenderBaseUtils> => {
-    const {
-      theme,
-      scale,
-      data,
-      logger,
-      output,
-      ffmpegPath,
-      ffprobePath,
-      ffmpegTimeout,
-      ffmpegAdditonalOption,
-      font,
-      width,
-    } = flag
+  next = async (data: T1, param: SnapRenderNextParam): Promise<SnapRenderBaseUtils> => {
+    const {theme, scale, logger, output, ffmpegPath, ffprobePath, ffmpegTimeout, ffmpegAdditonalOption, font, width} =
+      param
     const base = (path: FilePath) => {
       return [
         logger,
@@ -215,104 +250,96 @@ export class SnapRenderChild<T1> {
       ] as const
     }
 
-    const utils = await (async () => {
-      if (includeTheme(theme)) {
-        switch (themeList[theme]) {
-          case 'element': {
-            if (this.isImage(data)) {
-              const name = getName('image', this.placeholder(data), output, this.count++)
-              if (name.isExtension('png')) {
-                const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme, scale}))
-                const element = await this.image(theme)(data, utils)
-                await utils.file.saveImg(await utils.render(element))
-                return utils
-              } else if (name.isExtension('')) {
-                logger.hint('Output as png')
-                const rep = name.update({extension: 'png'})
-                const utils = new SnapRenderColorUtils(...base(rep), new ElementColorUtils({theme, scale}))
-                const element = await this.image(theme)(data, utils)
-                await utils.file.saveImg(await utils.render(element))
-                return utils
-              } else if (name.isImage()) {
-                logger.hint(`Unsupported format: ${name.extension}, output as png`)
-                const rep = name.update({extension: 'png'})
-                const utils = new SnapRenderColorUtils(...base(rep), new ElementColorUtils({theme, scale}))
-                const element = await this.image(theme)(data, utils)
-                await utils.file.saveImg(await utils.render(element))
-                return utils
-              } else {
-                const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme, scale}))
-                await this.video(theme)(data, utils)
-                return utils
-              }
-            } else {
-              const name = getName('video', this.placeholder(data), output, this.count++)
-              if (name.isExtension('png')) {
-                const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme, scale}))
-                const element = await this.image(theme)(data, utils)
-                await utils.file.saveImg(await utils.render(element))
-                return utils
-              } else if (name.isExtension('')) {
-                logger.hint('Output as mp4')
-                const rep = name.update({extension: 'mp4'})
-                const utils = new SnapRenderColorUtils(...base(rep), new ElementColorUtils({theme, scale}))
-                await this.video(theme)(data, utils)
-                return utils
-              } else if (name.isImage()) {
-                logger.hint(`Unsupported format: ${name.extension}, output as png`)
-                const rep = name.update({extension: 'png'})
-                const utils = new SnapRenderColorUtils(...base(rep), new ElementColorUtils({theme, scale}))
-                const element = await this.image(theme)(data, utils)
-                await utils.file.saveImg(await utils.render(element))
-                return utils
-              } else {
-                const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme, scale}))
-                await this.video(theme)(data, utils)
-                return utils
-              }
-            }
+    const renderImage = async (name: FilePath) => {
+      const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme, scale}))
+      const element = await this.image(theme)(data, utils)
+      await utils.file.saveImg(await utils.render(element))
+      return utils
+    }
+
+    const renderVideo = async (name: FilePath) => {
+      const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme, scale}))
+      await this.video(theme)(data, utils)
+      return utils
+    }
+
+    const renderJson = async (name: FilePath) => {
+      const utils = new SnapRenderUtils(...base(name), new ElementUtils({theme, scale}))
+      const res = await this.json(theme)(data, utils)
+      await utils.file.path.writeFile(JSON.stringify(res))
+      return utils
+    }
+
+    if (!includeTheme(theme)) {
+      throw new Error('No theme found')
+    }
+
+    switch (themeList[theme]) {
+      case 'element': {
+        if (this.isImage(data)) {
+          const name = getName('image', this.placeholder(data), output, this.count++)
+          if (name.isExtension('png')) {
+            return renderImage(name)
           }
 
-          case 'other': {
-            const name = getName('other', this.placeholder(data), output, this.count++)
-            const utils = new SnapRenderUtils(...base(name), new ElementUtils({theme, scale}))
-            await this.other(theme)(data, utils, this.placeholder(data), output)
-            return utils
+          if (name.isExtension('')) {
+            logger.hint('Output as png')
+            return renderImage(name.update({extension: 'png'}))
           }
 
-          case 'json': {
-            const name = getName('json', this.placeholder(data), output, this.count++)
-            if (output === '{stdout}') {
-              const utils = new SnapRenderUtils(...base(name), new ElementUtils({theme, scale}))
-              utils.stdout = await this.json(theme)(data, utils)
-              return utils
-            } else if (name.isExtension('json')) {
-              const utils = new SnapRenderUtils(...base(name), new ElementUtils({theme, scale}))
-              const res = await this.json(theme)(data, utils)
-              await utils.file.path.writeFile(JSON.stringify(res))
-              return utils
-            } else if (name.isExtension('')) {
-              logger.hint('Output as json')
-              const rep = name.update({extension: 'json'})
-              const utils = new SnapRenderUtils(...base(rep), new ElementUtils({theme, scale}))
-              const res = await this.json(theme)(data, utils)
-              await utils.file.path.writeFile(JSON.stringify(res))
-              return utils
-            } else {
-              logger.hint(`Unsupported format: ${name.extension}, output as json`)
-              const rep = name.update({extension: ''})
-              const utils = new SnapRenderUtils(...base(rep), new ElementUtils({theme, scale}))
-              const res = await this.json(theme)(data, utils)
-              await utils.file.path.writeFile(JSON.stringify(res))
-              return utils
-            }
+          if (name.isImage()) {
+            logger.hint(`Unsupported format: ${name.extension}, output as png`)
+            return renderImage(name.update({extension: 'png'}))
           }
+
+          return renderVideo(name)
         }
+
+        const name = getName('video', this.placeholder(data), output, this.count++)
+        if (name.isExtension('png')) {
+          return renderImage(name)
+        }
+
+        if (name.isExtension('')) {
+          logger.hint('Output as mp4')
+          return renderVideo(name.update({extension: 'mp4'}))
+        }
+
+        if (name.isImage()) {
+          logger.hint(`Unsupported format: ${name.extension}, output as png`)
+          return renderImage(name.update({extension: 'png'}))
+        }
+
+        return renderVideo(name)
       }
 
-      throw new Error('No theme found')
-    })()
+      case 'other': {
+        const name = getName('other', this.placeholder(data), output, this.count++)
+        const utils = new SnapRenderUtils(...base(name), new ElementUtils({theme, scale}))
+        await this.other(theme)(data, utils, this.placeholder(data), output)
+        return utils
+      }
 
-    return utils
+      case 'json': {
+        const name = getName('json', this.placeholder(data), output, this.count++)
+        if (output === '{stdout}') {
+          const utils = new SnapRenderUtils(...base(name), new ElementUtils({theme, scale}))
+          utils.stdout = await this.json(theme)(data, utils)
+          return utils
+        }
+
+        if (name.isExtension('json')) {
+          return renderJson(name)
+        }
+
+        if (name.isExtension('')) {
+          logger.hint('Output as json')
+          return renderJson(name.update({extension: 'json'}))
+        }
+
+        logger.hint(`Unsupported format: ${name.extension}, output as json`)
+        return renderJson(name.update({extension: ''}))
+      }
+    }
   }
 }

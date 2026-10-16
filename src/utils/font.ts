@@ -1,5 +1,5 @@
-import {ImageResponse} from '@vercel/og'
 import fs from 'node:fs/promises'
+import type {ImageResponse} from '@vercel/og'
 
 import {DirectoryPath, FilePath} from './path.js'
 

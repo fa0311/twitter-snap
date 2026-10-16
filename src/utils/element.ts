@@ -1,4 +1,4 @@
-import {ColorThemeType} from '../config.js'
+import type {ColorThemeType} from '../config.js'
 
 export type ElementUtilsParam = {
   scale?: number
@@ -26,7 +26,7 @@ export class ElementUtils {
   }
 
   applyScale = (value: number): string => {
-    return this.applyScaleNum(value) + 'px'
+    return `${this.applyScaleNum(value)}px`
   }
 
   applyScales = (value: number[]): string => {

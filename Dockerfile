@@ -1,25 +1,25 @@
-FROM node:22-alpine AS build
+FROM node:24-alpine AS build
 
 WORKDIR /app
 
-COPY package.json package.json
-COPY package-lock.json package-lock.json
-RUN npm install
+RUN corepack enable
+
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
-RUN npm run build
+RUN pnpm run build
 RUN node bin/run.js _
 
-FROM node:22-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache ffmpeg
+RUN apk add --no-cache ffmpeg && corepack enable
 
-COPY package.json package.json
-COPY package-lock.json package-lock.json
-RUN npm install --omit=dev
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
 COPY --from=build /root/.cache /root/.cache
 COPY --from=build /app/bin /app/bin

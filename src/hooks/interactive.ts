@@ -1,28 +1,22 @@
-import type {Hook} from '@oclif/core'
-
 import {cancel, intro, isCancel, note, outro, select, text} from '@clack/prompts'
+import type {Hook} from '@oclif/core'
 import clc from 'cli-color'
 
-import {DefaultCommandType} from '../commands/index.js'
-import {themeList} from '../config.js'
+import {themeList, themeNameList} from '../config.js'
 
-const nonEmptyValidation = (input: string) => {
-  if (input.trim().length === 0) {
+const nonEmptyValidation = (input: string | undefined) => {
+  if (!input?.trim()) {
     return 'Please enter a value'
   }
 }
 
-const numberValidation = (input: string) => {
+const numberValidation = (input: string | undefined) => {
   if (Number.isNaN(Number(input))) {
     return 'Please enter a number'
   }
 }
 
-const drop = <T extends string>(value: unknown): value is DefaultCommandType['flags'][T] => {
-  return !isCancel(value)
-}
-
-const exit = (message: string, context: Parameters<Hook<any>>[0]['context']) => {
+const exit = (message: string, context: Parameters<Hook.Preparse>[0]['context']) => {
   cancel(message)
   console.error = () => {}
   context?.exit(1)
@@ -33,7 +27,7 @@ const hook: Hook.Preparse = async ({argv, options, context}) => {
   const interactive = argv.some((arg) => ['--interactive', '-i'].includes(arg))
   if (interactive) {
     intro('Twitter Snap Interactive Mode')
-    const needLine = Object.keys(themeList).length + 4
+    const needLine = themeNameList.length + 4
     if (process.stdout.rows < needLine) {
       throw exit(`Please resize your terminal window to at least ${needLine} lines`, context)
     }
@@ -48,7 +42,7 @@ const hook: Hook.Preparse = async ({argv, options, context}) => {
         {value: 'file', label: 'Login with a cookies file', hint: '--session-type file'},
       ],
     })
-    if (!drop<'sessionType'>(login)) {
+    if (isCancel(login)) {
       throw exit('Operation canceled', context)
     }
 
@@ -61,7 +55,7 @@ const hook: Hook.Preparse = async ({argv, options, context}) => {
         validate: nonEmptyValidation,
       })
 
-      if (!drop<'cookiesFile'>(cookiesFile)) {
+      if (isCancel(cookiesFile)) {
         throw exit('Operation canceled', context)
       }
 
@@ -84,9 +78,9 @@ const hook: Hook.Preparse = async ({argv, options, context}) => {
 
     const theme = await select({
       message: 'Please select a theme',
-      options: Object.keys(themeList).map((e) => ({value: e, label: e, hint: `--theme ${e}`})),
+      options: themeNameList.map((e) => ({value: e, label: e, hint: `--theme ${e}`})),
     })
-    if (!drop<'theme'>(theme)) {
+    if (isCancel(theme)) {
       throw exit('Operation canceled', context)
     }
 
@@ -101,14 +95,14 @@ const hook: Hook.Preparse = async ({argv, options, context}) => {
             {value: 'file', label: 'file'},
           ],
         })
-        if (!drop<'output'>(stdout)) {
+        if (isCancel(stdout)) {
           throw exit('Operation canceled', context)
         }
 
         return stdout === 'stdout'
-      } else {
-        return false
       }
+
+      return false
     })()
 
     if (stdout) {
@@ -162,9 +156,9 @@ const hook: Hook.Preparse = async ({argv, options, context}) => {
               }
 
               return ext === 'custom with fallback' ? `.{if-photo:png:${extInput}}` : `.${extInput}`
-            } else {
-              return ext as string
             }
+
+            return ext
           }
         }
       })()

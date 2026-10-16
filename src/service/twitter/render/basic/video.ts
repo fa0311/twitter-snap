@@ -1,7 +1,7 @@
-import {TweetApiUtilsData} from 'twitter-openapi-typescript'
+import type {TweetApiUtilsData} from 'twitter-openapi-typescript'
 
-import {FilePath, URLPath} from '../../../../utils/path.js'
-import {SnapRenderColorUtils} from '../../../../utils/render.js'
+import {type FilePath, URLPath} from '../../../../utils/path.js'
+import type {SnapRenderColorUtils} from '../../../../utils/render.js'
 import {getResizedMediaByWidth} from '../../../../utils/video.js'
 import {getBiggerMedia, getUserScreenName} from '../utils/utils.js'
 
@@ -29,7 +29,7 @@ export class RenderBasicVideo {
     const id = data.tweet.legacy!.idStr
     const title = `https://twitter.com/${screenName}/status/${id}`
 
-    const [_, blank] = getBiggerMedia(extMedia)
+    const [, blank] = getBiggerMedia(extMedia)
 
     if (!blank) {
       await this.utils.video.fromImage(input.toString(), this.utils.file.path.toString(), title)
@@ -42,7 +42,7 @@ export class RenderBasicVideo {
       this.utils.width - this.utils.element.applyScaleNum((this.margin + this.padding) * 2),
     )
 
-    const res = video.map(async ({url}, i) => {
+    const res = video.map(async ({url}) => {
       const path = URLPath.fromURL(url)
       const temp = this.utils.file.getTemp(path.extension)
 

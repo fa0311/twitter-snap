@@ -11,10 +11,9 @@ jobs:
       fail-fast: false
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node_version }}
-          cache: npm
       - uses: FedericoCarboni/setup-ffmpeg@v3
         id: setup-ffmpeg
       - run: npx twitter-snap@latest --help

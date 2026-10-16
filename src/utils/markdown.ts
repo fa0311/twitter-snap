@@ -1,26 +1,17 @@
 import {apps} from '../service/core.js'
 
-const data = apps.map((app) => {
-  return {
-    base: app.pattern
-      .toString()
-      .slice(1, -1)
-      .replaceAll('\\', '')
-      .replaceAll(/\(\?<(\w+)>[^)]+\)/g, ':$1'),
-    child: app.callbackList.map(([url]) => {
-      return url
-        .toString()
-        .slice(1, -1)
-        .replaceAll('\\', '')
-        .replaceAll(/\(\?<(\w+)>[^)]+\)/g, ':$1')
-    }),
-  }
-})
+const toPath = (reg: RegExp) => {
+  return reg
+    .toString()
+    .slice(1, -1)
+    .replaceAll('\\', '')
+    .replaceAll(/\(\?<(\w+)>[^)]+\)/g, ':$1')
+}
 
-for (const app of data) {
-  console.log(`- \`${app.base}\``)
-  for (const child of app.child) {
-    console.log(`  - \`${child}\``)
+for (const app of apps) {
+  console.log(`- \`${toPath(app.pattern)}\``)
+  for (const route of app.routes) {
+    console.log(`  - \`${toPath(route)}\``)
   }
 
   console.log()

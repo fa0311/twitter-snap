@@ -1,5 +1,4 @@
 import {reactRenderer} from '@hono/react-renderer'
-import * as React from 'react'
 
 export const renderer = reactRenderer(({children}) => {
   return (

@@ -1,7 +1,7 @@
-import {ImageResponse} from '@vercel/og'
 import fs from 'node:fs/promises'
+import type {ImageResponse} from '@vercel/og'
 
-import {DirectoryPath, FilePath, URLPath} from './path.js'
+import {DirectoryPath, type FilePath, type URLPath} from './path.js'
 
 type TempType =
   | {

@@ -27,6 +27,6 @@ export class SnapAppCookies {
   }
 
   toKeyValues() {
-    return this.cookies.map((cookie) => ({[cookie.name]: cookie.value})).reduce((a, b) => ({...a, ...b}), {})
+    return Object.fromEntries(this.cookies.map((cookie) => [cookie.name, cookie.value]))
   }
 }

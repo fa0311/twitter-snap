@@ -3,18 +3,19 @@ import {SnapAppCookies} from '../../utils/cookies.js'
 import {URLPath} from '../../utils/path.js'
 import {pixivRender} from './render/image.js'
 import {pixivVideoRender, ugoiraEncode} from './render/video.js'
-import {APIResponse, IllustBody, PixivBody, PixivData, UgoiraBody, UserProfile} from './type.js'
+import type {APIResponse, IllustBody, PixivBody, PixivData, UgoiraBody, UserProfile} from './type.js'
+
+type LatestHeader = Record<string, Record<string, string>>
 
 const getFetch = async (cookies: SnapAppCookies) => {
   const url = 'https://raw.githubusercontent.com/fa0311/latest-user-agent/main/header.json'
-  const latestHeader = await fetch(url).then((res) => res.json())
+  const latestHeader = (await fetch(url).then((res) => res.json())) as LatestHeader
+  const {host: _host, connection: _connection, ...chrome} = latestHeader.chrome
   const header = {
-    ...latestHeader.chrome,
+    ...chrome,
     'accept-encoding': 'gzip, deflate, br, zstd',
     'accept-language': 'ja-JP,ja;q=0.9',
   }
-  delete header.host
-  delete header.connection
 
   return async (url: string) => {
     return fetch(url, {
@@ -58,13 +59,13 @@ const app = new SnapApp(
       }
     }
   },
-  async (utils) => {
+  async () => {
     return {
       text: undefined,
       emoji: 'twemoji',
     }
   },
-  async (utils) => {},
+  async () => {},
 )
 
 const render = new SnapRender<PixivData>(
@@ -72,24 +73,25 @@ const render = new SnapRender<PixivData>(
     return data.ugoira === undefined
   },
   (data) => {
+    const createDate = new Date(data.meta.illust.createDate)
     return [
       ['{id}', data.meta.illust.illustId],
       ['{user-id}', data.meta.user.userId],
-      ['{time-yyyy}', new Date(data.meta.illust.createDate).getFullYear().toString().padStart(4, '0')],
-      ['{time-mm}', (new Date(data.meta.illust.createDate).getMonth() + 1).toString().padStart(2, '0')],
-      ['{time-dd}', new Date(data.meta.illust.createDate).getDate().toString().padStart(2, '0')],
-      ['{time-hh}', new Date(data.meta.illust.createDate).getHours().toString().padStart(2, '0')],
-      ['{time-mi}', new Date(data.meta.illust.createDate).getMinutes().toString().padStart(2, '0')],
-      ['{time-ss}', new Date(data.meta.illust.createDate).getSeconds().toString().padStart(2, '0')],
-    ] as [string, number | string | undefined][]
+      ['{time-yyyy}', createDate.getFullYear().toString().padStart(4, '0')],
+      ['{time-mm}', (createDate.getMonth() + 1).toString().padStart(2, '0')],
+      ['{time-dd}', createDate.getDate().toString().padStart(2, '0')],
+      ['{time-hh}', createDate.getHours().toString().padStart(2, '0')],
+      ['{time-mi}', createDate.getMinutes().toString().padStart(2, '0')],
+      ['{time-ss}', createDate.getSeconds().toString().padStart(2, '0')],
+    ]
   },
   async (data, utils) => {
     utils.logger.update(`Rendering image ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
-    return pixivRender(data, utils, false)
+    return pixivRender(data, utils)
   },
   async (data, utils) => {
     utils.logger.update(`Rendering image ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
-    const element = await pixivRender(data, utils, true)
+    const element = await pixivRender(data, utils)
     utils.logger.update(`Rendering video ${data.meta.illust.illustTitle} ${data.meta.illust.illustId}`)
     const input = await utils.file.tempImg(await utils.render(element))
     await pixivVideoRender(data, utils, input)
@@ -107,8 +109,8 @@ render.media<MediaResponse>(
       return data.illust.map((illust) => ({data: illust}))
     }
   },
-  (data) => {
-    return [] as [string, number | string | undefined][]
+  () => {
+    return []
   },
   async (data, utils) => {
     if (data.ugoira === undefined) {
@@ -144,7 +146,7 @@ render.json('Json', async (data, utils) => {
   return data
 })
 
-app.call('/artworks/(?<id>[0-9]+)', async (utils, cookie, {id}) => {
+app.call('/artworks/(?<id>[0-9]+)', async (_utils, cookie, {id}) => {
   const fetch = await getFetch(cookie)
   const request = await getRequest(fetch)
 

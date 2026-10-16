@@ -1,10 +1,4 @@
-import {default as ffmpeg, default as ffprobe} from 'fluent-ffmpeg'
-
-export type GetFFmpegType = () => ffmpeg.FfmpegCommand
-export type DumpCommandType = (prefix: string, command: ffmpeg.FfmpegCommand) => void
-export type RunFFmpegType = (command: ffmpeg.FfmpegCommand) => Promise<unknown>
-export type RunFFMpegIntegrationType = (command: ffmpeg.FfmpegCommand, title: string) => Promise<unknown>
-export type RunFFprobeType = (command: ffprobe.FfmpegCommand) => Promise<ffmpeg.FfprobeData>
+import ffmpeg from 'fluent-ffmpeg'
 
 export type VideoUtilsParam = {
   ffmpegAdditonalOption?: string[]
@@ -31,9 +25,9 @@ export class VideoUtils {
   }
 
   bypassFFmpeg(command: ffmpeg.FfmpegCommand) {
-    const bk = command.availableFormats
-    command.availableFormats = (cb: (err: any, data: any) => void) => {
-      bk.bind(command)((err, data) => {
+    const bk = command.availableFormats.bind(command)
+    command.availableFormats = (cb) => {
+      bk((err, data) => {
         const lavfi = {
           canDemux: true,
           canMux: true,
@@ -57,17 +51,17 @@ export class VideoUtils {
     await this.runFFMpegIntegration(command, title)
   }
 
-  getFFmpeg: GetFFmpegType = () => {
+  getFFmpeg = () => {
     return ffmpeg({
       timeout: this.flags.ffmpegTimeout < 0 ? undefined : this.flags.ffmpegTimeout,
     }).setFfmpegPath(this.flags.ffmpegPath)
   }
 
-  getFFprobe: GetFFmpegType = () => {
-    return ffprobe().setFfprobePath(this.flags.ffprobePath)
+  getFFprobe = () => {
+    return ffmpeg().setFfprobePath(this.flags.ffprobePath)
   }
 
-  dumpFFmpegCommand: DumpCommandType = (prefix, command) => {
+  dumpFFmpegCommand = (prefix: string, command: ffmpeg.FfmpegCommand) => {
     const suffix = command
       ._getArguments()
       .map((e) => `"${e}"`)
@@ -76,17 +70,17 @@ export class VideoUtils {
     console.debug(c)
   }
 
-  runFFMpeg: RunFFmpegType = (command) => {
+  runFFMpeg = (command: ffmpeg.FfmpegCommand) => {
     this.bypassFFmpeg(command)
     this.dumpFFmpegCommand('ffmpeg', command)
-    return new Promise((resolve, reject) => {
-      command.on('end', resolve)
+    return new Promise<void>((resolve, reject) => {
+      command.on('end', () => resolve())
       command.on('error', reject)
       command.run()
     })
   }
 
-  runFFMpegIntegration: RunFFMpegIntegrationType = (command, title) => {
+  runFFMpegIntegration = (command: ffmpeg.FfmpegCommand, title: string) => {
     for (const option of this.flags.ffmpegAdditonalOption) {
       command.addOption(option)
     }
@@ -100,10 +94,10 @@ export class VideoUtils {
     return this.runFFMpeg(command)
   }
 
-  runProbe: RunFFprobeType = (command) => {
+  runProbe = (command: ffmpeg.FfmpegCommand) => {
     this.bypassFFmpeg(command)
     this.dumpFFmpegCommand('ffprobe', command)
-    return new Promise((resolve, reject) => {
+    return new Promise<ffmpeg.FfprobeData>((resolve, reject) => {
       command.ffprobe((err, data) => {
         if (err) reject(err)
         resolve(data)

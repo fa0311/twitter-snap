@@ -1,8 +1,7 @@
-import {TweetApiUtilsData, TwitterOpenApi} from 'twitter-openapi-typescript'
-
+import {type TweetApiUtilsData, TwitterOpenApi, type TwitterOpenApiClient} from 'twitter-openapi-typescript'
+import {Session, SnapApp, SnapRender} from './../../app.js'
 import {URLPath} from '../../utils/path.js'
 import {sleepLoop} from '../../utils/sleep.js'
-import {Session, SnapApp, SnapRender} from './../../app.js'
 import {RenderTweetImage} from './render/basic/image.js'
 import {RenderBasicVideo} from './render/basic/video.js'
 import {RenderMakeItAQuoteImage} from './render/makeItAQuote/image.js'
@@ -38,15 +37,15 @@ const app = new SnapApp(
   async (utils) => {
     const base = 'https://github.com/fa0311/twitter-snap-core/releases/download/assets-fonts/'
     const list = [
-      ['SEGOEUISL.TTF', 'Segoe UI', 500, 'normal'] as const,
-      ['SEGOEUIB.TTF', 'Segoe UI', 700, 'normal'] as const,
-      ['SEGUISLI.TTF', 'Segoe UI', 500, 'italic'] as const,
-      ['SEGOEUIZ.TTF', 'Segoe UI', 700, 'italic'] as const,
-      ['Meiryo.ttf', 'Meiryo', 500, 'normal'] as const,
-      ['Meiryo-Bold.ttf', 'Meiryo', 700, 'normal'] as const,
-      ['Meiryo-Italic.ttf', 'Meiryo', 500, 'italic'] as const,
-      ['Meiryo-BoldItalic.ttf', 'Meiryo', 700, 'italic'] as const,
-    ]
+      ['SEGOEUISL.TTF', 'Segoe UI', 500, 'normal'],
+      ['SEGOEUIB.TTF', 'Segoe UI', 700, 'normal'],
+      ['SEGUISLI.TTF', 'Segoe UI', 500, 'italic'],
+      ['SEGOEUIZ.TTF', 'Segoe UI', 700, 'italic'],
+      ['Meiryo.ttf', 'Meiryo', 500, 'normal'],
+      ['Meiryo-Bold.ttf', 'Meiryo', 700, 'normal'],
+      ['Meiryo-Italic.ttf', 'Meiryo', 500, 'italic'],
+      ['Meiryo-BoldItalic.ttf', 'Meiryo', 700, 'italic'],
+    ] as const
     const fonts = list.map(async ([file, name, weight, style]) => {
       const data = await utils.getFonts(file, async () => (await fetch(`${base}${file}`)).arrayBuffer())
       return {data, name, weight, style}
@@ -73,6 +72,8 @@ const app = new SnapApp(
   },
 )
 
+const pad = (value: number, length: number) => value.toString().padStart(length, '0')
+
 const render = new SnapRender<TweetApiUtilsData>(
   (data) => {
     const extEntities = data.tweet.legacy?.extendedEntities
@@ -80,18 +81,18 @@ const render = new SnapRender<TweetApiUtilsData>(
     return extMedia.every((media) => media.type === 'photo')
   },
   (data) => {
-    const legacy = data.tweet.legacy!
+    const createdAt = new Date(data.tweet.legacy?.createdAt ?? 0)
     return [
       ['{id}', data.tweet.restId],
       ['{user-screen-name}', getUserScreenName(data.user)],
       ['{user-id}', data.user.restId],
-      ['{time-yyyy}', new Date(legacy.createdAt).getFullYear().toString().padStart(4, '0')],
-      ['{time-mm}', (new Date(legacy.createdAt).getMonth() + 1).toString().padStart(2, '0')],
-      ['{time-dd}', new Date(legacy.createdAt).getDate().toString().padStart(2, '0')],
-      ['{time-hh}', new Date(legacy.createdAt).getHours().toString().padStart(2, '0')],
-      ['{time-mi}', new Date(legacy.createdAt).getMinutes().toString().padStart(2, '0')],
-      ['{time-ss}', new Date(legacy.createdAt).getSeconds().toString().padStart(2, '0')],
-    ] as [string, number | string | undefined][]
+      ['{time-yyyy}', pad(createdAt.getFullYear(), 4)],
+      ['{time-mm}', pad(createdAt.getMonth() + 1, 2)],
+      ['{time-dd}', pad(createdAt.getDate(), 2)],
+      ['{time-hh}', pad(createdAt.getHours(), 2)],
+      ['{time-mi}', pad(createdAt.getMinutes(), 2)],
+      ['{time-ss}', pad(createdAt.getSeconds(), 2)],
+    ]
   },
   async (data, utils) => {
     utils.logger.update(`Rendering image ${getUserScreenName(data.user)} ${data.tweet.restId}`)
@@ -117,25 +118,22 @@ render.media(
     const videoInfo = data.videoInfo && getVideo(data.videoInfo)
     return [
       ['{media-id}', data.idStr],
-      ['{media-video-variants-id}', videoInfo?.url.split('/').pop()!.split('.')[0]],
+      ['{media-video-variants-id}', videoInfo?.url.split('/').pop()?.split('.')[0]],
       ['{media-video-bitrate}', videoInfo?.bitrate],
-    ] as [string, number | string | undefined][]
+    ]
   },
   async (data, utils) => {
-    const isVideo = data.type !== 'photo'
+    const isVideo = data.videoInfo !== undefined && data.type !== 'photo'
     utils.logger.update(`Downloading ${isVideo ? 'video' : 'image'} ${data.idStr}`)
-    const mediaUrl = isVideo ? getVideo(data.videoInfo!).url : data.mediaUrlHttps
+    const mediaUrl = data.videoInfo && data.type !== 'photo' ? getVideo(data.videoInfo).url : data.mediaUrlHttps
 
     const url = URLPath.fromURL(mediaUrl)
 
-    if (utils.file.path.isExtension('')) {
-      await utils.file.saveFetch(url)
-    } else if (utils.file.path.isExtension(url.extension)) {
-      await utils.file.saveFetch(url)
-    } else {
+    if (!utils.file.path.isExtension('') && !utils.file.path.isExtension(url.extension)) {
       utils.logger.hint(`Extension is ignored, saving as ${url.extension}`)
-      await utils.file.saveFetch(url)
     }
+
+    await utils.file.saveFetch(url)
   },
 )
 
@@ -144,7 +142,7 @@ render.json('Json', async (data, utils) => {
   return data
 })
 
-render.other('LiteJson', async (data, utils) => {
+render.json('LiteJson', async (data, utils) => {
   utils.logger.update(`Parsing ${getUserScreenName(data.user)} ${data.tweet.restId}`)
   return toLiteJson(data)
 })
@@ -167,12 +165,21 @@ render.add(
   },
 )
 
+const getUserId = async (api: TwitterOpenApiClient, screenName: string) => {
+  const userData = await api.getUserApi().getUserByScreenName({screenName})
+  const id = userData.data.user?.restId
+  if (!id) throw new Error('User not found')
+  return id
+}
+
 app.call(`/(?<user>[a-zA-Z0-9_]+)/status/(?<id>[0-9]+)`, async (utils, api, {id}) => {
-  const guest = api.config.apiKey!('x-csrf-token') === undefined
+  const guest = api.config.apiKey?.('x-csrf-token') === undefined
 
   if (guest) {
     const fn = (async function* () {
-      yield (await api.getDefaultApi().getTweetResultByRestId({tweetId: id})).data!
+      const res = await api.getDefaultApi().getTweetResultByRestId({tweetId: id})
+      if (!res.data) throw new Error('No data')
+      yield res.data
     })()
     return render.run(fn)
   }
@@ -210,8 +217,7 @@ app.call(`/i/lists/(?<id>[0-9]+)`, async (utils, api, {id}) => {
 })
 
 app.call(`/(?<user>[a-zA-Z0-9_]+)/with_replies`, async (utils, api, {user}) => {
-  const userData = await api.getUserApi().getUserByScreenName({screenName: user})
-  const id = userData.data.user!.restId!
+  const id = await getUserId(api, user)
   const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
     return api.getTweetApi().getUserTweetsAndReplies({userId: id, cursor})
   })
@@ -219,8 +225,7 @@ app.call(`/(?<user>[a-zA-Z0-9_]+)/with_replies`, async (utils, api, {user}) => {
 })
 
 app.call(`/(?<user>[a-zA-Z0-9_]+)/media`, async (utils, api, {user}) => {
-  const userData = await api.getUserApi().getUserByScreenName({screenName: user})
-  const id = userData.data.user!.restId!
+  const id = await getUserId(api, user)
   const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
     return api.getTweetApi().getUserMedia({userId: id, cursor})
   })
@@ -228,8 +233,7 @@ app.call(`/(?<user>[a-zA-Z0-9_]+)/media`, async (utils, api, {user}) => {
 })
 
 app.call(`/(?<user>[a-zA-Z0-9_]+)/likes`, async (utils, api, {user}) => {
-  const userData = await api.getUserApi().getUserByScreenName({screenName: user})
-  const id = userData.data.user!.restId!
+  const id = await getUserId(api, user)
   const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
     return api.getTweetApi().getLikes({userId: id, cursor})
   })
@@ -244,16 +248,14 @@ app.call(`/i/bookmarks`, async (utils, api) => {
 })
 
 app.call(`/i/communities/(?<id>[0-9]+)`, async (utils, api, {id}) => {
-  console.log(id)
   const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return await api.getTweetApi().getCommunityTweetsTimeline({communityId: id, cursor: cursor, rankingMode: 'Recency'})
+    return api.getTweetApi().getCommunityTweetsTimeline({communityId: id, cursor, rankingMode: 'Recency'})
   })
   return render.run(fn)
 })
 
 app.call(`/(?<user>[a-zA-Z0-9_]+)`, async (utils, api, {user}) => {
-  const userData = await api.getUserApi().getUserByScreenName({screenName: user})
-  const id = userData.data.user!.restId!
+  const id = await getUserId(api, user)
   const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
     return api.getTweetApi().getUserTweets({userId: id, cursor})
   })

@@ -10,7 +10,6 @@ oclif.manifest.json
 
 
 yarn.lock
-pnpm-lock.yaml
 
 cookies.json
 temp

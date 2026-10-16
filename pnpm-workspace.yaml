@@ -1,0 +1,9 @@
+allowBuilds:
+  esbuild: true
+  puppeteer: true
+  es5-ext: false
+  sharp: false
+  yarn: false
+minimumReleaseAgeExclude:
+  - twitter-openapi-typescript
+  - twitter-openapi-typescript-generated

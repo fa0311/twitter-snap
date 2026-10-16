@@ -1,11 +1,11 @@
-import {Hono} from 'hono'
 import fs from 'node:fs/promises'
-import * as React from 'react'
+import {Hono} from 'hono'
 
-import type {Session} from '../src/app.js'
+import type {SnapRenderItem, SnapSession} from '../src/app.js'
 
 import {themeList} from '../src/config.js'
 import {apps} from '../src/service/core.js'
+import simpleCache from '../src/utils/cache.js'
 import {ElementColorUtils} from '../src/utils/element.js'
 import {FileUtils} from '../src/utils/file.js'
 import {type FontOptions, FontUtils} from '../src/utils/font.js'
@@ -20,42 +20,22 @@ const app = new Hono()
 
 app.use(renderer)
 
-const cache = <T extends any[]>() => {
-  const cache: {[key: string]: T} = {}
-  return async (key: string, callback: () => Promise<T>) => {
-    if (cache[key] === undefined) {
-      cache[key] = await callback()
-      return cache[key]
-    }
-
-    return cache[key]
-  }
-}
-
-const sessionCache = cache<[Session<any>, FontOptions]>()
-const fetchCache = cache<any>()
+const sessionCache = simpleCache<[SnapSession, FontOptions]>()
+const itemCache = simpleCache<SnapRenderItem>()
 
 const getRender = async (url: string) => {
-  const app = apps.find((app) => app.pattern.test(url))
+  const app = apps.find((app) => app.test(url))
   if (!app) {
     throw new Error('Unsupported URL')
   }
 
-  const prefix = app.pattern.exec(url)![0]
-  const path = url.slice(prefix.length)
-  const match = app.callbackList.find(([regs]) => regs.test(path))
-  if (!match) {
-    throw new Error('Unsupported URL')
-  }
-
-  const groups = match[0].exec(url)!.groups!
   const [session, font] = await sessionCache(app.name, async () => {
     const font = await app.fonts(new FontUtils({}))
     const type = await fs
       .access('cookies.json')
       .then(() => 'file' as const)
       .catch(() => 'browser' as const)
-    const session = await app.callback(
+    const session = await app.login(
       new SnapAppBrowserUtils({
         sessionType: type,
         browserProfile: '~/.cache/twitter-snap/profiles',
@@ -65,8 +45,12 @@ const getRender = async (url: string) => {
     return [session, font]
   })
 
-  const render = await match[1]({limit: 1}, session.api, groups)
-  return {render, font}
+  const item = await itemCache(url, async () => {
+    const render = await session.render(url, {limit: 1})
+    for await (const item of render) return item
+    throw new Error('No data')
+  })
+  return {item, font}
 }
 
 const getUtils = (font: FontOptions, name: string, theme: string, width: number, scale: number) => {
@@ -80,6 +64,15 @@ const getUtils = (font: FontOptions, name: string, theme: string, width: number,
     width,
     new ElementColorUtils({theme, scale}),
   )
+}
+
+const getQuery = (c: {req: {query: (key: string) => string | undefined}}) => {
+  return {
+    url: c.req.query('url') ?? '',
+    theme: c.req.query('theme') ?? 'RenderOceanBlueColor',
+    width: Number(c.req.query('width') ?? 650),
+    scale: Number(c.req.query('scale') ?? 1),
+  }
 }
 
 app.get('/', async (c) => {
@@ -107,25 +100,20 @@ app.get('/', async (c) => {
       <input defaultValue="650" id="width" type="number" />
       <p>scale</p>
       <input defaultValue="1" id="scale" type="number" />
-      <button id="submit">submit</button>
+      <button id="submit" type="button">
+        submit
+      </button>
     </div>
   )
   return c.render(body)
 })
 
 app.get('/element', async (c) => {
-  const url = c.req.query('url')!
-  const theme = c.req.query('theme')!
-  const width = Number(c.req.query('width')!)
-  const scale = Number(c.req.query('scale')!)
-
-  const {font, render} = await getRender(url)
-  const data = await fetchCache(url, async () => {
-    return (await render.data.next()).value
-  })
+  const {url, theme, width, scale} = getQuery(c)
+  const {font, item} = await getRender(url)
   const id = Math.random().toString(32).slice(2)
   const param = getUtils(font, `temp/${id}.png`, theme, width, scale)
-  const element = await render.image(theme)(data, param)
+  const element = await item.image(theme, param)
   return c.render(
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
       <div style={{width, display: 'flex'}}>{element}</div>
@@ -134,18 +122,11 @@ app.get('/element', async (c) => {
 })
 
 app.get('/image', async (c) => {
-  const url = c.req.query('url')!
-  const theme = c.req.query('theme')!
-  const width = Number(c.req.query('width')!)
-  const scale = Number(c.req.query('scale')!)
-
-  const {font, render} = await getRender(url)
-  const data = await fetchCache(url, async () => {
-    return (await render.data.next()).value
-  })
+  const {url, theme, width, scale} = getQuery(c)
+  const {font, item} = await getRender(url)
   const id = Math.random().toString(32).slice(2)
   const param = getUtils(font, `temp/${id}.png`, theme, width, scale)
-  const element = await render.image(theme)(data, param)
+  const element = await item.image(theme, param)
   const img = await param.render(element)
   c.header('Content-Type', 'image/png')
   const body = Buffer.from(await img.arrayBuffer())
@@ -154,18 +135,11 @@ app.get('/image', async (c) => {
 })
 
 app.get('/video', async (c) => {
-  const url = c.req.query('url')!
-  const theme = c.req.query('theme')!
-  const width = Number(c.req.query('width')!)
-  const scale = Number(c.req.query('scale')!)
-
-  const {font, render} = await getRender(url)
-  const data = await fetchCache(url, async () => {
-    return (await render.data.next()).value
-  })
+  const {url, theme, width, scale} = getQuery(c)
+  const {font, item} = await getRender(url)
   const id = Math.random().toString(32).slice(2)
   const param = getUtils(font, `temp/${id}.mp4`, theme, width, scale)
-  await render.video(theme)(data, param)
+  await item.video(theme, param)
   const body = await fs.readFile(`./temp/${id}.mp4`)
   await param.file.tempCleanup()
   await fs.unlink(`./temp/${id}.mp4`)

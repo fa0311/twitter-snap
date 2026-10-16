@@ -26,7 +26,11 @@ export class DirectoryPath {
 }
 
 export class FilePath {
-  constructor(public dir: string, public name: string, public extension: string) {}
+  constructor(
+    public dir: string,
+    public name: string,
+    public extension: string,
+  ) {}
 
   static from(path: string) {
     const p = path.startsWith('~/') ? `${os.homedir()}${path.slice(1)}` : path
@@ -96,7 +100,12 @@ export class FilePath {
 }
 
 export class URLPath extends FilePath {
-  constructor(public url: URL, dir: string, name: string, extension: string) {
+  constructor(
+    public url: URL,
+    dir: string,
+    name: string,
+    extension: string,
+  ) {
     super(dir, name, extension)
   }
 
