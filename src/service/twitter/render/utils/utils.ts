@@ -64,9 +64,9 @@ export const toLiteJson = (obj: TweetApiUtilsData): LiteJson => {
     user: {
       id: getUserScreenName(obj.user),
       name: getUserName(obj.user),
-      followersCount: obj.user.legacy?.followersCount,
-      followingCount: obj.user.legacy?.friendsCount,
-      description: obj.user.legacy?.description,
+      followersCount: obj.user.relationshipCounts?.followers ?? obj.user.legacy?.followersCount,
+      followingCount: obj.user.relationshipCounts?.following ?? obj.user.legacy?.friendsCount,
+      description: obj.user.profileBio?.description ?? obj.user.legacy?.description,
       createAt: obj.user.core?.createdAt ?? obj.user.legacy?.createdAt,
     },
     tweet: {

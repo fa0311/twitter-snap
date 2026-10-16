@@ -75,8 +75,8 @@
     "ora": "^9.4.1",
     "puppeteer": "^25.14.0",
     "react": "^19.3.1",
-    "twitter-openapi-typescript": "^0.0.56",
-    "twitter-openapi-typescript-generated": "^0.0.40"
+    "twitter-openapi-typescript": "^0.0.57",
+    "twitter-openapi-typescript-generated": "^0.0.41"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
