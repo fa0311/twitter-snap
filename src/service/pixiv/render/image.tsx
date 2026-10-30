@@ -3,6 +3,7 @@ import type {CSSProperties, ReactElement} from 'react'
 
 import type {ExtractGroups} from '../../../app.js'
 import type {SnapRenderColorUtils} from '../../../utils/render.js'
+import {splitLineBreak} from '../../../utils/text.js'
 import type {PixivData} from '../type.js'
 
 const htmlReplace = (text: string): string => {
@@ -30,14 +31,15 @@ const match = <T extends string>(text: T, callback: (groups: ExtractGroups<T>) =
 
 const textWrap = (text: string, style: CSSProperties) => {
   const trueSplit = split(text).map((char, index) => ({char, index}))
-  const splitText = trueSplit.map((item, index) => {
-    return (
-      <span key={index} style={style}>
-        {item.char}
-      </span>
-    )
-  })
-  return splitText
+  return splitLineBreak(trueSplit).map((unit, index) => (
+    <span key={index} style={{display: 'flex'}}>
+      {unit.map((item) => (
+        <span key={item.index} style={style}>
+          {item.char}
+        </span>
+      ))}
+    </span>
+  ))
 }
 
 const htmlParse = (text: string): ReactElement[] => {

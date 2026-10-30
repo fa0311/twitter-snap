@@ -3,6 +3,7 @@ import type {TweetApiUtilsData} from 'twitter-openapi-typescript'
 import type {Tweet} from 'twitter-openapi-typescript-generated'
 
 import type {SnapRenderUtils} from '../../../../utils/render.js'
+import {splitLineBreak} from '../../../../utils/text.js'
 import {getUserAvatarUrl, getUserName, getUserScreenName, type RenderWidgetType} from '../utils/utils.js'
 
 export class RenderMakeItAQuoteImage {
@@ -100,28 +101,7 @@ export class RenderMakeItAQuoteImage {
     const text = this.tweetNormalize(data.tweet)
     const trueSplit = split(text).map((char, index) => ({char, index}))
 
-    const textDataList: string[][] = []
-
-    for (const [i, data] of trueSplit.entries()) {
-      if (i === 0) {
-        textDataList.push([data.char])
-      } else {
-        const last = textDataList.pop()!
-        const add: string[][] = []
-
-        if (/[\d./A-Za-z]/.test(data.char)) {
-          last.push(data.char)
-        } else if (data.char === ' ') {
-          last.push(data.char)
-          add.push([])
-        } else {
-          add.push([data.char])
-        }
-
-        textDataList.push(last)
-        for (const data of add) textDataList.push(data)
-      }
-    }
+    const textDataList = splitLineBreak(trueSplit)
 
     return (
       <p
@@ -133,9 +113,9 @@ export class RenderMakeItAQuoteImage {
         }}
       >
         {textDataList.map((data, i) => {
-          const n = data.length === 1 && data[0] === '\n'
+          const n = data.length === 1 && data[0].char === '\n'
           const last = i > 0 && textDataList[i - 1]
-          const lastN = last && last.length === 1 && last[0] === '\n'
+          const lastN = last && last.length === 1 && last[0].char === '\n'
 
           return (
             <span
@@ -146,10 +126,10 @@ export class RenderMakeItAQuoteImage {
                 color: '#ffffff',
                 margin: '0',
                 ...(n ? {width: '100%'} : {}),
-                ...(lastN ? {height: '1em'} : {}),
+                ...(n && lastN ? {height: '1em'} : {}),
               }}
             >
-              {data.map((char, i) => (
+              {data.map(({char}, i) => (
                 <span
                   key={i}
                   style={{
