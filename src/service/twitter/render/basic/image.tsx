@@ -7,6 +7,7 @@ import {
 } from 'twitter-openapi-typescript-generated'
 
 import type {SnapRenderColorUtils} from '../../../../utils/render.js'
+import {splitLineBreak} from '../../../../utils/text.js'
 import {getResizedMediaByWidth} from '../../../../utils/video.js'
 import {
   getBiggerMedia,
@@ -967,50 +968,21 @@ export class RenderTweetImage {
       }
     })
 
-    const textDataList: {
-      data: {char: string; properties: CSSProperties}[][]
-      end: number
-      start: number
-    }[] = []
+    const paragraphs: {chars: typeof charDataList; end: number; start: number}[] = []
 
     for (const [i, data] of charDataList.entries()) {
-      const {index, char} = data
-      const split = insert.some((i) => i.index === index)
+      const split = insert.some((e) => e.index === data.index)
 
       if (split || i === 0) {
-        textDataList.push({
-          start: index,
-          end: index + 1,
-          data: [[data]],
-        })
+        paragraphs.push({start: data.index, end: data.index, chars: [data]})
       } else {
-        const last = textDataList.pop()!
-        const lastDataLast = last.data.pop()!
-        const add: (typeof lastDataLast)[] = []
-        const lastData: typeof lastDataLast = []
-        const lastChar = lastDataLast.at(-1)
-
-        const matchReg = /[\d./A-Za-z]/
-
-        if (matchReg.test(char)) {
-          lastData.push(data)
-        } else if (char === ' ') {
-          lastData.push(data)
-          add.push([])
-        } else if (lastChar?.char.match(matchReg)) {
-          add.push([data])
-        } else {
-          lastData.push(data)
-          add.push([])
-        }
-
-        textDataList.push({
-          start: last.start,
-          end: index,
-          data: [...last.data, [...lastDataLast, ...lastData], ...add],
-        })
+        const last = paragraphs.at(-1)!
+        last.end = data.index
+        last.chars.push(data)
       }
     }
+
+    const textDataList = paragraphs.map(({start, end, chars}) => ({start, end, data: splitLineBreak(chars)}))
 
     // console.log("insert", insert);
     // console.log("charIndices", charIndices);
@@ -1052,7 +1024,7 @@ export class RenderTweetImage {
                 style={{
                   display: 'flex',
                   ...(n ? {width: '100%'} : {}),
-                  ...(lastN ? {height: '1em'} : {}),
+                  ...(n && lastN ? {height: '1em'} : {}),
                 }}
               >
                 {y.map(({char, properties}, i) => (
