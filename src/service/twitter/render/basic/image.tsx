@@ -2,6 +2,7 @@ import split from 'graphemesplit'
 import type {CSSProperties, ReactElement} from 'react'
 import {type TweetApiUtilsData, userOrNullConverter} from 'twitter-openapi-typescript'
 import {
+  type BirdwatchPivot,
   NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum,
   type UserProfileImageShapeEnum,
 } from 'twitter-openapi-typescript-generated'
@@ -223,6 +224,7 @@ export class RenderTweetImage {
         >
           <this.userRender data={data} />
           {data.tweet.card && <this.ogp data={data} />}
+          {data.tweet.birdwatchPivot && <this.birdwatch data={data.tweet.birdwatchPivot} />}
 
           <this.bottonWidget data={data} />
         </div>
@@ -301,8 +303,268 @@ export class RenderTweetImage {
     )
   }
 
+  poll: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+    const values = data.tweet.card?.legacy?.bindingValues ?? []
+    const get = (key: string) => values.find((v) => v.key === key)?.value
+    const choices = [1, 2, 3, 4].flatMap((i) => {
+      const label = get(`choice${i}_label`)?.stringValue
+      return label === undefined ? [] : [{label, count: Number(get(`choice${i}_count`)?.stringValue ?? 0)}]
+    })
+    const total = choices.reduce((sum, {count}) => sum + count, 0)
+    const max = Math.max(...choices.map(({count}) => count))
+    const end = new Date(get('end_datetime_utc')?.stringValue ?? 0)
+    const final = get('counts_are_final')?.booleanValue || end.getTime() <= Date.now()
+    const font = this.utils.element.applyScale(15)
+
+    const timeLeft = (() => {
+      const minutes = Math.ceil((end.getTime() - Date.now()) / 60000)
+      const hours = Math.floor(minutes / 60)
+      const days = Math.floor(hours / 24)
+      if (days > 0) return `${days} day${days === 1 ? '' : 's'} left`
+      if (hours > 0) return `${hours} hour${hours === 1 ? '' : 's'} left`
+      return `${minutes} minute${minutes === 1 ? '' : 's'} left`
+    })()
+
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(12)}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(4)}}>
+          {choices.map(({label, count}, i) => {
+            const percent = total === 0 ? 0 : (count / total) * 100
+            const lead = count === max
+            return (
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  position: 'relative',
+                  alignItems: 'center',
+                  height: this.utils.element.applyScale(32),
+                }}
+              >
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: `${percent}%`,
+                    minWidth: this.utils.element.applyScale(7),
+                    borderRadius: this.utils.element.applyScale(4),
+                    background: lead ? '#1d9bf094' : this.borderColor,
+                  }}
+                />
+                <p
+                  style={{
+                    flexGrow: 1,
+                    margin: this.utils.element.applyScale(0),
+                    padding: this.utils.element.applyScales([0, 12]),
+                    fontSize: font,
+                    fontWeight: lead ? '700' : '400',
+                    color: this.textColor,
+                    ...this.textOverFlowCSS({lineClamp: 1}),
+                  }}
+                >
+                  {this.removeUnsupportChar(label)}
+                </p>
+                <p
+                  style={{
+                    margin: this.utils.element.applyScale(0),
+                    paddingLeft: this.utils.element.applyScale(12),
+                    fontSize: font,
+                    fontWeight: lead ? '700' : '400',
+                    color: this.textColor,
+                  }}
+                >
+                  {`${percent.toFixed(1)}%`}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+        <p
+          style={{
+            display: 'flex',
+            margin: this.utils.element.applyScale(0),
+            gap: this.utils.element.applyScale(4),
+            fontSize: font,
+            color: this.subTextColor,
+          }}
+        >
+          <span>{`${total.toLocaleString('en-US')} vote${total === 1 ? '' : 's'}`}</span>
+          <span>·</span>
+          <span>{final ? 'Final results' : timeLeft}</span>
+        </p>
+      </div>
+    )
+  }
+
+  birdwatch: RenderWidgetType<{data: BirdwatchPivot}> = ({data}) => {
+    const border = `${this.utils.element.applyScale(1)} solid ${this.borderColor}`
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(12)}}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            border,
+            borderRadius: this.utils.element.applyScale(16),
+          }}
+        >
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: this.utils.element.applyScale(8),
+              padding: this.utils.element.applyScale(12),
+              borderRadius: this.utils.element.applyScales([15, 15, 0, 0]),
+              background: this.subBackgroundColor,
+            }}
+          >
+            <svg
+              width={this.utils.element.applyScale(19)}
+              height={this.utils.element.applyScale(19)}
+              viewBox="0 0 24 24"
+              fill="#1d9bf0"
+              style={{flexShrink: 0}}
+            >
+              <path d="M5.5 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm18.25 13.91c-.18-2.01-.78-3.72-1.81-4.96C20.89 10.7 19.45 10 17.75 10c-.35 0-.68.03-1.01.09-.18.54-.45 1.05-.8 1.49.74.46 1.41 1.05 1.99 1.76 1.05 1.3 1.71 2.91 2.06 4.66h3.85l-.09-1.09zM18.5 9c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zM6.07 13.34c.58-.71 1.25-1.3 1.99-1.76-.35-.44-.62-.95-.8-1.49-.33-.06-.66-.09-1.01-.09-1.7 0-3.14.7-4.19 1.95C1.032 13.19.433 14.9.254 16.91L.157 18H4.01c.35-1.75 1.01-3.36 2.06-4.66zM15 8.5c0-1.66-1.34-3-3-3s-3 1.34-3 3 1.34 3 3 3 3-1.34 3-3zm-7.37 6.1c-1.07 1.32-1.69 3.15-1.88 5.31L5.66 21h12.68l-.09-1.09c-.19-2.16-.81-3.99-1.88-5.31-1.08-1.35-2.59-2.1-4.37-2.1s-3.28.75-4.37 2.1z" />
+            </svg>
+            <p
+              style={{
+                flexGrow: 1,
+                flexShrink: 1,
+                margin: this.utils.element.applyScale(0),
+                padding: this.utils.element.applyScales([2, 0]),
+                fontSize: this.utils.element.applyScale(14),
+                fontWeight: '700',
+                color: this.textColor,
+              }}
+            >
+              {this.removeUnsupportChar(data.title)}
+            </p>
+          </div>
+          {data.subtitle && (
+            <div
+              style={{
+                display: 'flex',
+                paddingTop: this.utils.element.applyScale(12),
+                paddingBottom: this.utils.element.applyScale(12),
+                paddingLeft: this.utils.element.applyScale(12),
+                paddingRight: this.utils.element.applyScale(12),
+              }}
+            >
+              <this.paragraph chars={this.richText(data.subtitle.text, data.subtitle.entities)} fontSize={15} />
+            </div>
+          )}
+          {data.callToAction && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: this.utils.element.applyScale(12),
+                borderTop: border,
+              }}
+            >
+              <p
+                style={{
+                  margin: this.utils.element.applyScale(0),
+                  fontSize: this.utils.element.applyScale(14),
+                  color: this.textColor,
+                }}
+              >
+                {this.removeUnsupportChar(data.callToAction.prompt)}
+              </p>
+              <p
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: this.utils.element.applyScale(32),
+                  margin: this.utils.element.applyScale(0),
+                  padding: this.utils.element.applyScales([0, 16]),
+                  border,
+                  borderRadius: this.utils.element.applyScale(9999),
+                  fontSize: this.utils.element.applyScale(14),
+                  fontWeight: '700',
+                  color: this.textColor,
+                }}
+              >
+                {this.removeUnsupportChar(data.callToAction.title)}
+              </p>
+            </div>
+          )}
+        </div>
+        {data.footer && (
+          <this.paragraph
+            chars={this.richText(data.footer.text, data.footer.entities)}
+            color={this.subTextColor}
+            fontSize={13}
+          />
+        )}
+      </div>
+    )
+  }
+
+  // Graphemes of a text, the entity ranges (code point indices, as X counts them) in the link color
+  richText = (text: string, entities: {fromIndex: number; toIndex: number}[]) => {
+    let index = 0
+    return split(text).map((char) => {
+      const link = entities.some(({fromIndex, toIndex}) => fromIndex <= index && index < toIndex)
+      index += [...char].length
+      return {char, properties: link ? {color: '#1d9bf0'} : {}}
+    })
+  }
+
+  // Lays text out as a browser does: a flex-wrap of UAX #14 units, a newline unit forcing the break
+  paragraph: RenderWidgetType<{chars: {char: string; properties: CSSProperties}[]; color?: string; fontSize: number}> =
+    ({chars, color, fontSize}) => {
+      const units = splitLineBreak(chars)
+      return (
+        <p
+          style={{
+            fontSize: this.utils.element.applyScale(fontSize),
+            margin: this.utils.element.applyScale(0),
+            width: '100%',
+            display: 'flex',
+            flexWrap: 'wrap',
+          }}
+        >
+          {units.map((y, i) => {
+            const n = y.length === 1 && y[0].char === '\n'
+            const last = i > 0 && units[i - 1]
+            const lastN = last && last.length === 1 && last[0].char === '\n'
+
+            return (
+              <span
+                key={i}
+                style={{
+                  display: 'flex',
+                  ...(n ? {width: '100%'} : {}),
+                  ...(n && lastN ? {height: '1em'} : {}),
+                }}
+              >
+                {y.map(({char, properties}, i) => (
+                  <span
+                    key={i}
+                    style={{
+                      color: color ?? this.textColor,
+                      ...(char === ' ' ? {width: '0.25em'} : {}),
+                      ...properties,
+                    }}
+                  >
+                    {this.removeUnsupportChar(char)}
+                  </span>
+                ))}
+              </span>
+            )
+          })}
+        </p>
+      )
+    }
+
   ogp: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
     const legacy = data.tweet.card?.legacy
+    if (legacy?.name.startsWith('poll')) return <this.poll data={data} />
     const thumbnail = legacy?.bindingValues.find((v) => v.key === 'thumbnail_image_original')?.value.imageValue
     const summary = legacy?.bindingValues.find((v) => v.key === 'summary_photo_image_original')?.value.imageValue
     const player = legacy?.bindingValues.find((v) => v.key === 'player_image_large')?.value.imageValue
@@ -982,8 +1244,6 @@ export class RenderTweetImage {
       }
     }
 
-    const textDataList = paragraphs.map(({start, end, chars}) => ({start, end, data: splitLineBreak(chars)}))
-
     // console.log("insert", insert);
     // console.log("charIndices", charIndices);
     // console.log("textDataList", textDataList);
@@ -999,52 +1259,9 @@ export class RenderTweetImage {
 
     for (const {fn} of insert.filter(({index}) => index === 0)) textElement.push(fn())
 
-    for (const [i, t] of textDataList.entries()) {
+    for (const [i, t] of paragraphs.entries()) {
       for (const {fn} of insert.filter(({index}) => t.start - 1 === index)) textElement.push(fn())
-
-      textElement.push(
-        <p
-          key={i}
-          style={{
-            fontSize: quoted ? this.utils.element.applyScale(14) : this.utils.element.applyScale(17),
-            margin: this.utils.element.applyScale(0),
-            width: '100%',
-            display: 'flex',
-            flexWrap: 'wrap',
-          }}
-        >
-          {t.data.map((y, i) => {
-            const n = y.length === 1 && y[0].char === '\n'
-            const last = i > 0 && t.data[i - 1]
-            const lastN = last && last.length === 1 && last[0].char === '\n'
-
-            return (
-              <span
-                key={i}
-                style={{
-                  display: 'flex',
-                  ...(n ? {width: '100%'} : {}),
-                  ...(n && lastN ? {height: '1em'} : {}),
-                }}
-              >
-                {y.map(({char, properties}, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      color: this.textColor,
-                      ...(char === ' ' ? {width: '0.25em'} : {}),
-                      ...properties,
-                    }}
-                  >
-                    {this.removeUnsupportChar(char)}
-                  </span>
-                ))}
-              </span>
-            )
-          })}
-        </p>,
-      )
-
+      textElement.push(<this.paragraph key={i} chars={t.chars} fontSize={quoted ? 14 : 17} />)
       for (const {fn} of insert.filter(({index}) => t.end + 1 === index)) textElement.push(fn())
     }
 

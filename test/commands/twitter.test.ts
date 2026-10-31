@@ -42,6 +42,21 @@ describe('Twitter test', () => {
     expect(result).toBeUndefined()
   })
 
+  it('poll_tweet_to_image', async () => {
+    const {stderr, error, result, stdout} = await run(
+      'https://x.com/elonmusk/status/1604617643973124097',
+      'temp/poll_tweet_to_image/{count}.png',
+    )
+    await count('temp/poll_tweet_to_image', 1)
+    await access('temp/poll_tweet_to_image/0.png')
+
+    expect(stdout).toContain('Rendering')
+
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
+  })
+
   it('single_text_tweet_to_video', async () => {
     const {stderr, error, result, stdout} = await run(
       'https://x.com/elonmusk/status/1349129669258448897',
