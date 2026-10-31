@@ -113,6 +113,14 @@ export class ElementColorUtils extends ElementUtils {
       case 'RenderTransparentShadowDark': {
         return 'none'
       }
+
+      case 'RenderXReference': {
+        return '#ffffff'
+      }
+
+      case 'RenderXReferenceDark': {
+        return '#000000'
+      }
     }
   }
 
@@ -181,6 +189,14 @@ export class ElementColorUtils extends ElementUtils {
       case 'RenderTransparentShadowDark': {
         return '0px 0px 20px 0px #00000088'
       }
+
+      case 'RenderXReference': {
+        return '0px 0px 0px 0px #ffffff00'
+      }
+
+      case 'RenderXReferenceDark': {
+        return '0px 0px 0px 0px #ffffff00'
+      }
     }
   }
 
@@ -247,6 +263,14 @@ export class ElementColorUtils extends ElementUtils {
       }
 
       case 'RenderTransparentShadowDark': {
+        return true
+      }
+
+      case 'RenderXReference': {
+        return false
+      }
+
+      case 'RenderXReferenceDark': {
         return true
       }
     }

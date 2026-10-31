@@ -40,11 +40,12 @@ const getApp = ({url, allowAppName}: GetAppParam) => {
 }
 
 const toNextParam = (param: SnapRunParam, log: Logger): SnapRenderNextParam => {
+  const theme = param.theme ?? 'RenderOceanBlueColor'
   return {
-    width: param.width ?? 650,
+    width: param.width ?? (theme.startsWith('RenderXReference') ? 600 : 650), // x.com's column is 600px
     font: param.font ?? {text: [], emoji: undefined},
     scale: param.scale ?? 1,
-    theme: param.theme ?? 'RenderOceanBlueColor',
+    theme,
     output: param.output ?? '{id}-{count}.{if-type:png:mp4:json:}',
     ffmpegPath: param.ffmpegPath,
     ffprobePath: param.ffprobePath,

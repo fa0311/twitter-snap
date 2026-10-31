@@ -9,9 +9,7 @@ import {
 
 import type {SnapRenderColorUtils} from '../../../../utils/render.js'
 import {splitLineBreak} from '../../../../utils/text.js'
-import {getResizedMediaByWidth} from '../../../../utils/video.js'
 import {
-  getBiggerMedia,
   getUserAvatarUrl,
   getUserName,
   getUserScreenName,
@@ -20,6 +18,7 @@ import {
   type RenderCssType,
   type RenderWidgetType,
 } from '../utils/utils.js'
+import {blankColor} from './video.js'
 
 type UnifiedCardDetails = {
   type: 'details'
@@ -46,11 +45,19 @@ export class RenderTweetImage {
   subTextColor: string
   borderColor: string
   imageBorderColor: string
+  mediaBorderColor: string
+  frameBorderColor: string
+  mediaRadius: number = 10
+  linkColor: string = '#1d9bf0'
   cardSuffix: string
   fontFamily: string
   rawAssetsUrl: string
   margin: number = 30
   padding: number = 12
+  bodyGap: number = 10 // between header, text, quote and video blank
+  // The image shows what the page showed at that moment (views, counts, remaining time, controls); the plain themes
+  // leave out what changes over time, so the image reads the same later
+  timeDependent: boolean = false
 
   constructor(
     public utils: SnapRenderColorUtils,
@@ -62,6 +69,8 @@ export class RenderTweetImage {
     this.subTextColor = this.utils.element.getDark() ? '#71767b' : '#536471'
     this.borderColor = this.utils.element.getDark() ? '#2f3336' : '#cfd9de'
     this.imageBorderColor = this.utils.element.getDark() ? '#000000' : '#e6e6e6'
+    this.mediaBorderColor = this.imageBorderColor
+    this.frameBorderColor = this.utils.element.getDark() ? '#2f3336' : '#eff3f4'
     this.cardSuffix = this.utils.element.getDark() ? '-dark' : ''
     this.fontFamily = 'Segoe UI,Meiryo,system-ui,sans-serif'
     this.rawAssetsUrl = 'https://raw.githubusercontent.com/fa0311/twitter-snap-core/main/assets'
@@ -94,6 +103,9 @@ export class RenderTweetImage {
   getCardURL = (): string => {
     return `${this.rawAssetsUrl}/twitter/card${this.cardSuffix}.png`
   }
+
+  // Width left for the tweet body once the frame's margin and padding are taken off
+  contentWidth = (): number => this.utils.width - this.utils.element.applyScaleNum((this.margin + this.padding) * 2)
 
   removeUnsupportChar = (text: string): string => {
     return [...text]
@@ -143,26 +155,22 @@ export class RenderTweetImage {
     }
   }
 
-  icon: RenderWidgetType<{alt: string; size: number; src?: string; type?: UserProfileImageShapeEnum}> = ({
-    alt,
-    size,
-    src,
-    type,
-  }) => {
-    const scaledSize = this.utils.element.applyScale(size)
-    const style = {
-      width: scaledSize,
-      height: scaledSize,
-      margin: this.utils.element.applyScale(4),
-      ...(type ? this.getIconShapeWidget({type}) : {borderRadius: '50%'}),
-    }
+  icon: RenderWidgetType<{alt: string; margin?: number; size: number; src?: string; type?: UserProfileImageShapeEnum}> =
+    ({alt, margin, size, src, type}) => {
+      const scaledSize = this.utils.element.applyScale(size)
+      const style = {
+        width: scaledSize,
+        height: scaledSize,
+        margin: this.utils.element.applyScale(margin ?? 4),
+        ...(type ? this.getIconShapeWidget({type}) : {borderRadius: '50%'}),
+      }
 
-    if (!src) {
-      return <div style={{...style, background: this.subBackgroundColor}} />
-    }
+      if (!src) {
+        return <div style={{...style, background: this.subBackgroundColor}} />
+      }
 
-    return <img alt={alt} src={src} style={style} />
-  }
+      return <img alt={alt} src={src} style={style} />
+    }
 
   textOverFlowCSS: RenderCssType<{lineClamp: number}> = ({lineClamp}) => {
     return {
@@ -174,16 +182,17 @@ export class RenderTweetImage {
     }
   }
 
+  // Counts as x.com shows them: 9,999 / 12K / 340K / 366.6M (truncated, not rounded)
   toKMB = (num: number): string => {
-    if (num < 1000) {
-      return num.toString()
-    }
+    if (num < 10000) return num.toLocaleString('en-US')
+    if (num < 1000000) return `${Math.floor(num / 1000)}K`
+    if (num < 1000000000) return `${(Math.floor(num / 100000) / 10).toFixed(1)}M`
+    return `${(Math.floor(num / 100000000) / 10).toFixed(1)}B`
+  }
 
-    if (num < 1000000) {
-      return `${(num / 1000).toFixed(1)}K`
-    }
-
-    return `${(num / 1000000).toFixed(1)}M`
+  // "Oct 22, 2024": x.com drops the year of a quoted tweet from this year, a snapshot read later should not
+  shortDate = (time: string): string => {
+    return new Date(time).toLocaleString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})
   }
 
   toOriginal = (url: URL): URL => {
@@ -223,7 +232,7 @@ export class RenderTweetImage {
           }}
         >
           <this.userRender data={data} />
-          {data.tweet.card && <this.ogp data={data} />}
+          {data.tweet.card?.legacy && <this.ogp data={data} quoted={false} />}
           {data.tweet.birdwatchPivot && <this.birdwatch data={data.tweet.birdwatchPivot} />}
 
           <this.bottonWidget data={data} />
@@ -247,63 +256,33 @@ export class RenderTweetImage {
       year: 'numeric',
     })
     const view = data.tweet.views?.count
-    const font = this.utils.element.applyScale(15)
+    const sub = {color: this.subTextColor, fontSize: this.utils.element.applyScale(15)}
+    const small = {fontSize: this.utils.element.applyScale(14), lineHeight: this.utils.element.applyScale(16)}
 
     return (
-      <div
+      <p
         style={{
           display: 'flex',
-          flexDirection: 'row',
-          gap: this.utils.element.applyScale(2),
+          alignItems: 'center',
+          margin: this.utils.element.applyScale(0),
+          gap: this.utils.element.applyScale(4),
+          lineHeight: this.utils.element.applyScale(20),
         }}
       >
-        <p
-          style={{
-            display: 'flex',
-            margin: this.utils.element.applyScale(0),
-            gap: this.utils.element.applyScale(2),
-          }}
-        >
-          <span style={{color: this.subTextColor, fontSize: font}}>{timeString}</span>
-          <span style={{color: this.subTextColor, fontSize: font}}>·</span>
-          <span style={{color: this.subTextColor, fontSize: font}}>{dateString}</span>
-        </p>
-        {view && (
-          <p
-            style={{
-              display: 'flex',
-              margin: this.utils.element.applyScale(0),
-              gap: this.utils.element.applyScale(2),
-            }}
-          >
-            <span style={{color: this.subTextColor, fontSize: font}}>·</span>
-          </p>
+        <span style={sub}>{timeString}</span>
+        <span style={sub}>·</span>
+        <span style={sub}>{dateString}</span>
+        {this.timeDependent && view && <span style={sub}>·</span>}
+        {this.timeDependent && view && (
+          <span style={{...small, color: this.textColor, fontWeight: '700'}}>{this.toKMB(Number(view))}</span>
         )}
-        {view && (
-          <p
-            style={{
-              display: 'flex',
-              margin: this.utils.element.applyScale(0),
-              gap: this.utils.element.applyScale(4),
-            }}
-          >
-            <span
-              style={{
-                color: this.textColor,
-                fontSize: font,
-                fontWeight: '700',
-              }}
-            >
-              {this.toKMB(Number(view))}
-            </span>
-            <span style={{color: this.subTextColor, fontSize: font}}>Views</span>
-          </p>
-        )}
-      </div>
+        {this.timeDependent && view && <span style={{...small, color: this.subTextColor}}>Views</span>}
+      </p>
     )
   }
 
   poll: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+    const s = this.utils.element.applyScale
     const values = data.tweet.card?.legacy?.bindingValues ?? []
     const get = (key: string) => values.find((v) => v.key === key)?.value
     const choices = [1, 2, 3, 4].flatMap((i) => {
@@ -314,9 +293,24 @@ export class RenderTweetImage {
     const max = Math.max(...choices.map(({count}) => count))
     const end = new Date(get('end_datetime_utc')?.stringValue ?? 0)
     const final = get('counts_are_final')?.booleanValue || end.getTime() <= Date.now()
-    const font = this.utils.element.applyScale(15)
+    // The numbers of a running poll are those of the moment the image was taken
+    const results = final || this.timeDependent
+    const font = s(15)
 
-    const timeLeft = (() => {
+    const status = (() => {
+      if (final) return 'Final results'
+      if (!this.timeDependent) {
+        const ends = end.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: true,
+        })
+        return `Ends ${ends}`
+      }
+
       const minutes = Math.ceil((end.getTime() - Date.now()) / 60000)
       const hours = Math.floor(minutes / 60)
       const days = Math.floor(hours / 24)
@@ -326,37 +320,43 @@ export class RenderTweetImage {
     })()
 
     return (
-      <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(12)}}>
-        <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(4)}}>
+      <div style={{display: 'flex', flexDirection: 'column', gap: s(12)}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: s(4)}}>
           {choices.map(({label, count}, i) => {
             const percent = total === 0 ? 0 : (count / total) * 100
-            const lead = count === max
+            const lead = results && count === max
             return (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  position: 'relative',
-                  alignItems: 'center',
-                  height: this.utils.element.applyScale(32),
-                }}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: `${percent}%`,
-                    minWidth: this.utils.element.applyScale(7),
-                    borderRadius: this.utils.element.applyScale(4),
-                    background: lead ? '#1d9bf094' : this.borderColor,
-                  }}
-                />
+              <div key={i} style={{display: 'flex', position: 'relative', alignItems: 'center', height: s(32)}}>
+                {results ? (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: `${percent}%`,
+                      minWidth: s(7),
+                      borderRadius: s(4),
+                      background: lead ? '#1d9bf094' : this.borderColor,
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      right: 0,
+                      borderRadius: s(4),
+                      border: `${s(1)} solid ${this.borderColor}`,
+                    }}
+                  />
+                )}
                 <p
                   style={{
                     flexGrow: 1,
-                    margin: this.utils.element.applyScale(0),
+                    margin: s(0),
                     padding: this.utils.element.applyScales([0, 12]),
                     fontSize: font,
                     fontWeight: lead ? '700' : '400',
@@ -366,33 +366,27 @@ export class RenderTweetImage {
                 >
                   {this.removeUnsupportChar(label)}
                 </p>
-                <p
-                  style={{
-                    margin: this.utils.element.applyScale(0),
-                    paddingLeft: this.utils.element.applyScale(12),
-                    fontSize: font,
-                    fontWeight: lead ? '700' : '400',
-                    color: this.textColor,
-                  }}
-                >
-                  {`${percent.toFixed(1)}%`}
-                </p>
+                {results && (
+                  <p
+                    style={{
+                      margin: s(0),
+                      paddingLeft: s(12),
+                      fontSize: font,
+                      fontWeight: lead ? '700' : '400',
+                      color: this.textColor,
+                    }}
+                  >
+                    {`${percent.toFixed(1)}%`}
+                  </p>
+                )}
               </div>
             )
           })}
         </div>
-        <p
-          style={{
-            display: 'flex',
-            margin: this.utils.element.applyScale(0),
-            gap: this.utils.element.applyScale(4),
-            fontSize: font,
-            color: this.subTextColor,
-          }}
-        >
-          <span>{`${total.toLocaleString('en-US')} vote${total === 1 ? '' : 's'}`}</span>
-          <span>·</span>
-          <span>{final ? 'Final results' : timeLeft}</span>
+        <p style={{display: 'flex', margin: s(0), gap: s(4), fontSize: font, color: this.subTextColor}}>
+          {results && <span>{`${total.toLocaleString('en-US')} vote${total === 1 ? '' : 's'}`}</span>}
+          {results && <span>·</span>}
+          <span>{status}</span>
         </p>
       </div>
     )
@@ -453,10 +447,14 @@ export class RenderTweetImage {
                 paddingRight: this.utils.element.applyScale(12),
               }}
             >
-              <this.paragraph chars={this.richText(data.subtitle.text, data.subtitle.entities)} fontSize={15} />
+              <this.paragraph
+                chars={this.richText(data.subtitle.text, data.subtitle.entities)}
+                fontSize={15}
+                lineHeight={20}
+              />
             </div>
           )}
-          {data.callToAction && (
+          {this.timeDependent && data.callToAction && (
             <div
               style={{
                 display: 'flex',
@@ -499,6 +497,7 @@ export class RenderTweetImage {
             chars={this.richText(data.footer.text, data.footer.entities)}
             color={this.subTextColor}
             fontSize={13}
+            lineHeight={16}
           />
         )}
       </div>
@@ -511,71 +510,89 @@ export class RenderTweetImage {
     return split(text).map((char) => {
       const link = entities.some(({fromIndex, toIndex}) => fromIndex <= index && index < toIndex)
       index += [...char].length
-      return {char, properties: link ? {color: '#1d9bf0'} : {}}
+      return {char, properties: link ? {color: this.linkColor} : {}}
     })
   }
 
   // Lays text out as a browser does: a flex-wrap of UAX #14 units, a newline unit forcing the break
-  paragraph: RenderWidgetType<{chars: {char: string; properties: CSSProperties}[]; color?: string; fontSize: number}> =
-    ({chars, color, fontSize}) => {
-      const units = splitLineBreak(chars)
-      return (
-        <p
-          style={{
-            fontSize: this.utils.element.applyScale(fontSize),
-            margin: this.utils.element.applyScale(0),
-            width: '100%',
-            display: 'flex',
-            flexWrap: 'wrap',
-          }}
-        >
-          {units.map((y, i) => {
-            const n = y.length === 1 && y[0].char === '\n'
-            const last = i > 0 && units[i - 1]
-            const lastN = last && last.length === 1 && last[0].char === '\n'
-
-            return (
-              <span
-                key={i}
-                style={{
-                  display: 'flex',
-                  ...(n ? {width: '100%'} : {}),
-                  ...(n && lastN ? {height: '1em'} : {}),
-                }}
-              >
-                {y.map(({char, properties}, i) => (
-                  <span
-                    key={i}
-                    style={{
-                      color: color ?? this.textColor,
-                      ...(char === ' ' ? {width: '0.25em'} : {}),
-                      ...properties,
-                    }}
-                  >
-                    {this.removeUnsupportChar(char)}
-                  </span>
-                ))}
-              </span>
-            )
-          })}
-        </p>
-      )
+  paragraph: RenderWidgetType<{
+    chars: {char: string; properties: CSSProperties}[]
+    color?: string
+    fontSize: number
+    lineHeight: number
+  }> = ({chars, color, fontSize, lineHeight}) => {
+    const units = splitLineBreak(chars)
+    // A newline closing a line that holds nothing but whitespace makes an empty line of the line height, as in a browser
+    const blankLines = new Set<number>()
+    let whitespaceOnly = true
+    for (const [i, unit] of units.entries()) {
+      if (unit.length === 1 && unit[0].char === '\n') {
+        if (whitespaceOnly && i > 0) blankLines.add(i)
+        whitespaceOnly = true
+      } else if (!unit.every(({char}) => char === ' ')) {
+        whitespaceOnly = false
+      }
     }
+    return (
+      <p
+        style={{
+          fontSize: this.utils.element.applyScale(fontSize),
+          lineHeight: this.utils.element.applyScale(lineHeight),
+          margin: this.utils.element.applyScale(0),
+          width: '100%',
+          display: 'flex',
+          flexWrap: 'wrap',
+        }}
+      >
+        {units.map((y, i) => {
+          const n = y.length === 1 && y[0].char === '\n'
+          return (
+            <span
+              key={i}
+              style={{
+                display: 'flex',
+                ...(n ? {width: '100%'} : {}),
+                ...(blankLines.has(i) ? {height: this.utils.element.applyScale(lineHeight)} : {}),
+              }}
+            >
+              {y.map(({char, properties}, i) => (
+                <span
+                  key={i}
+                  style={{
+                    color: color ?? this.textColor,
+                    ...(char === ' ' ? {width: '0.25em'} : {}),
+                    ...properties,
+                  }}
+                >
+                  {this.removeUnsupportChar(char)}
+                </span>
+              ))}
+            </span>
+          )
+        })}
+      </p>
+    )
+  }
 
-  ogp: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+  // Cards; inside a quoted tweet the large image runs flush with the box and carries no caption
+  ogp: RenderWidgetType<{data: TweetApiUtilsData; quoted: boolean}> = ({data, quoted}) => {
     const legacy = data.tweet.card?.legacy
     if (legacy?.name.startsWith('poll')) return <this.poll data={data} />
-    const thumbnail = legacy?.bindingValues.find((v) => v.key === 'thumbnail_image_original')?.value.imageValue
-    const summary = legacy?.bindingValues.find((v) => v.key === 'summary_photo_image_original')?.value.imageValue
-    const player = legacy?.bindingValues.find((v) => v.key === 'player_image_large')?.value.imageValue
-    const title = legacy?.bindingValues.find((v) => v.key === 'title')?.value.stringValue
-    const vanityUrl = legacy?.bindingValues.find((v) => v.key === 'vanity_url')?.value.stringValue
-    const description = legacy?.bindingValues.find((v) => v.key === 'description')?.value.stringValue
-    const unifiedCard = legacy?.bindingValues.find((v) => v.key === 'unified_card')?.value.stringValue
-
-    // data.tweet.card?.legacy?.bindingValues.forEach((v) => {
-    //     console.log(v.key, v.value);
-    // });
+    const value = (key: string) => legacy?.bindingValues.find((v) => v.key === key)?.value
+    const thumbnail = value('thumbnail_image_original')?.imageValue
+    // broadcast thumbnails come as webp, which the renderer cannot decode; the CDN serves the same file as jpg
+    const toJpg = (image: {url: string}) => {
+      const url = new URL(image.url)
+      if (url.searchParams.get('format') === 'webp') url.searchParams.set('format', 'jpg')
+      return {...image, url: url.toString()}
+    }
+    const broadcast = value('broadcast_thumbnail_x_large')?.imageValue
+    const summary = value('summary_photo_image_original')?.imageValue ?? (broadcast && toJpg(broadcast))
+    const player = value('player_image_large')?.imageValue
+    const title = value('title')?.stringValue ?? value('broadcast_title')?.stringValue
+    const vanityUrl = value('vanity_url')?.stringValue
+    const description = value('description')?.stringValue
+    const unifiedCard = value('unified_card')?.stringValue
 
     if (summary) {
       return (
@@ -585,8 +602,10 @@ export class RenderTweetImage {
               src={summary.url}
               style={{
                 width: '100%',
-                borderRadius: this.utils.element.applyScale(10),
-                border: `${this.utils.element.applyScale(1)} solid ${this.imageBorderColor}`,
+                borderRadius: quoted
+                  ? this.utils.element.applyScales([0, 0, 15, 15])
+                  : this.utils.element.applyScale(this.mediaRadius),
+                border: quoted ? 'none' : `${this.utils.element.applyScale(1)} solid ${this.mediaBorderColor}`,
               }}
             />
             <div
@@ -601,7 +620,9 @@ export class RenderTweetImage {
               <p
                 style={{
                   fontSize: this.utils.element.applyScale(13),
-                  padding: this.utils.element.applyScales([0, 4]),
+                  lineHeight: this.utils.element.applyScale(16),
+                  padding: this.utils.element.applyScales([2, 8]),
+                  margin: this.utils.element.applyScale(0),
                   background: '#000000c4',
                   color: '#ffffff',
                   borderRadius: this.utils.element.applyScale(4),
@@ -612,15 +633,18 @@ export class RenderTweetImage {
               </p>
             </div>
           </div>
-          <p
-            style={{
-              fontSize: this.utils.element.applyScale(13),
-              margin: this.utils.element.applyScale(0),
-              color: this.subTextColor,
-            }}
-          >
-            From {vanityUrl}
-          </p>
+          {vanityUrl && !quoted && (
+            <p
+              style={{
+                fontSize: this.utils.element.applyScale(13),
+                lineHeight: this.utils.element.applyScale(16),
+                margin: this.utils.element.applyScales([4, 0, 0, 0]),
+                color: this.subTextColor,
+              }}
+            >
+              From {vanityUrl}
+            </p>
+          )}
         </div>
       )
     }
@@ -641,8 +665,8 @@ export class RenderTweetImage {
                 src={imgData.media_url_https}
                 style={{
                   width: '100%',
-                  borderRadius: this.utils.element.applyScale(10),
-                  border: `${this.utils.element.applyScale(1)} solid ${this.imageBorderColor}`,
+                  borderRadius: this.utils.element.applyScale(this.mediaRadius),
+                  border: `${this.utils.element.applyScale(1)} solid ${this.mediaBorderColor}`,
                 }}
               />
               <div
@@ -657,7 +681,9 @@ export class RenderTweetImage {
                 <p
                   style={{
                     fontSize: this.utils.element.applyScale(13),
-                    padding: this.utils.element.applyScales([0, 4]),
+                    lineHeight: this.utils.element.applyScale(16),
+                    padding: this.utils.element.applyScales([2, 8]),
+                    margin: this.utils.element.applyScale(0),
                     background: '#000000c4',
                     color: '#ffffff',
                     borderRadius: this.utils.element.applyScale(4),
@@ -671,7 +697,8 @@ export class RenderTweetImage {
             <p
               style={{
                 fontSize: this.utils.element.applyScale(13),
-                margin: this.utils.element.applyScale(0),
+                lineHeight: this.utils.element.applyScale(16),
+                margin: this.utils.element.applyScales([4, 0, 0, 0]),
                 color: this.subTextColor,
               }}
             >
@@ -693,8 +720,8 @@ export class RenderTweetImage {
                 display: 'flex',
                 position: 'relative',
                 flexDirection: 'column',
-                borderRadius: this.utils.element.applyScale(10),
-                border: `${this.utils.element.applyScale(1)} solid ${this.imageBorderColor}`,
+                borderRadius: this.utils.element.applyScale(this.mediaRadius),
+                border: `${this.utils.element.applyScale(1)} solid ${this.mediaBorderColor}`,
               }}
             >
               <div style={{display: 'flex', flexDirection: 'column'}}>
@@ -732,7 +759,7 @@ export class RenderTweetImage {
                     src={answerUrl}
                     style={{
                       width: '100%',
-                      borderRadius: this.utils.element.applyScales([0, 0, 10, 10]),
+                      borderRadius: this.utils.element.applyScales([0, 0, this.mediaRadius, this.mediaRadius]),
                     }}
                   />
                 )}
@@ -783,7 +810,7 @@ export class RenderTweetImage {
             style={{
               width: this.utils.element.applyScale(size),
               height: this.utils.element.applyScale(size),
-              borderRadius: this.utils.element.applyScales([10, 0, 0, 10]),
+              borderRadius: this.utils.element.applyScales([this.mediaRadius, 0, 0, this.mediaRadius]),
               objectFit: 'cover',
               borderRight: `${this.utils.element.applyScale(1)} solid ${this.borderColor}`,
             }}
@@ -799,7 +826,7 @@ export class RenderTweetImage {
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            borderRadius: this.utils.element.applyScales([10, 0, 0, 10]),
+            borderRadius: this.utils.element.applyScales([this.mediaRadius, 0, 0, this.mediaRadius]),
             borderRight: `${this.utils.element.applyScale(1)} solid ${this.borderColor}`,
             background: this.subBackgroundColor,
           }}
@@ -821,7 +848,7 @@ export class RenderTweetImage {
           display: 'flex',
           flexDirection: 'row',
           overflow: 'hidden',
-          borderRadius: this.utils.element.applyScale(10),
+          borderRadius: this.utils.element.applyScale(this.mediaRadius),
           border: `${this.utils.element.applyScale(1)} solid ${this.borderColor}`,
         }}
       >
@@ -833,7 +860,7 @@ export class RenderTweetImage {
             flexDirection: 'column',
             gap: this.utils.element.applyScale(2),
             justifyContent: 'center',
-            width: this.utils.element.applyScale(this.utils.width - (this.margin + this.padding) * 2 - size),
+            width: this.contentWidth() - this.utils.element.applyScaleNum(size),
           }}
         >
           <p
@@ -910,121 +937,231 @@ export class RenderTweetImage {
   }
 
   userRender: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
-    const reg = [/_[a-z]+\.([a-z]+)$/, '.$1'] as const
-    const icon = getUserAvatarUrl(data.user)?.replace(...reg)
-    const id = getUserScreenName(data.user)
-    const legacy = data.tweet.legacy!
-    const extEntities = legacy.extendedEntities
-
-    const videoBlank = (() => {
-      const [, blank] = getBiggerMedia(extEntities?.media ?? [])
-      if (blank && this.video) {
-        const resizedMedia = getResizedMediaByWidth(
-          blank.videoInfo!.aspectRatio[0],
-          blank.videoInfo!.aspectRatio[1],
-          this.utils.width - this.utils.element.applyScaleNum((this.margin + this.padding) * 2),
-        )
-        return (
-          <div
-            style={{
-              display: 'flex',
-              width: resizedMedia.width,
-              height: resizedMedia.height,
-            }}
-          ></div>
-        )
-      }
-    })()
-
     return (
       <div
         style={{
           display: 'flex',
-          gap: this.utils.element.applyScale(10),
+          gap: this.utils.element.applyScale(this.bodyGap),
           flexDirection: 'column',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            gap: this.utils.element.applyScale(2),
-            alignItems: 'center',
-          }}
-        >
-          <this.icon alt="icon" size={40} src={icon} type={data.user.profileImageShape} />
-          <div style={{display: 'flex', flexDirection: 'column'}}>
-            {this.username({data})}
-            <p
-              style={{
-                fontSize: this.utils.element.applyScale(15),
-                margin: this.utils.element.applyScale(0),
-                color: this.subTextColor,
-              }}
-            >
-              @{id}
-            </p>
-          </div>
-        </div>
+        <this.header data={data} />
         <this.tweetRender data={data} quoted={false} />
-        {data.quoted && (
-          <div
-            style={{
-              border: `${this.utils.element.applyScale(1)} solid ${this.imageBorderColor}`,
-              borderRadius: this.utils.element.applyScale(16),
-              padding: this.utils.element.applyScale(10),
-              display: 'flex',
-            }}
-          >
-            <this.quotedRender data={data.quoted} />
-          </div>
-        )}
-        {videoBlank}
+        {data.quoted && <this.quotedRender data={data.quoted} />}
       </div>
     )
   }
 
-  quotedRender: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
-    const icon = getUserAvatarUrl(data.user)
+  header: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+    const reg = [/_[a-z]+\.([a-z]+)$/, '.$1'] as const
+    const icon = getUserAvatarUrl(data.user)?.replace(...reg)
     const id = getUserScreenName(data.user)
     return (
       <div
         style={{
           display: 'flex',
           gap: this.utils.element.applyScale(2),
-          flexDirection: 'column',
+          alignItems: 'center',
         }}
       >
-        <div style={{display: 'flex', gap: this.utils.element.applyScale(2)}}>
-          <this.icon alt="icon" size={24} src={icon} type={data.user.profileImageShape} />
+        <this.icon alt="icon" size={40} src={icon} type={data.user.profileImageShape} />
+        <div style={{display: 'flex', flexDirection: 'column'}}>
+          {this.username({data})}
+          <p
+            style={{
+              fontSize: this.utils.element.applyScale(15),
+              margin: this.utils.element.applyScale(0),
+              color: this.subTextColor,
+            }}
+          >
+            @{id}
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  // The quoted tweet as x.com shows it: 12px padding, one header line (avatar 24, name, handle, date), media flush with the box
+  quotedRender: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+    const icon = getUserAvatarUrl(data.user)
+    const id = getUserScreenName(data.user)
+    const card = data.tweet.card?.legacy
+    const flush = (data.tweet.legacy?.extendedEntities?.media ?? []).length > 0 || card !== undefined
+    const sub = {
+      margin: this.utils.element.applyScale(0),
+      fontSize: this.utils.element.applyScale(15),
+      lineHeight: this.utils.element.applyScale(20),
+      color: this.subTextColor,
+    }
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          border: `${this.utils.element.applyScale(1)} solid ${this.borderColor}`,
+          borderRadius: this.utils.element.applyScale(16),
+          paddingTop: this.utils.element.applyScale(12),
+          paddingLeft: this.utils.element.applyScale(12),
+          paddingRight: this.utils.element.applyScale(12),
+          paddingBottom: this.utils.element.applyScale(flush ? 0 : 12),
+        }}
+      >
+        <div style={{display: 'flex', alignItems: 'center', gap: this.utils.element.applyScale(4)}}>
+          <this.icon alt="icon" margin={0} size={24} src={icon} type={data.user.profileImageShape} />
+          {this.username({data})}
+          <p style={sub}>@{id}</p>
+          <p style={sub}>·</p>
+          <p style={sub}>{this.shortDate(data.tweet.legacy!.createdAt)}</p>
+        </div>
+        <div style={{display: 'flex', flexDirection: 'column', marginTop: this.utils.element.applyScale(4)}}>
+          <this.tweetRender data={data} quoted={true} />
+        </div>
+        {card && (
+          <div
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              marginTop: this.utils.element.applyScale(4),
+              marginLeft: -this.utils.element.applyScaleNum(12),
+              marginRight: -this.utils.element.applyScaleNum(12),
+            }}
+          >
+            <this.ogp data={data} quoted={true} />
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // Photos as x.com lays them out: one photo at full width; several side by side at one height, fitted to the width
+  // when that keeps them 240px tall, otherwise a carousel 0.68 of the width tall with each photo at most 0.8 wide (cropped).
+  // Inside a quoted tweet the media runs flush with the box.
+  // Media stacked at full width, each at its own proportions, so every item stays in the picture whatever its shape
+  // (x.com's carousel would cut the right-most ones off). On a video output the videos are replaced by one blank frame,
+  // as tall as the tallest of them, where they play one after another. Inside a quoted tweet the media runs flush.
+  mediaGroup: RenderWidgetType<{
+    blank?: {height: number; width: number}
+    media: {
+      durationMillis?: number
+      height: number
+      idStr: string
+      mediaUrlHttps: string
+      type: string
+      width: number
+    }[]
+    quoted: boolean
+    spaced: boolean
+  }> = ({blank, media, quoted, spaced}) => {
+    const s = this.utils.element.applyScaleNum
+    const border = quoted ? 0 : s(1)
+    const width = quoted ? this.contentWidth() - s(1) * 2 : this.contentWidth()
+    const inner = width - border * 2
+    const spacing = {
+      ...(spaced ? {marginTop: this.utils.element.applyScale(quoted ? 4 : 12)} : {}),
+      ...(quoted ? {marginLeft: -s(12), marginRight: -s(12)} : {}),
+    }
+    // satori clips an <img> only by its own corners, not by a rounded parent, so the radius sits on each item;
+    // inside a quoted tweet the last item takes over the box's bottom corners
+    const radius = (last: boolean) => {
+      if (!quoted) return this.utils.element.applyScale(this.mediaRadius)
+      return last ? this.utils.element.applyScales([0, 0, 15, 15]) : '0'
+    }
+    const frame = (m: {height: number; width: number}, last: boolean) => ({
+      border,
+      borderColor: this.mediaBorderColor,
+      height: Math.round((inner * m.height) / m.width),
+      radius: radius(last),
+      width: inner,
+    })
+
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: s(4), ...spacing}}>
+        {media.map((m, i) => (
+          <this.mediaFrame key={m.idStr} blank={false} media={m} {...frame(m, !blank && i === media.length - 1)} />
+        ))}
+        {blank && <this.mediaFrame blank={true} media={{mediaUrlHttps: '', type: 'video'}} {...frame(blank, true)} />}
+      </div>
+    )
+  }
+
+  // One media frame: the photo, or a video's poster with x.com's duration pill and mute button, or the blank the
+  // video is laid over later (painted in blankColor, found again on the rendered image). The border and the corners
+  // sit on the image itself: satori does not clip an image by a rounded parent.
+  mediaFrame: RenderWidgetType<{
+    blank: boolean
+    border: number
+    borderColor: string
+    height: number
+    media: {durationMillis?: number; mediaUrlHttps: string; type: string}
+    radius: string
+    width: number
+  }> = ({blank, border, borderColor, height, media, radius, width}) => {
+    const s = this.utils.element.applyScale
+    const box = {
+      width: width + border * 2,
+      height: height + border * 2,
+      border: `${border}px solid ${borderColor}`,
+      borderRadius: radius,
+    }
+    const pill = {
+      display: 'flex',
+      alignItems: 'center',
+      position: 'absolute' as const,
+      height: s(20),
+      padding: this.utils.element.applyScales([0, 8]),
+      borderRadius: s(4),
+      background: '#000000c4',
+      color: '#ffffff',
+      fontSize: s(13),
+      lineHeight: s(16),
+    }
+    const label =
+      media.type === 'animated_gif' ? 'GIF' : media.type === 'video' ? this.duration(media.durationMillis) : undefined
+    return (
+      <div style={{display: 'flex', position: 'relative', flexShrink: 0, width: box.width, height: box.height}}>
+        {blank ? (
+          <div style={{...box, background: blankColor}} />
+        ) : (
+          <img
+            alt="img"
+            src={this.toOriginal(new URL(media.mediaUrlHttps)).toString()}
+            style={{...box, objectFit: 'cover', flexShrink: 0}}
+          />
+        )}
+        {!blank && label && <p style={{...pill, left: s(12), bottom: s(12), margin: s(0)}}>{label}</p>}
+        {!blank && this.timeDependent && media.type === 'video' && (
           <div
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: this.utils.element.applyScale(6),
+              justifyContent: 'center',
+              position: 'absolute',
+              right: s(12),
+              bottom: s(10),
+              width: s(24),
+              height: s(24),
+              borderRadius: s(9999),
+              background: '#000000c4',
             }}
           >
-            {this.username({data})}
-            <p
-              style={{
-                fontSize: this.utils.element.applyScale(15),
-                margin: this.utils.element.applyScale(0),
-                color: this.subTextColor,
-              }}
-            >
-              @{id}
-            </p>
+            <svg width={s(12)} height={s(12)} viewBox="0 0 24 24" fill="#ffffff">
+              <path d="M16 22h-2.35l-.275-.219-3.842-3.073 1.424-1.424L14 19.72v-5.477l2-2V22z" />
+              <path d="M16 6.586l4.293-4.293 1.414 1.414-18 18-1.414-1.414 2.657-2.658C3.795 17.063 3 15.875 3 14.5v-5C3 7.567 4.567 6 6.5 6h2.148l4.727-3.781.274-.219H16v4.586zM9.625 7.78L9.351 8H6.5C5.672 8 5 8.672 5 9.5v5c0 .828.672 1.5 1.5 1.5h.086L14 8.586V4.28l-4.375 3.5z" />
+            </svg>
           </div>
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <this.tweetRender data={data} quoted={true} />
-        </div>
+        )}
       </div>
     )
+  }
+
+  // 0:27 / 1:14 / 1:02:03, as x.com labels a video
+  duration = (millis?: number): string => {
+    const total = Math.round((millis ?? 0) / 1000)
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    const hours = Math.floor(total / 3600)
+    const minutes = Math.floor((total % 3600) / 60)
+    return hours > 0 ? `${hours}:${pad(minutes)}:${pad(total % 60)}` : `${minutes}:${pad(total % 60)}`
   }
 
   tweetRender: RenderWidgetType<{data: TweetApiUtilsData; quoted: boolean}> = ({data, quoted}) => {
@@ -1069,13 +1206,18 @@ export class RenderTweetImage {
       end: normalizeMap.findIndex(({array}) => array === indices[1]),
     }))
 
-    const normalizeMedia = [...(extEntities?.media ?? [])].map(({indices, idStr, mediaUrlHttps, type}) => ({
-      start: normalizeMap.findIndex(({array}) => array === indices[0]),
-      end: normalizeMap.findIndex(({array}) => array === indices[1]),
-      remove: video && type !== 'photo',
-      idStr,
-      mediaUrlHttps,
-    }))
+    const normalizeMedia = [...(extEntities?.media ?? [])].map(
+      ({indices, idStr, mediaUrlHttps, type, originalInfo, videoInfo}) => ({
+        start: normalizeMap.findIndex(({array}) => array === indices[0]),
+        end: normalizeMap.findIndex(({array}) => array === indices[1]),
+        idStr,
+        mediaUrlHttps,
+        type,
+        durationMillis: videoInfo?.durationMillis,
+        width: originalInfo.width,
+        height: originalInfo.height,
+      }),
+    )
 
     const normalizeUrls = [...(noteEntity?.urls ?? []), ...(legacySet?.urls ?? [])].map(({indices, displayUrl}) => ({
       start: normalizeMap.findIndex(({array}) => array === indices[0]),
@@ -1102,70 +1244,31 @@ export class RenderTweetImage {
       index: number
     }[] = []
 
+    // Media that share a position in the text are laid out together (a row / carousel, as x.com does).
+    // For a video output the first video's frame is left blank for the video to be laid over.
+    const groups = new Map<number, typeof normalizeMedia>()
     for (const m of normalizeMedia) {
       const inline = normalizeInlineMedia.find(({mediaId}) => mediaId === m.idStr)
+      if (!inline && !note) charIndices.push({start: m.start, end: m.end, chars: []})
+      const index = inline ? inline.index : note ? trueSplit.length : m.start
+      groups.set(index, [...(groups.get(index) ?? []), m])
+    }
 
-      if (m.remove) {
-        charIndices.push({
-          start: m.start,
-          end: m.end,
-          chars: [],
-        })
-      } else if (inline) {
-        insert.push({
-          index: inline.index,
-          fn: () => (
-            <img
-              alt="img"
-              key={m.idStr}
-              src={this.toOriginal(new URL(m.mediaUrlHttps)).toString()}
-              style={{
-                width: '100%',
-                borderRadius: this.utils.element.applyScale(10),
-                border: `${this.utils.element.applyScale(1)} solid ${this.imageBorderColor}`,
-              }}
-            />
-          ),
-        })
-      } else if (note) {
-        insert.push({
-          index: trueSplit.length,
-          fn: () => (
-            <img
-              alt="img"
-              key={m.idStr}
-              src={this.toOriginal(new URL(m.mediaUrlHttps)).toString()}
-              style={{
-                width: '100%',
-                borderRadius: this.utils.element.applyScale(10),
-                border: `${this.utils.element.applyScale(1)} solid ${this.imageBorderColor}`,
-              }}
-            />
-          ),
-        })
-      } else {
-        charIndices.push({
-          start: m.start,
-          end: m.end,
-          chars: [],
-        })
-        insert.push({
-          index: m.start,
-          fn: () => (
-            <img
-              alt="img"
-              key={m.idStr}
-              src={this.toOriginal(new URL(m.mediaUrlHttps)).toString()}
-              style={{
-                width: '100%',
-                borderRadius: this.utils.element.applyScale(10),
-                border: `${this.utils.element.applyScale(1)} solid ${this.imageBorderColor}`,
-                marginTop: this.utils.element.applyScale(8),
-              }}
-            />
-          ),
-        })
-      }
+    for (const [index, media] of groups) {
+      const videos = video ? media.filter(({type}) => type !== 'photo') : []
+      const tallest = [...videos].sort((a, b) => b.height / b.width - a.height / a.width)[0]
+      insert.push({
+        index,
+        fn: () => (
+          <this.mediaGroup
+            key={index}
+            blank={tallest}
+            media={video ? media.filter(({type}) => type === 'photo') : media}
+            quoted={quoted}
+            spaced={index > 0}
+          />
+        ),
+      })
     }
 
     for (const {start, end, displayUrl} of normalizeUrls) {
@@ -1261,7 +1364,9 @@ export class RenderTweetImage {
 
     for (const [i, t] of paragraphs.entries()) {
       for (const {fn} of insert.filter(({index}) => t.start - 1 === index)) textElement.push(fn())
-      textElement.push(<this.paragraph key={i} chars={t.chars} fontSize={quoted ? 14 : 17} />)
+      textElement.push(
+        <this.paragraph key={i} chars={t.chars} fontSize={quoted ? 15 : 17} lineHeight={quoted ? 20 : 24} />,
+      )
       for (const {fn} of insert.filter(({index}) => t.end + 1 === index)) textElement.push(fn())
     }
 
