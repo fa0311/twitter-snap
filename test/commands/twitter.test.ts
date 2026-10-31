@@ -137,10 +137,12 @@ describe('Twitter test', () => {
       'temp/single_video_tweet_to_video_no_cleanup/{count}.mp4',
       '--noCleanup',
     )
-    await count('temp/single_video_tweet_to_video_no_cleanup', 3)
+    // the rendered image, the rounded-corner mask of the video frame, the downloaded video, the output
+    await count('temp/single_video_tweet_to_video_no_cleanup', 4)
     await access('temp/single_video_tweet_to_video_no_cleanup/0.mp4')
     await access('temp/single_video_tweet_to_video_no_cleanup/temp-0-0.png')
-    await access('temp/single_video_tweet_to_video_no_cleanup/temp-1-0.mp4')
+    await access('temp/single_video_tweet_to_video_no_cleanup/temp-1-0.png')
+    await access('temp/single_video_tweet_to_video_no_cleanup/temp-2-0.mp4')
 
     expect(stdout).toContain('Initializing API')
     expect(stdout).toContain('Loading font')
