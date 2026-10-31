@@ -131,8 +131,9 @@ USAGE
     SunsetGardenDarkColor|RenderDawnBlossomColor|RenderDawnBlossomDarkColor|Rend
     erFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyColor|RenderT
     wilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|
-    RenderTransparentDark|RenderTransparentShadow|RenderTransparentShadowDark|Js
-    on|LiteJson|Media|RenderMakeItAQuote] [--width <value>] [--scale <value>]
+    RenderTransparentDark|RenderTransparentShadow|RenderTransparentShadowDark|Re
+    nderXReference|RenderXReferenceDark|Json|LiteJson|Media|RenderMakeItAQuote]
+    [--width <value>] [--scale <value>]
 
 ARGUMENTS
   URL  Twitter url
@@ -195,15 +196,16 @@ FLAGS
 
   --theme=<option>
       [default: RenderOceanBlueColor] Theme type
-      <options: RenderOceanBlueColor|RenderOceanBlueDarkColor|RenderSunsetGardenCo
-      lor|RenderSunsetGardenDarkColor|RenderDawnBlossomColor|RenderDawnBlossomDark
-      Color|RenderFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyCol
-      or|RenderTwilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTr
-      ansparent|RenderTransparentDark|RenderTransparentShadow|RenderTransparentSha
-      dowDark|Json|LiteJson|Media|RenderMakeItAQuote>
+      <options:
+      RenderOceanBlueColor|RenderOceanBlueDarkColor|RenderSunsetGardenColor|Render
+      SunsetGardenDarkColor|RenderDawnBlossomColor|RenderDawnBlossomDarkColor|Rend
+      erFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyColor|RenderT
+      wilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|
+      RenderTransparentDark|RenderTransparentShadow|RenderTransparentShadowDark|Re
+      nderXReference|RenderXReferenceDark|Json|LiteJson|Media|RenderMakeItAQuote>
 
   --width=<value>
-      [default: 650] Width
+      Width (650 unless set, 600 for RenderXReference)
 
 DESCRIPTION
   Create beautiful Tweet images fast
