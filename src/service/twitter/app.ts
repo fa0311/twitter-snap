@@ -108,10 +108,10 @@ const render = new SnapRender<TweetApiUtilsData>({
     },
     video: async (data, utils) => {
       utils.logger.update(`Rendering image ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-      const image = tweetImage(utils, true)
-      const input = await utils.file.tempImg(await utils.render(image.render({data})))
+      const element = tweetImage(utils, true).render({data})
+      const input = await utils.file.tempImg(await utils.render(element))
       utils.logger.update(`Rendering video ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-      await new RenderBasicVideo(utils, image.videoInset()).render({data, input})
+      await new RenderBasicVideo(utils).render({data, input})
     },
   },
   element: {

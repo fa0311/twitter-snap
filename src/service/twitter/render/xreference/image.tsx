@@ -35,8 +35,6 @@ const icons = {
 export class RenderXReferenceImage extends RenderTweetImage {
   columnBorder = 1
   sidePadding = 16
-  // Below the video blank: time line with its margins, the action bar with its top border, the article's bottom padding
-  bottomInset = 16 + 20 + 16 + 1 + 48 + 12
 
   constructor(utils: SnapRenderColorUtils, video: boolean) {
     super(utils, video)
@@ -53,15 +51,6 @@ export class RenderXReferenceImage extends RenderTweetImage {
 
   contentWidth = (): number =>
     this.utils.width - this.utils.element.applyScaleNum((this.columnBorder + this.sidePadding) * 2)
-
-  videoInset = () => {
-    const s = this.utils.element.applyScaleNum
-    return {
-      x: s(this.columnBorder + this.sidePadding) + s(1),
-      bottom: s(this.bottomInset) + s(1),
-      width: this.contentWidth() - s(1) * 2,
-    }
-  }
 
   svg: RenderWidgetType<{color: string; path: string; size: number; viewBox?: string}> = ({
     color,

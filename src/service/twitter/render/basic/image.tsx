@@ -9,9 +9,7 @@ import {
 
 import type {SnapRenderColorUtils} from '../../../../utils/render.js'
 import {splitLineBreak} from '../../../../utils/text.js'
-import {getResizedMediaByWidth} from '../../../../utils/video.js'
 import {
-  getBiggerMedia,
   getUserAvatarUrl,
   getUserName,
   getUserScreenName,
@@ -20,6 +18,7 @@ import {
   type RenderCssType,
   type RenderWidgetType,
 } from '../utils/utils.js'
+import {blankColor} from './video.js'
 
 type UnifiedCardDetails = {
   type: 'details'
@@ -55,7 +54,6 @@ export class RenderTweetImage {
   rawAssetsUrl: string
   margin: number = 30
   padding: number = 12
-  bottomPadding: number = 32 // gap + time line below the video blank
   bodyGap: number = 10 // between header, text, quote and video blank
 
   constructor(
@@ -105,16 +103,6 @@ export class RenderTweetImage {
 
   // Width left for the tweet body once the frame's margin and padding are taken off
   contentWidth = (): number => this.utils.width - this.utils.element.applyScaleNum((this.margin + this.padding) * 2)
-
-  // Where the video goes on the rendered image: inside the 1px frame of the blank, measured from the left and the bottom
-  videoInset = () => {
-    const border = this.utils.element.applyScaleNum(1)
-    return {
-      x: this.utils.element.applyScaleNum(this.margin + this.padding) + border,
-      bottom: this.utils.element.applyScaleNum(this.margin + this.padding + this.bottomPadding) + border,
-      width: this.contentWidth() - border * 2,
-    }
-  }
 
   removeUnsupportChar = (text: string): string => {
     return [...text]
@@ -515,6 +503,17 @@ export class RenderTweetImage {
     lineHeight: number
   }> = ({chars, color, fontSize, lineHeight}) => {
     const units = splitLineBreak(chars)
+    // A newline closing a line that holds nothing but whitespace makes an empty line of the line height, as in a browser
+    const blankLines = new Set<number>()
+    let whitespaceOnly = true
+    for (const [i, unit] of units.entries()) {
+      if (unit.length === 1 && unit[0].char === '\n') {
+        if (whitespaceOnly && i > 0) blankLines.add(i)
+        whitespaceOnly = true
+      } else if (!unit.every(({char}) => char === ' ')) {
+        whitespaceOnly = false
+      }
+    }
     return (
       <p
         style={{
@@ -528,16 +527,13 @@ export class RenderTweetImage {
       >
         {units.map((y, i) => {
           const n = y.length === 1 && y[0].char === '\n'
-          const last = i > 0 && units[i - 1]
-          const lastN = last && last.length === 1 && last[0].char === '\n'
-
           return (
             <span
               key={i}
               style={{
                 display: 'flex',
                 ...(n ? {width: '100%'} : {}),
-                ...(n && lastN ? {height: this.utils.element.applyScale(lineHeight)} : {}),
+                ...(blankLines.has(i) ? {height: this.utils.element.applyScale(lineHeight)} : {}),
               }}
             >
               {y.map(({char, properties}, i) => (
@@ -920,33 +916,6 @@ export class RenderTweetImage {
   }
 
   userRender: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
-    const legacy = data.tweet.legacy!
-    const extEntities = legacy.extendedEntities
-
-    const videoBlank = (() => {
-      const [, blank] = getBiggerMedia(extEntities?.media ?? [])
-      if (blank && this.video) {
-        const inset = this.videoInset()
-        const border = this.utils.element.applyScaleNum(1)
-        const resizedMedia = getResizedMediaByWidth(
-          blank.videoInfo!.aspectRatio[0],
-          blank.videoInfo!.aspectRatio[1],
-          inset.width,
-        )
-        return (
-          <div
-            style={{
-              display: 'flex',
-              width: resizedMedia.width + border * 2,
-              height: resizedMedia.height + border * 2,
-              borderRadius: this.utils.element.applyScale(this.mediaRadius),
-              border: `${border}px solid ${this.mediaBorderColor}`,
-            }}
-          ></div>
-        )
-      }
-    })()
-
     return (
       <div
         style={{
@@ -958,7 +927,6 @@ export class RenderTweetImage {
         <this.header data={data} />
         <this.tweetRender data={data} quoted={false} />
         {data.quoted && <this.quotedRender data={data.quoted} />}
-        {videoBlank}
       </div>
     )
   }
@@ -1049,14 +1017,20 @@ export class RenderTweetImage {
   // when that keeps them 240px tall, otherwise a carousel 0.68 of the width tall with each photo at most 0.8 wide (cropped).
   // Inside a quoted tweet the media runs flush with the box.
   mediaGroup: RenderWidgetType<{
-    media: {height: number; idStr: string; mediaUrlHttps: string; width: number}[]
+    blankId?: string
+    media: {
+      durationMillis?: number
+      height: number
+      idStr: string
+      mediaUrlHttps: string
+      type: string
+      width: number
+    }[]
     quoted: boolean
     spaced: boolean
-  }> = ({media, quoted, spaced}) => {
+  }> = ({blankId, media, quoted, spaced}) => {
     const s = this.utils.element.applyScaleNum
-    const border = quoted ? 0 : s(1)
     const width = quoted ? this.contentWidth() - s(1) * 2 : this.contentWidth()
-    const src = (m: {mediaUrlHttps: string}) => this.toOriginal(new URL(m.mediaUrlHttps)).toString()
     const spacing = {
       ...(spaced ? {marginTop: this.utils.element.applyScale(quoted ? 4 : 12)} : {}),
       ...(quoted ? {marginLeft: -s(12), marginRight: -s(12)} : {}),
@@ -1064,18 +1038,21 @@ export class RenderTweetImage {
 
     if (media.length === 1) {
       const [m] = media
+      const border = quoted ? 0 : s(1)
+      const inner = Math.round(((width - border * 2) * m.height) / m.width)
       return (
-        <img
-          alt="img"
-          src={src(m)}
-          style={{
-            width: width,
-            height: Math.round(((width - border * 2) * m.height) / m.width) + border * 2,
-            borderRadius: quoted ? 0 : this.utils.element.applyScale(this.mediaRadius),
-            border: `${border}px solid ${this.mediaBorderColor}`,
-            ...spacing,
-          }}
-        />
+        <div style={{display: 'flex', ...spacing}}>
+          <this.mediaFrame
+            blank={m.idStr === blankId}
+            border={border}
+            borderColor={this.mediaBorderColor}
+            height={inner}
+            media={m}
+            radius={quoted ? 0 : this.mediaRadius}
+            visible={width}
+            width={width - border * 2}
+          />
+        </div>
       )
     }
 
@@ -1086,7 +1063,7 @@ export class RenderTweetImage {
     const inner = Math.round(fit >= s(240) ? fit : Math.round(width * 0.68) - frame * 2)
     const maxInner = Math.round(width * 0.8) - frame * 2
 
-    // Frames past the right edge are cut like the real carousel: each frame clips its own photo
+    // Frames past the right edge are cut like the real carousel: each frame clips its own media
     let x = 0
     const frames = media.flatMap((m, i) => {
       const full = Math.min(Math.round(aspects[i] * inner), maxInner) + frame * 2
@@ -1098,27 +1075,105 @@ export class RenderTweetImage {
     return (
       <div style={{display: 'flex', gap, width, ...spacing}}>
         {frames.map(({m, full, visible}) => (
-          <div
+          <this.mediaFrame
             key={m.idStr}
-            style={{
-              display: 'flex',
-              width: visible,
-              height: inner + frame * 2,
-              overflow: 'hidden',
-              flexShrink: 0,
-              borderRadius: this.utils.element.applyScale(8),
-              border: `${frame}px solid ${this.frameBorderColor}`,
-            }}
-          >
-            <img
-              alt="img"
-              src={src(m)}
-              style={{width: full - frame * 2, height: inner, objectFit: 'cover', flexShrink: 0}}
-            />
-          </div>
+            blank={m.idStr === blankId}
+            border={frame}
+            borderColor={this.frameBorderColor}
+            height={inner}
+            media={m}
+            radius={8}
+            visible={visible}
+            width={full - frame * 2}
+          />
         ))}
       </div>
     )
+  }
+
+  // One media frame: the photo, or a video's poster with x.com's duration pill and mute button, or the blank the
+  // video is laid over later (painted in blankColor, found again on the rendered image)
+  mediaFrame: RenderWidgetType<{
+    blank: boolean
+    border: number
+    borderColor: string
+    height: number
+    media: {durationMillis?: number; mediaUrlHttps: string; type: string}
+    radius: number
+    visible: number
+    width: number
+  }> = ({blank, border, borderColor, height, media, radius, visible, width}) => {
+    const s = this.utils.element.applyScale
+    const pill = {
+      display: 'flex',
+      alignItems: 'center',
+      position: 'absolute' as const,
+      height: s(20),
+      padding: this.utils.element.applyScales([0, 8]),
+      borderRadius: s(4),
+      background: '#000000c4',
+      color: '#ffffff',
+      fontSize: s(13),
+      lineHeight: s(16),
+    }
+    const label =
+      media.type === 'animated_gif' ? 'GIF' : media.type === 'video' ? this.duration(media.durationMillis) : undefined
+    return (
+      <div
+        style={{
+          display: 'flex',
+          position: 'relative',
+          overflow: 'hidden',
+          flexShrink: 0,
+          width: visible,
+          height: height + border * 2,
+          borderRadius: s(radius),
+          border: `${border}px solid ${borderColor}`,
+          background: this.backgroundColor,
+        }}
+      >
+        {blank ? (
+          <div style={{width: width - (width % 2), height: height - (height % 2), background: blankColor}} />
+        ) : (
+          <img
+            alt="img"
+            src={this.toOriginal(new URL(media.mediaUrlHttps)).toString()}
+            style={{width, height, objectFit: 'cover', flexShrink: 0}}
+          />
+        )}
+        {!blank && label && <p style={{...pill, left: s(12), bottom: s(12), margin: s(0)}}>{label}</p>}
+        {!blank && media.type === 'video' && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'absolute',
+              right: s(12),
+              bottom: s(10),
+              width: s(24),
+              height: s(24),
+              borderRadius: s(9999),
+              background: '#000000c4',
+            }}
+          >
+            <svg width={s(12)} height={s(12)} viewBox="0 0 24 24" fill="#ffffff">
+              <path d="M16 22h-2.35l-.275-.219-3.842-3.073 1.424-1.424L14 19.72v-5.477l2-2V22z" />
+              <path d="M16 6.586l4.293-4.293 1.414 1.414-18 18-1.414-1.414 2.657-2.658C3.795 17.063 3 15.875 3 14.5v-5C3 7.567 4.567 6 6.5 6h2.148l4.727-3.781.274-.219H16v4.586zM9.625 7.78L9.351 8H6.5C5.672 8 5 8.672 5 9.5v5c0 .828.672 1.5 1.5 1.5h.086L14 8.586V4.28l-4.375 3.5z" />
+            </svg>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  // 0:27 / 1:14 / 1:02:03, as x.com labels a video
+  duration = (millis?: number): string => {
+    const total = Math.round((millis ?? 0) / 1000)
+    const pad = (n: number) => n.toString().padStart(2, '0')
+    const hours = Math.floor(total / 3600)
+    const minutes = Math.floor((total % 3600) / 60)
+    return hours > 0 ? `${hours}:${pad(minutes)}:${pad(total % 60)}` : `${minutes}:${pad(total % 60)}`
   }
 
   tweetRender: RenderWidgetType<{data: TweetApiUtilsData; quoted: boolean}> = ({data, quoted}) => {
@@ -1164,12 +1219,13 @@ export class RenderTweetImage {
     }))
 
     const normalizeMedia = [...(extEntities?.media ?? [])].map(
-      ({indices, idStr, mediaUrlHttps, type, originalInfo}) => ({
+      ({indices, idStr, mediaUrlHttps, type, originalInfo, videoInfo}) => ({
         start: normalizeMap.findIndex(({array}) => array === indices[0]),
         end: normalizeMap.findIndex(({array}) => array === indices[1]),
-        remove: video && type !== 'photo',
         idStr,
         mediaUrlHttps,
+        type,
+        durationMillis: videoInfo?.durationMillis,
         width: originalInfo.width,
         height: originalInfo.height,
       }),
@@ -1200,23 +1256,22 @@ export class RenderTweetImage {
       index: number
     }[] = []
 
-    // Media that share a position in the text are laid out together (a row / carousel, as x.com does)
+    // Media that share a position in the text are laid out together (a row / carousel, as x.com does).
+    // For a video output the first video's frame is left blank for the video to be laid over.
     const groups = new Map<number, typeof normalizeMedia>()
     for (const m of normalizeMedia) {
       const inline = normalizeInlineMedia.find(({mediaId}) => mediaId === m.idStr)
-
-      if (m.remove) {
-        charIndices.push({start: m.start, end: m.end, chars: []})
-        continue
-      }
-
       if (!inline && !note) charIndices.push({start: m.start, end: m.end, chars: []})
       const index = inline ? inline.index : note ? trueSplit.length : m.start
       groups.set(index, [...(groups.get(index) ?? []), m])
     }
 
+    const blankId = video ? normalizeMedia.find(({type}) => type !== 'photo')?.idStr : undefined
     for (const [index, media] of groups) {
-      insert.push({index, fn: () => <this.mediaGroup key={index} media={media} quoted={quoted} spaced={index > 0} />})
+      insert.push({
+        index,
+        fn: () => <this.mediaGroup key={index} blankId={blankId} media={media} quoted={quoted} spaced={index > 0} />,
+      })
     }
 
     for (const {start, end, displayUrl} of normalizeUrls) {

@@ -5,20 +5,6 @@ import type {MediaExtended, MediaVideoInfo, User} from 'twitter-openapi-typescri
 export type RenderWidgetType<T> = (props: T) => ReactElement
 export type RenderCssType<T> = (props: T) => CSSProperties
 
-export const getBiggerMedia = (extMedia: MediaExtended[]) => {
-  const video = extMedia.filter((e) => e.type !== 'photo')
-  const sorted = [...video].sort(
-    (a, b) =>
-      b.videoInfo!.aspectRatio[1] / b.videoInfo!.aspectRatio[0] -
-      a.videoInfo!.aspectRatio[1] / a.videoInfo!.aspectRatio[0],
-  )
-  if (sorted.length === 0) {
-    return [undefined, undefined] as const
-  }
-
-  return [video.indexOf(sorted[0]), sorted[0]] as const
-}
-
 export const getVideo = (videoInfo: MediaVideoInfo) => {
   return [...videoInfo.variants].sort((a, b) => {
     if (a.bitrate === undefined) return 1

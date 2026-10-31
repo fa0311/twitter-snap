@@ -1,17 +1,39 @@
+import fs from 'node:fs/promises'
+import {PNG} from 'pngjs'
 import type {TweetApiUtilsData} from 'twitter-openapi-typescript'
 
 import {type FilePath, URLPath} from '../../../../utils/path.js'
 import type {SnapRenderColorUtils} from '../../../../utils/render.js'
-import {getResizedMediaByWidth} from '../../../../utils/video.js'
-import {getBiggerMedia, getUserScreenName} from '../utils/utils.js'
+import {getUserScreenName} from '../utils/utils.js'
 
-export type VideoInset = {bottom: number; width: number; x: number}
+// The image renderer paints the video's frame in this color; the video is laid over wherever that frame ended up
+export const blankColor = '#ff00fe'
+
+const findBlank = async (path: string) => {
+  const {width, height, data} = PNG.sync.read(await fs.readFile(path))
+  const rows: {length: number; start: number; y: number}[] = []
+  for (let y = 0; y < height; y++) {
+    let best = {start: 0, length: 0}
+    let run = 0
+    for (let x = 0; x <= width; x++) {
+      const i = (y * width + x) * 4
+      if (x < width && data[i] === 0xff && data[i + 1] === 0x00 && data[i + 2] === 0xfe) {
+        run++
+      } else {
+        if (run > best.length) best = {start: x - run, length: run}
+        run = 0
+      }
+    }
+    if (best.length >= 32) rows.push({y, ...best})
+  }
+  if (rows.length === 0) throw new Error('Video frame not found on the image')
+  const length = Math.max(...rows.map((row) => row.length))
+  const start = Math.min(...rows.filter((row) => row.length === length).map((row) => row.start))
+  return {x: start, y: rows[0].y, width: length, height: rows[rows.length - 1].y - rows[0].y + 1}
+}
 
 export class RenderBasicVideo {
-  constructor(
-    public utils: SnapRenderColorUtils,
-    public inset: VideoInset,
-  ) {}
+  constructor(public utils: SnapRenderColorUtils) {}
 
   render = async ({data, input}: {data: TweetApiUtilsData; input: FilePath}) => {
     const removeList: string[] = []
@@ -30,18 +52,14 @@ export class RenderBasicVideo {
     const id = data.tweet.legacy!.idStr
     const title = `https://twitter.com/${screenName}/status/${id}`
 
-    const [, blank] = getBiggerMedia(extMedia)
-
-    if (!blank) {
+    if (video.length === 0) {
       await this.utils.video.fromImage(input.toString(), this.utils.file.path.toString(), title)
       return {temp: removeList}
     }
 
-    const {width, height} = getResizedMediaByWidth(
-      blank.videoInfo!.aspectRatio[0],
-      blank.videoInfo!.aspectRatio[1],
-      this.inset.width,
-    )
+    const blank = await findBlank(input.toString())
+    const width = blank.width - (blank.width % 2)
+    const height = blank.height - (blank.height % 2)
 
     const res = video.map(async ({url}) => {
       const path = URLPath.fromURL(url)
@@ -98,15 +116,12 @@ export class RenderBasicVideo {
       return `${video.map((_, i) => `[${e}${i}]`).join('')}`
     }
 
-    const overlayWidth = this.inset.x
-    const overlayHeight = `H-${height + this.inset.bottom}`
-
     const command = this.utils.video.getFFmpeg()
     command.input(input.toString())
     for (const input of tempVideo) command.input(input.toString())
 
     const normalize = `setsar=1/1`
-    const pad = `scale=w=${width}:h=${height}:force_original_aspect_ratio=1,pad=w=${width}:h=${height}:x=trunc((ow-iw)/4)*2:y=trunc((oh-ih)/4)*2:color=white`
+    const pad = `scale=w=${width}:h=${height}:force_original_aspect_ratio=1,pad=w=${width}:h=${height}:x=trunc((ow-iw)/4)*2:y=trunc((oh-ih)/4)*2:color=black`
     command.complexFilter(
       [
         `[0]scale=trunc(iw/2)*2:trunc(ih/2)*2[i]`,
@@ -114,7 +129,8 @@ export class RenderBasicVideo {
         video.map((_, i) => `[${i + 1}]${pad},${normalize}[v${i}]`),
         `${all('v')}concat=n=${video.length}:v=1:a=0[video]`,
         `${all('a')}concat=n=${video.length}:v=0:a=1[audio]`,
-        `[i][video]overlay=${overlayWidth}:${overlayHeight}[marge]`,
+        // overlay in RGB: converted to 4:2:0 first, the blank's chroma would bleed into the rows around the video
+        `[i][video]overlay=${blank.x}:${blank.y}:format=rgb,format=yuv420p[marge]`,
       ].flat(),
     )
     command.map('[marge]')
