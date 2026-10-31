@@ -55,6 +55,9 @@ export class RenderTweetImage {
   margin: number = 30
   padding: number = 12
   bodyGap: number = 10 // between header, text, quote and video blank
+  // The image shows what the page showed at that moment (views, counts, remaining time, controls); the plain themes
+  // leave out what changes over time, so the image reads the same later
+  timeDependent: boolean = false
 
   constructor(
     public utils: SnapRenderColorUtils,
@@ -269,14 +272,17 @@ export class RenderTweetImage {
         <span style={sub}>{timeString}</span>
         <span style={sub}>·</span>
         <span style={sub}>{dateString}</span>
-        {view && <span style={sub}>·</span>}
-        {view && <span style={{...small, color: this.textColor, fontWeight: '700'}}>{this.toKMB(Number(view))}</span>}
-        {view && <span style={{...small, color: this.subTextColor}}>Views</span>}
+        {this.timeDependent && view && <span style={sub}>·</span>}
+        {this.timeDependent && view && (
+          <span style={{...small, color: this.textColor, fontWeight: '700'}}>{this.toKMB(Number(view))}</span>
+        )}
+        {this.timeDependent && view && <span style={{...small, color: this.subTextColor}}>Views</span>}
       </p>
     )
   }
 
   poll: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+    const s = this.utils.element.applyScale
     const values = data.tweet.card?.legacy?.bindingValues ?? []
     const get = (key: string) => values.find((v) => v.key === key)?.value
     const choices = [1, 2, 3, 4].flatMap((i) => {
@@ -287,9 +293,24 @@ export class RenderTweetImage {
     const max = Math.max(...choices.map(({count}) => count))
     const end = new Date(get('end_datetime_utc')?.stringValue ?? 0)
     const final = get('counts_are_final')?.booleanValue || end.getTime() <= Date.now()
-    const font = this.utils.element.applyScale(15)
+    // The numbers of a running poll are those of the moment the image was taken
+    const results = final || this.timeDependent
+    const font = s(15)
 
-    const timeLeft = (() => {
+    const status = (() => {
+      if (final) return 'Final results'
+      if (!this.timeDependent) {
+        const ends = end.toLocaleString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: true,
+        })
+        return `Ends ${ends}`
+      }
+
       const minutes = Math.ceil((end.getTime() - Date.now()) / 60000)
       const hours = Math.floor(minutes / 60)
       const days = Math.floor(hours / 24)
@@ -299,37 +320,43 @@ export class RenderTweetImage {
     })()
 
     return (
-      <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(12)}}>
-        <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(4)}}>
+      <div style={{display: 'flex', flexDirection: 'column', gap: s(12)}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: s(4)}}>
           {choices.map(({label, count}, i) => {
             const percent = total === 0 ? 0 : (count / total) * 100
-            const lead = count === max
+            const lead = results && count === max
             return (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  position: 'relative',
-                  alignItems: 'center',
-                  height: this.utils.element.applyScale(32),
-                }}
-              >
-                <div
-                  style={{
-                    position: 'absolute',
-                    left: 0,
-                    top: 0,
-                    bottom: 0,
-                    width: `${percent}%`,
-                    minWidth: this.utils.element.applyScale(7),
-                    borderRadius: this.utils.element.applyScale(4),
-                    background: lead ? '#1d9bf094' : this.borderColor,
-                  }}
-                />
+              <div key={i} style={{display: 'flex', position: 'relative', alignItems: 'center', height: s(32)}}>
+                {results ? (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      width: `${percent}%`,
+                      minWidth: s(7),
+                      borderRadius: s(4),
+                      background: lead ? '#1d9bf094' : this.borderColor,
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      left: 0,
+                      top: 0,
+                      bottom: 0,
+                      right: 0,
+                      borderRadius: s(4),
+                      border: `${s(1)} solid ${this.borderColor}`,
+                    }}
+                  />
+                )}
                 <p
                   style={{
                     flexGrow: 1,
-                    margin: this.utils.element.applyScale(0),
+                    margin: s(0),
                     padding: this.utils.element.applyScales([0, 12]),
                     fontSize: font,
                     fontWeight: lead ? '700' : '400',
@@ -339,33 +366,27 @@ export class RenderTweetImage {
                 >
                   {this.removeUnsupportChar(label)}
                 </p>
-                <p
-                  style={{
-                    margin: this.utils.element.applyScale(0),
-                    paddingLeft: this.utils.element.applyScale(12),
-                    fontSize: font,
-                    fontWeight: lead ? '700' : '400',
-                    color: this.textColor,
-                  }}
-                >
-                  {`${percent.toFixed(1)}%`}
-                </p>
+                {results && (
+                  <p
+                    style={{
+                      margin: s(0),
+                      paddingLeft: s(12),
+                      fontSize: font,
+                      fontWeight: lead ? '700' : '400',
+                      color: this.textColor,
+                    }}
+                  >
+                    {`${percent.toFixed(1)}%`}
+                  </p>
+                )}
               </div>
             )
           })}
         </div>
-        <p
-          style={{
-            display: 'flex',
-            margin: this.utils.element.applyScale(0),
-            gap: this.utils.element.applyScale(4),
-            fontSize: font,
-            color: this.subTextColor,
-          }}
-        >
-          <span>{`${total.toLocaleString('en-US')} vote${total === 1 ? '' : 's'}`}</span>
-          <span>·</span>
-          <span>{final ? 'Final results' : timeLeft}</span>
+        <p style={{display: 'flex', margin: s(0), gap: s(4), fontSize: font, color: this.subTextColor}}>
+          {results && <span>{`${total.toLocaleString('en-US')} vote${total === 1 ? '' : 's'}`}</span>}
+          {results && <span>·</span>}
+          <span>{status}</span>
         </p>
       </div>
     )
@@ -433,7 +454,7 @@ export class RenderTweetImage {
               />
             </div>
           )}
-          {data.callToAction && (
+          {this.timeDependent && data.callToAction && (
             <div
               style={{
                 display: 'flex',
@@ -1014,8 +1035,11 @@ export class RenderTweetImage {
   // Photos as x.com lays them out: one photo at full width; several side by side at one height, fitted to the width
   // when that keeps them 240px tall, otherwise a carousel 0.68 of the width tall with each photo at most 0.8 wide (cropped).
   // Inside a quoted tweet the media runs flush with the box.
+  // Media stacked at full width, each at its own proportions, so every item stays in the picture whatever its shape
+  // (x.com's carousel would cut the right-most ones off). On a video output the videos are replaced by one blank frame,
+  // as tall as the tallest of them, where they play one after another. Inside a quoted tweet the media runs flush.
   mediaGroup: RenderWidgetType<{
-    blankIds: string[]
+    blank?: {height: number; width: number}
     media: {
       durationMillis?: number
       height: number
@@ -1026,81 +1050,44 @@ export class RenderTweetImage {
     }[]
     quoted: boolean
     spaced: boolean
-  }> = ({blankIds, media, quoted, spaced}) => {
+  }> = ({blank, media, quoted, spaced}) => {
     const s = this.utils.element.applyScaleNum
+    const border = quoted ? 0 : s(1)
     const width = quoted ? this.contentWidth() - s(1) * 2 : this.contentWidth()
+    const inner = width - border * 2
     const spacing = {
       ...(spaced ? {marginTop: this.utils.element.applyScale(quoted ? 4 : 12)} : {}),
       ...(quoted ? {marginLeft: -s(12), marginRight: -s(12)} : {}),
     }
-
-    if (media.length === 1) {
-      const [m] = media
-      const border = quoted ? 0 : s(1)
-      const inner = Math.round(((width - border * 2) * m.height) / m.width)
-      return (
-        <div style={{display: 'flex', ...spacing}}>
-          <this.mediaFrame
-            blank={blankIds.indexOf(m.idStr)}
-            border={border}
-            borderColor={this.mediaBorderColor}
-            height={inner}
-            media={m}
-            radius={quoted ? 0 : this.mediaRadius}
-            visible={width}
-            width={width - border * 2}
-          />
-        </div>
-      )
-    }
-
-    const gap = s(4)
-    const frame = s(1)
-    const aspects = media.map(({width, height}) => width / height)
-    const fit = (width - gap * (media.length - 1) - frame * 2 * media.length) / aspects.reduce((a, b) => a + b, 0)
-    const inner = Math.round(fit >= s(240) ? fit : Math.round(width * 0.68) - frame * 2)
-    const maxInner = Math.round(width * 0.8) - frame * 2
-
-    // Frames past the right edge are cut like the real carousel: each frame clips its own media
-    let x = 0
-    const frames = media.flatMap((m, i) => {
-      const full = Math.min(Math.round(aspects[i] * inner), maxInner) + frame * 2
-      const visible = Math.min(full, width - x)
-      x += full + gap
-      return visible > 0 ? [{m, full, visible}] : []
+    const frame = (m: {height: number; width: number}) => ({
+      border,
+      borderColor: this.mediaBorderColor,
+      height: Math.round((inner * m.height) / m.width),
+      radius: quoted ? 0 : this.mediaRadius,
+      width: inner,
     })
 
     return (
-      <div style={{display: 'flex', gap, width, ...spacing}}>
-        {frames.map(({m, full, visible}) => (
-          <this.mediaFrame
-            key={m.idStr}
-            blank={blankIds.indexOf(m.idStr)}
-            border={frame}
-            borderColor={this.frameBorderColor}
-            height={inner}
-            media={m}
-            radius={8}
-            visible={visible}
-            width={full - frame * 2}
-          />
+      <div style={{display: 'flex', flexDirection: 'column', gap: s(4), ...spacing}}>
+        {media.map((m) => (
+          <this.mediaFrame key={m.idStr} blank={false} media={m} {...frame(m)} />
         ))}
+        {blank && <this.mediaFrame blank={true} media={{mediaUrlHttps: '', type: 'video'}} {...frame(blank)} />}
       </div>
     )
   }
 
   // One media frame: the photo, or a video's poster with x.com's duration pill and mute button, or the blank the
-  // video is laid over later (painted in its marker color, found again on the rendered image; -1 for no blank)
+  // video is laid over later (painted in blankColor, found again on the rendered image)
   mediaFrame: RenderWidgetType<{
-    blank: number
+    blank: boolean
     border: number
     borderColor: string
     height: number
     media: {durationMillis?: number; mediaUrlHttps: string; type: string}
     radius: number
-    visible: number
     width: number
-  }> = ({blank, border, borderColor, height, media, radius, visible, width}) => {
+  }> = ({blank, border, borderColor, height, media, radius, width}) => {
     const s = this.utils.element.applyScale
     const pill = {
       display: 'flex',
@@ -1123,15 +1110,15 @@ export class RenderTweetImage {
           position: 'relative',
           overflow: 'hidden',
           flexShrink: 0,
-          width: visible,
+          width: width + border * 2,
           height: height + border * 2,
           borderRadius: s(radius),
           border: `${border}px solid ${borderColor}`,
           background: this.backgroundColor,
         }}
       >
-        {blank >= 0 ? (
-          <div style={{width: width - (width % 2), height: height - (height % 2), background: blankColor(blank)}} />
+        {blank ? (
+          <div style={{width: width - (width % 2), height: height - (height % 2), background: blankColor}} />
         ) : (
           <img
             alt="img"
@@ -1139,8 +1126,8 @@ export class RenderTweetImage {
             style={{width, height, objectFit: 'cover', flexShrink: 0}}
           />
         )}
-        {blank < 0 && label && <p style={{...pill, left: s(12), bottom: s(12), margin: s(0)}}>{label}</p>}
-        {blank < 0 && media.type === 'video' && (
+        {!blank && label && <p style={{...pill, left: s(12), bottom: s(12), margin: s(0)}}>{label}</p>}
+        {!blank && this.timeDependent && media.type === 'video' && (
           <div
             style={{
               display: 'flex',
@@ -1264,11 +1251,20 @@ export class RenderTweetImage {
       groups.set(index, [...(groups.get(index) ?? []), m])
     }
 
-    const blankIds = video ? normalizeMedia.filter(({type}) => type !== 'photo').map(({idStr}) => idStr) : []
     for (const [index, media] of groups) {
+      const videos = video ? media.filter(({type}) => type !== 'photo') : []
+      const tallest = [...videos].sort((a, b) => b.height / b.width - a.height / a.width)[0]
       insert.push({
         index,
-        fn: () => <this.mediaGroup key={index} blankIds={blankIds} media={media} quoted={quoted} spaced={index > 0} />,
+        fn: () => (
+          <this.mediaGroup
+            key={index}
+            blank={tallest}
+            media={video ? media.filter(({type}) => type === 'photo') : media}
+            quoted={quoted}
+            spaced={index > 0}
+          />
+        ),
       })
     }
 

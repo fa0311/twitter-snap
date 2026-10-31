@@ -6,47 +6,30 @@ import {type FilePath, URLPath} from '../../../../utils/path.js'
 import type {SnapRenderColorUtils} from '../../../../utils/render.js'
 import {getUserScreenName} from '../utils/utils.js'
 
-// The image renderer paints each video's frame in its own marker color (#ff00fe, #ff00fd, ...); the videos are laid
-// over wherever those frames ended up on the rendered image
-export const blankColor = (index: number) => `#ff00${(254 - index).toString(16).padStart(2, '0')}`
+// The image renderer paints the video's frame in this color; the video is laid over wherever that frame ended up
+export const blankColor = '#ff00fe'
 
-type Box = {height: number; width: number; x: number; y: number}
-
-const findBlanks = async (path: string) => {
+const findBlank = async (path: string) => {
   const {width, height, data} = PNG.sync.read(await fs.readFile(path))
-  const rows = new Map<number, {length: number; start: number; y: number}[]>()
+  const rows: {length: number; start: number; y: number}[] = []
   for (let y = 0; y < height; y++) {
-    const best = new Map<number, {length: number; start: number}>()
-    let run = {index: -1, length: 0}
+    let best = {start: 0, length: 0}
+    let run = 0
     for (let x = 0; x <= width; x++) {
       const i = (y * width + x) * 4
-      const index =
-        x < width && data[i] === 0xff && data[i + 1] === 0x00 && data[i + 2] >= 0xf5 ? 0xfe - data[i + 2] : -1
-      if (index === run.index && index >= 0) {
-        run.length++
-        continue
+      if (x < width && data[i] === 0xff && data[i + 1] === 0x00 && data[i + 2] === 0xfe) {
+        run++
+      } else {
+        if (run > best.length) best = {start: x - run, length: run}
+        run = 0
       }
-
-      if (run.index >= 0 && run.length > (best.get(run.index)?.length ?? 0)) {
-        best.set(run.index, {start: x - run.length, length: run.length})
-      }
-
-      run = {index, length: index >= 0 ? 1 : 0}
     }
-
-    for (const [index, {start, length}] of best) {
-      if (length >= 32) rows.set(index, [...(rows.get(index) ?? []), {y, start, length}])
-    }
+    if (best.length >= 32) rows.push({y, ...best})
   }
-
-  const boxes = new Map<number, Box>()
-  for (const [index, list] of rows) {
-    const length = Math.max(...list.map((row) => row.length))
-    const start = Math.min(...list.filter((row) => row.length === length).map((row) => row.start))
-    boxes.set(index, {x: start, y: list[0].y, width: length, height: list[list.length - 1].y - list[0].y + 1})
-  }
-
-  return boxes
+  if (rows.length === 0) throw new Error('Video frame not found on the image')
+  const length = Math.max(...rows.map((row) => row.length))
+  const start = Math.min(...rows.filter((row) => row.length === length).map((row) => row.start))
+  return {x: start, y: rows[0].y, width: length, height: rows[rows.length - 1].y - rows[0].y + 1}
 }
 
 export class RenderBasicVideo {
@@ -74,20 +57,16 @@ export class RenderBasicVideo {
       return {temp: removeList}
     }
 
-    // Only the frames that made it onto the image (a carousel cuts the right-most ones) get a video
-    const blanks = await findBlanks(input.toString())
-    const shown = video.flatMap((variant, index) => {
-      const blank = blanks.get(index)
-      return blank ? [{variant, blank}] : []
-    })
-    if (shown.length === 0) throw new Error('Video frame not found on the image')
+    const blank = await findBlank(input.toString())
+    const width = blank.width - (blank.width % 2)
+    const height = blank.height - (blank.height % 2)
 
-    const res = shown.map(async ({variant, blank}) => {
-      const path = URLPath.fromURL(variant.url)
+    const res = video.map(async ({url}) => {
+      const path = URLPath.fromURL(url)
       const temp = this.utils.file.getTemp(path.extension)
 
       const command = this.utils.video.getFFmpeg()
-      command.input(variant.url)
+      command.input(url)
       command.addOption('-c:v', 'copy')
       command.addOption('-c:a', 'copy')
       command.output(temp.toString())
@@ -103,51 +82,57 @@ export class RenderBasicVideo {
       const video = data.streams.find((e) => e.codec_type === 'video')
       const audio = data.streams.find((e) => e.codec_type === 'audio')
 
-      if (!video) throw new Error('video not found')
-      if (audio) return {path: temp, duration, blank}
+      if (!audio) {
+        const tempAudio = this.utils.file.getTemp('aac')
+        const tempOutput = this.utils.file.getTemp()
+        const command = this.utils.video.getFFmpeg()
+        command.input('anullsrc=channel_layout=stereo:sample_rate=128000')
+        command.inputFormat('lavfi')
+        command.addOption('-t', duration.toString())
+        command.output(tempAudio.toString())
+        await this.utils.video.runFFMpeg(command)
 
-      const tempAudio = this.utils.file.getTemp('aac')
-      const tempOutput = this.utils.file.getTemp()
-      const silence = this.utils.video.getFFmpeg()
-      silence.input('anullsrc=channel_layout=stereo:sample_rate=128000')
-      silence.inputFormat('lavfi')
-      silence.addOption('-t', duration.toString())
-      silence.output(tempAudio.toString())
-      await this.utils.video.runFFMpeg(silence)
+        const command2 = this.utils.video.getFFmpeg()
+        command2.input(temp.toString())
+        command2.input(tempAudio.toString())
+        command2.output(tempOutput.toString())
+        await this.utils.video.runFFMpeg(command2)
 
-      const merge = this.utils.video.getFFmpeg()
-      merge.input(temp.toString())
-      merge.input(tempAudio.toString())
-      merge.output(tempOutput.toString())
-      await this.utils.video.runFFMpeg(merge)
+        removeList.push(tempAudio.toString(), tempOutput.toString())
 
-      removeList.push(tempAudio.toString(), tempOutput.toString())
+        return tempOutput
+      }
 
-      return {path: tempOutput, duration, blank}
+      if (video) {
+        return temp
+      }
+
+      throw new Error('video not found')
     })
 
     const tempVideo = await Promise.all(res)
-    const longest = Math.max(...tempVideo.map(({duration}) => duration))
+
+    const all = (e: string) => {
+      return `${video.map((_, i) => `[${e}${i}]`).join('')}`
+    }
 
     const command = this.utils.video.getFFmpeg()
     command.input(input.toString())
-    for (const {path} of tempVideo) command.input(path.toString())
+    for (const input of tempVideo) command.input(input.toString())
 
-    // Every video plays in its own frame, filling it as x.com does, held on its last frame until the longest ends;
-    // the sound is the first video's. The overlays run in RGB: converted to 4:2:0 first, the marker's chroma would
-    // bleed into the rows around the video.
-    const fill = ({blank, duration}: {blank: Box; duration: number}) => {
-      const width = blank.width - (blank.width % 2)
-      const height = blank.height - (blank.height % 2)
-      return `scale=w=${width}:h=${height}:force_original_aspect_ratio=increase,crop=${width}:${height},setsar=1/1,tpad=stop_mode=clone:stop_duration=${longest - duration}`
-    }
-    command.complexFilter([
-      `[0]scale=trunc(iw/2)*2:trunc(ih/2)*2[o0]`,
-      ...tempVideo.map((item, i) => `[${i + 1}:v]${fill(item)}[v${i}]`),
-      ...tempVideo.map(({blank}, i) => `[o${i}][v${i}]overlay=${blank.x}:${blank.y}:format=rgb[o${i + 1}]`),
-      `[o${tempVideo.length}]format=yuv420p[marge]`,
-      `[1:a]apad=whole_dur=${longest}[audio]`,
-    ])
+    const normalize = `setsar=1/1`
+    const pad = `scale=w=${width}:h=${height}:force_original_aspect_ratio=1,pad=w=${width}:h=${height}:x=trunc((ow-iw)/4)*2:y=trunc((oh-ih)/4)*2:color=black`
+    command.complexFilter(
+      [
+        `[0]scale=trunc(iw/2)*2:trunc(ih/2)*2[i]`,
+        video.map((_, i) => `[${i + 1}]anull[a${i}]`),
+        video.map((_, i) => `[${i + 1}]${pad},${normalize}[v${i}]`),
+        `${all('v')}concat=n=${video.length}:v=1:a=0[video]`,
+        `${all('a')}concat=n=${video.length}:v=0:a=1[audio]`,
+        // overlay in RGB: converted to 4:2:0 first, the blank's chroma would bleed into the rows around the video
+        `[i][video]overlay=${blank.x}:${blank.y}:format=rgb,format=yuv420p[marge]`,
+      ].flat(),
+    )
     command.map('[marge]')
     command.map('[audio]')
 

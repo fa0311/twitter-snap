@@ -47,6 +47,7 @@ export class RenderXReferenceImage extends RenderTweetImage {
     this.frameBorderColor = dark ? '#2f3336' : '#eff3f4'
     this.mediaRadius = 16
     this.bodyGap = 12
+    this.timeDependent = true
   }
 
   contentWidth = (): number =>
