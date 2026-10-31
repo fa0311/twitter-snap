@@ -109,6 +109,9 @@ export default class Default extends Command {
       default: 0,
       description: 'Sleep (ms)',
     }),
+    translate: Flags.string({
+      description: 'Show the post translated into this language, as x.com does (x.com language code: en, ja, ...)',
+    }),
     theme: Flags.custom<ThemeNameType>({
       default: 'RenderOceanBlueColor',
       description: 'Theme type',
@@ -162,6 +165,7 @@ export default class Default extends Command {
           browserProfile: flags.browserProfile,
           browserHeadless: flags.browserHeadless,
           cookiesFile: flags.cookiesFile,
+          translate: flags.translate,
         }),
       })
 
@@ -182,6 +186,7 @@ export default class Default extends Command {
               font,
               scale: flags.scale,
               theme: flags.theme,
+              translate: flags.translate,
               output: `${flags.outputPrefix}${flags.output}`,
               ffmpegPath: flags.ffmpegPath,
               ffprobePath: flags.ffprobePath,

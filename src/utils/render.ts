@@ -15,6 +15,7 @@ export class SnapRenderBaseUtils {
     public video: VideoUtils,
     public font: FontOptions,
     public width: number,
+    public translate?: string,
   ) {}
 
   render = async (element: ReactElement) => {
@@ -35,8 +36,9 @@ export class SnapRenderUtils extends SnapRenderBaseUtils {
     font: FontOptions,
     width: number,
     public element: ElementUtils,
+    translate?: string,
   ) {
-    super(logger, file, video, font, width)
+    super(logger, file, video, font, width, translate)
   }
 }
 
@@ -48,7 +50,8 @@ export class SnapRenderColorUtils extends SnapRenderBaseUtils {
     font: FontOptions,
     width: number,
     public element: ElementColorUtils,
+    translate?: string,
   ) {
-    super(logger, file, video, font, width)
+    super(logger, file, video, font, width, translate)
   }
 }

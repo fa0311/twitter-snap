@@ -18,6 +18,8 @@ const app = new SnapApp(
     const allowDomains = ['twitter.com', 'x.com']
 
     const twitter = new TwitterOpenApi()
+    // X translates posts into the client language of the request
+    if (utils.translate) twitter.setAdditionalApiHeaders({'x-twitter-client-language': utils.translate})
     switch (utils.sessionType) {
       case 'browser': {
         const browser = await utils.puppeteerLogin(

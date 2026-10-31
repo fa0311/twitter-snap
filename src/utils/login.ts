@@ -9,14 +9,17 @@ export type SnapAppBrowserUtilsParams = {
   browserProfile?: string
   browserHeadless?: boolean
   cookiesFile?: string
+  translate?: string
 }
 
 export class SnapAppBrowserUtils {
   public sessionType: 'browser' | 'file' | 'guest'
-  private flags: Required<SnapAppBrowserUtilsParams>
+  public translate?: string
+  private flags: Required<Omit<SnapAppBrowserUtilsParams, 'translate'>>
 
   constructor(flags: SnapAppBrowserUtilsParams) {
     this.sessionType = flags.sessionType ?? 'guest'
+    this.translate = flags.translate
     this.flags = {
       sessionType: this.sessionType,
       browserProfile: flags.browserProfile ?? '~/.cache/twitter-snap/profiles',

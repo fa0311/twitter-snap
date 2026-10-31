@@ -57,6 +57,24 @@ describe('Twitter test', () => {
     expect(result).toBeUndefined()
   })
 
+  it('translate_tweet_to_image', async () => {
+    // a guest session gets no translation back, so this only checks the flag goes through the whole run
+    const {stderr, error, result, stdout} = await run(
+      'https://x.com/elonmusk/status/1349129669258448897',
+      'temp/translate_tweet_to_image/{count}.png',
+      '--translate',
+      'ja',
+    )
+    await count('temp/translate_tweet_to_image', 1)
+    await access('temp/translate_tweet_to_image/0.png')
+
+    expect(stdout).toContain('Rendering')
+
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
+  })
+
   it('xreference_theme_image', async () => {
     const {stderr, error, result, stdout} = await run(
       'https://x.com/elonmusk/status/1604617643973124097',
