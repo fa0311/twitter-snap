@@ -1,4 +1,4 @@
-import fs from 'node:fs/promises'
+import fs from 'node:fs'
 import {ImageResponse} from '@vercel/og'
 import {PNG} from 'pngjs'
 import {createElement} from 'react'
@@ -11,8 +11,14 @@ import {getUserScreenName} from '../utils/utils.js'
 // The image renderer paints the video's frame in this color; the video is laid over wherever that frame ended up
 export const blankColor = '#ff00fe'
 
+// pngjs's synchronous reader calls zlib.Inflate as a function, which Node 25 refuses; the stream-based parser is fine
+const readPng = async (path: string) =>
+  new Promise<PNG>((resolve, reject) => {
+    new PNG().parse(fs.readFileSync(path), (error, png) => (error ? reject(error) : resolve(png)))
+  })
+
 const findBlank = async (path: string) => {
-  const {width, height, data} = PNG.sync.read(await fs.readFile(path))
+  const {width, height, data} = await readPng(path)
   const rows: {length: number; start: number; y: number}[] = []
   for (let y = 0; y < height; y++) {
     let best = {start: 0, length: 0}
@@ -70,7 +76,7 @@ export class RenderBasicVideo {
     const shape = createElement('div', {
       style: {display: 'flex', width, height, background: '#000000', borderRadius: blank.radius},
     })
-    await fs.writeFile(mask.toString(), Buffer.from(await new ImageResponse(shape, {width, height}).arrayBuffer()))
+    fs.writeFileSync(mask.toString(), Buffer.from(await new ImageResponse(shape, {width, height}).arrayBuffer()))
     removeList.push(mask.toString())
 
     const res = video.map(async ({url}) => {
