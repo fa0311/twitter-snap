@@ -5,12 +5,13 @@ import type {SnapRenderColorUtils} from '../../../../utils/render.js'
 import {getResizedMediaByWidth} from '../../../../utils/video.js'
 import {getBiggerMedia, getUserScreenName} from '../utils/utils.js'
 
-export class RenderBasicVideo {
-  margin: number = 30
-  padding: number = 12
-  bottomPadding: number = 31
+export type VideoInset = {bottom: number; width: number; x: number}
 
-  constructor(public utils: SnapRenderColorUtils) {}
+export class RenderBasicVideo {
+  constructor(
+    public utils: SnapRenderColorUtils,
+    public inset: VideoInset,
+  ) {}
 
   render = async ({data, input}: {data: TweetApiUtilsData; input: FilePath}) => {
     const removeList: string[] = []
@@ -39,7 +40,7 @@ export class RenderBasicVideo {
     const {width, height} = getResizedMediaByWidth(
       blank.videoInfo!.aspectRatio[0],
       blank.videoInfo!.aspectRatio[1],
-      this.utils.width - this.utils.element.applyScaleNum((this.margin + this.padding) * 2),
+      this.inset.width,
     )
 
     const res = video.map(async ({url}) => {
@@ -97,10 +98,8 @@ export class RenderBasicVideo {
       return `${video.map((_, i) => `[${e}${i}]`).join('')}`
     }
 
-    const overlayWidth = this.utils.element.applyScaleNum(this.margin + this.padding)
-    const overlayHeight = `H-${
-      height + this.utils.element.applyScaleNum(this.margin + this.padding + this.bottomPadding)
-    }`
+    const overlayWidth = this.inset.x
+    const overlayHeight = `H-${height + this.inset.bottom}`
 
     const command = this.utils.video.getFFmpeg()
     command.input(input.toString())

@@ -15,6 +15,8 @@ export const colorThemeList = {
   RenderTransparentDark: 'element',
   RenderTransparentShadow: 'element',
   RenderTransparentShadowDark: 'element',
+  RenderXReference: 'element',
+  RenderXReferenceDark: 'element',
 } as const
 
 export const themeList = {

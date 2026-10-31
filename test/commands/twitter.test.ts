@@ -57,6 +57,23 @@ describe('Twitter test', () => {
     expect(result).toBeUndefined()
   })
 
+  it('xreference_theme_image', async () => {
+    const {stderr, error, result, stdout} = await run(
+      'https://x.com/elonmusk/status/1604617643973124097',
+      'temp/xreference_theme_image/{count}.png',
+      '--theme',
+      'RenderXReference',
+    )
+    await count('temp/xreference_theme_image', 1)
+    await access('temp/xreference_theme_image/0.png')
+
+    expect(stdout).toContain('Rendering')
+
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
+  })
+
   it('single_text_tweet_to_video', async () => {
     const {stderr, error, result, stdout} = await run(
       'https://x.com/elonmusk/status/1349129669258448897',

@@ -115,8 +115,7 @@ export default class Default extends Command {
       options: themeNameList,
     })(),
     width: Flags.integer({
-      default: 650,
-      description: 'Width',
+      description: 'Width (650 unless set, 600 for RenderXReference)',
     }),
     scale: Flags.custom<number>({
       default: 1,

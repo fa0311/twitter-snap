@@ -1,11 +1,13 @@
 import {type TweetApiUtilsData, TwitterOpenApi, type TwitterOpenApiClient} from 'twitter-openapi-typescript'
 import {mediaCallback, Session, SnapApp, SnapRender} from './../../app.js'
 import {URLPath} from '../../utils/path.js'
+import type {SnapRenderColorUtils} from '../../utils/render.js'
 import {sleepLoop} from '../../utils/sleep.js'
 import {RenderTweetImage} from './render/basic/image.js'
 import {RenderBasicVideo} from './render/basic/video.js'
 import {RenderMakeItAQuoteImage} from './render/makeItAQuote/image.js'
 import {getUserScreenName, getVideo, toLiteJson} from './render/utils/utils.js'
+import {RenderXReferenceImage} from './render/xreference/image.js'
 import {tweetCursor} from './utils.js'
 
 const app = new SnapApp(
@@ -74,6 +76,11 @@ const app = new SnapApp(
 
 const pad = (value: number, length: number) => value.toString().padStart(length, '0')
 
+const tweetImage = (utils: SnapRenderColorUtils, video: boolean) =>
+  utils.element.theme.startsWith('RenderXReference')
+    ? new RenderXReferenceImage(utils, video)
+    : new RenderTweetImage(utils, video)
+
 const render = new SnapRender<TweetApiUtilsData>({
   isImage: (data) => {
     const extEntities = data.tweet.legacy?.extendedEntities
@@ -97,14 +104,14 @@ const render = new SnapRender<TweetApiUtilsData>({
   color: {
     image: async (data, utils) => {
       utils.logger.update(`Rendering image ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-      return new RenderTweetImage(utils, false).render({data})
+      return tweetImage(utils, false).render({data})
     },
     video: async (data, utils) => {
       utils.logger.update(`Rendering image ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-      const element = new RenderTweetImage(utils, true).render({data})
-      const input = await utils.file.tempImg(await utils.render(element))
+      const image = tweetImage(utils, true)
+      const input = await utils.file.tempImg(await utils.render(image.render({data})))
       utils.logger.update(`Rendering video ${getUserScreenName(data.user)} ${data.tweet.restId}`)
-      await new RenderBasicVideo(utils).render({data, input})
+      await new RenderBasicVideo(utils, image.videoInset()).render({data, input})
     },
   },
   element: {
