@@ -62,7 +62,7 @@
   "dependencies": {
     "@clack/prompts": "^1.8.1",
     "@oclif/core": "^5.1.10",
-    "@oclif/plugin-help": "^7.0.5",
+    "@oclif/plugin-help": "^7.0.6",
     "@oclif/plugin-plugins": "^7.0.13",
     "@oclif/plugin-warn-if-update-available": "^4.0.5",
     "@vercel/og": "^0.11.1",
