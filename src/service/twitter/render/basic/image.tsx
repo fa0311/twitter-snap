@@ -326,59 +326,61 @@ export class RenderTweetImage {
     })()
 
     return (
-      <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(4)}}>
-        {choices.map(({label, count}, i) => {
-          const percent = total === 0 ? 0 : (count / total) * 100
-          const lead = count === max
-          return (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                position: 'relative',
-                alignItems: 'center',
-                height: this.utils.element.applyScale(32),
-              }}
-            >
+      <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(12)}}>
+        <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(4)}}>
+          {choices.map(({label, count}, i) => {
+            const percent = total === 0 ? 0 : (count / total) * 100
+            const lead = count === max
+            return (
               <div
+                key={i}
                 style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: `${percent}%`,
-                  minWidth: this.utils.element.applyScale(7),
-                  borderRadius: this.utils.element.applyScale(4),
-                  background: lead ? '#1d9bf094' : this.borderColor,
-                }}
-              />
-              <p
-                style={{
-                  flexGrow: 1,
-                  margin: this.utils.element.applyScale(0),
-                  padding: this.utils.element.applyScales([0, 12]),
-                  fontSize: font,
-                  fontWeight: lead ? '700' : '400',
-                  color: this.textColor,
-                  ...this.textOverFlowCSS({lineClamp: 1}),
+                  display: 'flex',
+                  position: 'relative',
+                  alignItems: 'center',
+                  height: this.utils.element.applyScale(32),
                 }}
               >
-                {this.removeUnsupportChar(label)}
-              </p>
-              <p
-                style={{
-                  margin: this.utils.element.applyScale(0),
-                  paddingRight: this.utils.element.applyScale(12),
-                  fontSize: font,
-                  fontWeight: lead ? '700' : '400',
-                  color: this.textColor,
-                }}
-              >
-                {`${percent.toFixed(1)}%`}
-              </p>
-            </div>
-          )
-        })}
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    top: 0,
+                    bottom: 0,
+                    width: `${percent}%`,
+                    minWidth: this.utils.element.applyScale(7),
+                    borderRadius: this.utils.element.applyScale(4),
+                    background: lead ? '#1d9bf094' : this.borderColor,
+                  }}
+                />
+                <p
+                  style={{
+                    flexGrow: 1,
+                    margin: this.utils.element.applyScale(0),
+                    padding: this.utils.element.applyScales([0, 12]),
+                    fontSize: font,
+                    fontWeight: lead ? '700' : '400',
+                    color: this.textColor,
+                    ...this.textOverFlowCSS({lineClamp: 1}),
+                  }}
+                >
+                  {this.removeUnsupportChar(label)}
+                </p>
+                <p
+                  style={{
+                    margin: this.utils.element.applyScale(0),
+                    paddingLeft: this.utils.element.applyScale(12),
+                    fontSize: font,
+                    fontWeight: lead ? '700' : '400',
+                    color: this.textColor,
+                  }}
+                >
+                  {`${percent.toFixed(1)}%`}
+                </p>
+              </div>
+            )
+          })}
+        </div>
         <p
           style={{
             display: 'flex',
@@ -397,43 +399,106 @@ export class RenderTweetImage {
   }
 
   birdwatch: RenderWidgetType<{data: BirdwatchPivot}> = ({data}) => {
-    const size = this.utils.element.applyScale(20)
+    const border = `${this.utils.element.applyScale(1)} solid ${this.borderColor}`
     return (
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: this.utils.element.applyScale(4),
-          padding: this.utils.element.applyScale(12),
-          borderRadius: this.utils.element.applyScale(12),
-          border: `${this.utils.element.applyScale(1)} solid ${this.borderColor}`,
-        }}
-      >
-        <div style={{display: 'flex', alignItems: 'flex-start', gap: this.utils.element.applyScale(8)}}>
-          <svg width={size} height={size} viewBox="0 0 24 24" fill={this.textColor} style={{flexShrink: 0}}>
-            <path d="M8.5 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm0 1.5c-3.6 0-6.5 2.4-6.5 5.5v1h13v-1c0-3.1-2.9-5.5-6.5-5.5Zm8-1.5a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 1.5c-.8 0-1.6.1-2.3.4 1.5 1.1 2.4 2.8 2.4 4.6v1H22v-1c0-2.8-2.5-5-5.5-5Z" />
-          </svg>
-          <p
+      <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(12)}}>
+        <div
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            border,
+            borderRadius: this.utils.element.applyScale(16),
+          }}
+        >
+          <div
             style={{
-              flexGrow: 1,
-              flexShrink: 1,
-              margin: this.utils.element.applyScale(0),
-              fontSize: this.utils.element.applyScale(15),
-              fontWeight: '700',
-              color: this.textColor,
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: this.utils.element.applyScale(8),
+              padding: this.utils.element.applyScale(12),
+              borderRadius: this.utils.element.applyScales([15, 15, 0, 0]),
+              background: this.subBackgroundColor,
             }}
           >
-            {this.removeUnsupportChar(data.title)}
-          </p>
+            <svg
+              width={this.utils.element.applyScale(19)}
+              height={this.utils.element.applyScale(19)}
+              viewBox="0 0 24 24"
+              fill="#1d9bf0"
+              style={{flexShrink: 0}}
+            >
+              <path d="M5.5 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm18.25 13.91c-.18-2.01-.78-3.72-1.81-4.96C20.89 10.7 19.45 10 17.75 10c-.35 0-.68.03-1.01.09-.18.54-.45 1.05-.8 1.49.74.46 1.41 1.05 1.99 1.76 1.05 1.3 1.71 2.91 2.06 4.66h3.85l-.09-1.09zM18.5 9c1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3 1.34 3 3 3zM6.07 13.34c.58-.71 1.25-1.3 1.99-1.76-.35-.44-.62-.95-.8-1.49-.33-.06-.66-.09-1.01-.09-1.7 0-3.14.7-4.19 1.95C1.032 13.19.433 14.9.254 16.91L.157 18H4.01c.35-1.75 1.01-3.36 2.06-4.66zM15 8.5c0-1.66-1.34-3-3-3s-3 1.34-3 3 1.34 3 3 3 3-1.34 3-3zm-7.37 6.1c-1.07 1.32-1.69 3.15-1.88 5.31L5.66 21h12.68l-.09-1.09c-.19-2.16-.81-3.99-1.88-5.31-1.08-1.35-2.59-2.1-4.37-2.1s-3.28.75-4.37 2.1z" />
+            </svg>
+            <p
+              style={{
+                flexGrow: 1,
+                flexShrink: 1,
+                margin: this.utils.element.applyScale(0),
+                padding: this.utils.element.applyScales([2, 0]),
+                fontSize: this.utils.element.applyScale(14),
+                fontWeight: '700',
+                color: this.textColor,
+              }}
+            >
+              {this.removeUnsupportChar(data.title)}
+            </p>
+          </div>
+          {data.subtitle && (
+            <div
+              style={{
+                display: 'flex',
+                paddingTop: this.utils.element.applyScale(12),
+                paddingBottom: this.utils.element.applyScale(12),
+                paddingLeft: this.utils.element.applyScale(12),
+                paddingRight: this.utils.element.applyScale(12),
+              }}
+            >
+              <this.paragraph chars={this.richText(data.subtitle.text, data.subtitle.entities)} fontSize={15} />
+            </div>
+          )}
+          {data.callToAction && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                padding: this.utils.element.applyScale(12),
+                borderTop: border,
+              }}
+            >
+              <p
+                style={{
+                  margin: this.utils.element.applyScale(0),
+                  fontSize: this.utils.element.applyScale(14),
+                  color: this.textColor,
+                }}
+              >
+                {this.removeUnsupportChar(data.callToAction.prompt)}
+              </p>
+              <p
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  height: this.utils.element.applyScale(32),
+                  margin: this.utils.element.applyScale(0),
+                  padding: this.utils.element.applyScales([0, 16]),
+                  border,
+                  borderRadius: this.utils.element.applyScale(9999),
+                  fontSize: this.utils.element.applyScale(14),
+                  fontWeight: '700',
+                  color: this.textColor,
+                }}
+              >
+                {this.removeUnsupportChar(data.callToAction.title)}
+              </p>
+            </div>
+          )}
         </div>
-        {data.subtitle && (
-          <this.paragraph chars={this.richText(data.subtitle.text, data.subtitle.entities)} fontSize={15} />
-        )}
         {data.footer && (
           <this.paragraph
             chars={this.richText(data.footer.text, data.footer.entities)}
             color={this.subTextColor}
-            fontSize={15}
+            fontSize={13}
           />
         )}
       </div>
