@@ -110,7 +110,7 @@ export default class Default extends Command {
       description: 'Sleep (ms)',
     }),
     translate: Flags.string({
-      description: 'Show the translation into this language under the text (x.com language code: en, ja, ...)',
+      description: 'Show the post translated into this language, as x.com does (x.com language code: en, ja, ...)',
     }),
     theme: Flags.custom<ThemeNameType>({
       default: 'RenderOceanBlueColor',

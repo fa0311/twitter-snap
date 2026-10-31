@@ -1,7 +1,8 @@
 import type {TweetApiUtilsData} from 'twitter-openapi-typescript'
+import type {GrokTranslatedPost} from 'twitter-openapi-typescript-generated'
 
 import type {SnapRenderColorUtils} from '../../../../utils/render.js'
-import {RenderTweetImage} from '../basic/image.js'
+import {grokIcon, RenderTweetImage} from '../basic/image.js'
 import {
   getUserAvatarUrl,
   getUserName,
@@ -15,7 +16,6 @@ import {
 const icons = {
   verified: // viewBox 0 0 22 22
     'M20.396 11c-.018-.646-.215-1.275-.57-1.816-.354-.54-.852-.972-1.438-1.246.223-.607.27-1.264.14-1.897-.131-.634-.437-1.218-.882-1.687-.47-.445-1.053-.75-1.687-.882-.633-.13-1.29-.083-1.897.14-.273-.587-.704-1.086-1.245-1.44S11.647 1.62 11 1.604c-.646.017-1.273.213-1.813.568s-.969.854-1.24 1.44c-.608-.223-1.267-.272-1.902-.14-.635.13-1.22.436-1.69.882-.445.47-.749 1.055-.878 1.688-.13.633-.08 1.29.144 1.896-.587.274-1.087.705-1.443 1.245-.356.54-.555 1.17-.574 1.817.02.647.218 1.276.574 1.817.356.54.856.972 1.443 1.245-.224.606-.274 1.263-.144 1.896.13.634.433 1.218.877 1.688.47.443 1.054.747 1.687.878.633.132 1.29.084 1.897-.136.274.586.705 1.084 1.246 1.439.54.354 1.17.551 1.816.569.647-.016 1.276-.213 1.817-.567s.972-.854 1.245-1.44c.604.239 1.266.296 1.903.164.636-.132 1.22-.447 1.68-.907.46-.46.776-1.044.908-1.681s.075-1.299-.165-1.903c.586-.274 1.084-.705 1.439-1.246.354-.54.551-1.17.569-1.816zM9.662 14.85l-3.429-3.428 1.293-1.302 2.072 2.072 4.4-4.794 1.347 1.246z',
-  grok: 'M12.745 20.54l10.97-8.19c.539-.4 1.307-.244 1.564.38 1.349 3.288.746 7.241-1.938 9.955-2.683 2.714-6.417 3.31-9.83 1.954l-3.728 1.745c5.347 3.697 11.84 2.782 15.898-1.324 3.219-3.255 4.216-7.692 3.284-11.693l.008.009c-1.351-5.878.332-8.227 3.782-13.031L33 0l-4.54 4.59v-.014L12.743 20.544m-2.263 1.987c-3.837-3.707-3.175-9.446.1-12.755 2.42-2.449 6.388-3.448 9.852-1.979l3.72-1.737c-.67-.49-1.53-1.017-2.515-1.387-4.455-1.854-9.789-.931-13.41 2.728-3.483 3.523-4.579 8.94-2.697 13.561 1.405 3.454-.899 5.898-3.22 8.364C1.49 30.2.666 31.074 0 32l10.478-9.466', // viewBox 0 0 33 32
   caret:
     'M3 12c0-1.1.9-2 2-2s2 .9 2 2-.9 2-2 2-2-.9-2-2zm9 2c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm7 0c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2z',
   reply:
@@ -25,6 +25,11 @@ const icons = {
   like: 'M16.697 5.5c-1.222-.06-2.679.51-3.89 2.16l-.805 1.09-.806-1.09C9.984 6.01 8.526 5.44 7.304 5.5c-1.243.07-2.349.78-2.91 1.91-.552 1.12-.633 2.78.479 4.82 1.074 1.97 3.257 4.27 7.129 6.61 3.87-2.34 6.052-4.64 7.126-6.61 1.111-2.04 1.03-3.7.477-4.82-.561-1.13-1.666-1.84-2.908-1.91zm4.187 7.69c-1.351 2.48-4.001 5.12-8.379 7.67l-.503.3-.504-.3c-4.379-2.55-7.029-5.19-8.382-7.67-1.36-2.5-1.41-4.86-.514-6.67.887-1.79 2.647-2.91 4.601-3.01 1.651-.09 3.368.56 4.798 2.01 1.429-1.45 3.146-2.1 4.796-2.01 1.954.1 3.714 1.22 4.601 3.01.896 1.81.846 4.17-.514 6.67z',
   bookmark:
     'M4 4.5C4 3.12 5.119 2 6.5 2h11C18.881 2 20 3.12 20 4.5v18.44l-8-5.71-8 5.71V4.5zM6.5 4c-.276 0-.5.22-.5.5v14.56l6-4.29 6 4.29V4.5c0-.28-.224-.5-.5-.5h-11z',
+  gear: 'M10.54 1.75h2.92l1.57 2.36c.11.17.32.25.53.21l2.53-.59 2.17 2.17-.58 2.54c-.05.2.04.41.21.53l2.36 1.57v2.92l-2.36 1.57c-.17.12-.26.33-.21.53l.58 2.54-2.17 2.17-2.53-.59c-.21-.04-.42.04-.53.21l-1.57 2.36h-2.92l-1.58-2.36c-.11-.17-.32-.25-.52-.21l-2.54.59-2.17-2.17.58-2.54c.05-.2-.03-.41-.21-.53l-2.35-1.57v-2.92L4.1 8.97c.18-.12.26-.33.21-.53L3.73 5.9 5.9 3.73l2.54.59c.2.04.41-.04.52-.21l1.58-2.36zm1.07 2l-.98 1.47C10.05 6.08 9 6.5 7.99 6.27l-1.46-.34-.6.6.33 1.46c.24 1.01-.18 2.07-1.05 2.64l-1.46.98v.78l1.46.98c.87.57 1.29 1.63 1.05 2.64l-.33 1.46.6.6 1.46-.34c1.01-.23 2.06.19 2.64 1.05l.98 1.47h.78l.97-1.47c.58-.86 1.63-1.28 2.65-1.05l1.45.34.61-.6-.34-1.46c-.23-1.01.18-2.07 1.05-2.64l1.47-.98v-.78l-1.47-.98c-.87-.57-1.28-1.63-1.05-2.64l.34-1.46-.61-.6-1.45.34c-1.02.23-2.07-.19-2.65-1.05l-.97-1.47h-.78zM12 10.5c-.83 0-1.5.67-1.5 1.5s.67 1.5 1.5 1.5c.82 0 1.5-.67 1.5-1.5s-.68-1.5-1.5-1.5zM8.5 12c0-1.93 1.56-3.5 3.5-3.5 1.93 0 3.5 1.57 3.5 3.5s-1.57 3.5-3.5 3.5c-1.94 0-3.5-1.57-3.5-3.5z',
+  thumbsUp:
+    'M18.36 8h-2.68l.42-2.52C16.4 3.66 15 2 13.15 2c-1.07 0-2.06.57-2.59 1.51l-3 5.24c-.04.06-.08.11-.14.15C6.96 8.35 6.27 8 5.5 8H2v13h14.2c2.1 0 3.92-1.45 4.39-3.5l1.19-5.22C22.27 10.09 20.61 8 18.36 8zM6 19H4v-9h1.5c.27 0 .5.22.5.5V19zm13.83-7.17l-1.19 5.22C18.38 18.19 17.37 19 16.2 19H8v-8.16c.54-.2 1-.58 1.3-1.1l2.99-5.24c.18-.31.5-.5.86-.5.61 0 1.07.55.97 1.15l-.8 4.85h5.04c.97 0 1.68.89 1.47 1.83z',
+  thumbsDown:
+    'M21.869 16h-3.5c-.77 0-1.46-.35-1.92-.9-.06.04-.1.09-.14.15l-3 5.24c-.53.94-1.52 1.51-2.59 1.51-1.85 0-3.25-1.66-2.95-3.48l.42-2.52h-2.68c-2.25 0-3.92-2.09-3.42-4.28l1.19-5.22c.46-2.05 2.29-3.5 4.39-3.5h14.2v13zm-6-11h-8.2c-1.17 0-2.18.81-2.44 1.95l-1.19 5.22c-.21.94.5 1.83 1.47 1.83h5.04l-.8 4.85c-.1.6.36 1.15.97 1.15.35 0 .68-.19.86-.5l2.99-5.24c.3-.52.76-.9 1.3-1.1V5zm2 8.5c0 .28.23.5.5.5h1.5V5h-2v8.5z',
   share:
     'M12 2.59l5.7 5.7-1.41 1.42L13 6.41V16h-2V6.41l-3.3 3.3-1.41-1.42L12 2.59zM21 15l-.02 3.51c0 1.38-1.12 2.49-2.5 2.49H5.5C4.11 21 3 19.88 3 18.5V15h2v3.5c0 .28.22.5.5.5h12.98c.28 0 .5-.22.5-.5L19 15h2z',
 }
@@ -52,23 +57,6 @@ export class RenderXReferenceImage extends RenderTweetImage {
 
   contentWidth = (): number =>
     this.utils.width - this.utils.element.applyScaleNum((this.columnBorder + this.sidePadding) * 2)
-
-  svg: RenderWidgetType<{color: string; path: string; size: number; viewBox?: string}> = ({
-    color,
-    path,
-    size,
-    viewBox,
-  }) => (
-    <svg
-      width={this.utils.element.applyScale(size)}
-      height={this.utils.element.applyScale(size)}
-      viewBox={viewBox ?? '0 0 24 24'}
-      fill={color}
-      style={{flexShrink: 0}}
-    >
-      <path d={path} />
-    </svg>
-  )
 
   render: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
     const s = this.utils.element.applyScale
@@ -107,24 +95,57 @@ export class RenderXReferenceImage extends RenderTweetImage {
     )
   }
 
-  // x.com prefixes the line with the Grok mark
-  translatedFrom: RenderWidgetType<{text: string}> = ({text}) => {
+  // x.com's line above a translated text, as the page shows it: the Grok mark, "Translated from <language>", the "Show original"
+  // link and the translation settings gear, 13/16 in a 20px row (4px above) that the 4px gap below makes 24
+  translatedFrom: RenderWidgetType<{data: GrokTranslatedPost}> = ({data}) => {
     const s = this.utils.element.applyScale
     return (
       <p
         style={{
           display: 'flex',
           alignItems: 'center',
-          gap: s(5),
+          width: '100%',
+          gap: s(4),
           margin: s(0),
+          paddingTop: s(4),
           fontSize: s(13),
           lineHeight: s(16),
           color: this.subTextColor,
         }}
       >
-        <this.svg color={this.subTextColor} path={icons.grok} size={16} viewBox="0 0 33 32" />
-        {text}
+        <this.svg color={this.subTextColor} path={grokIcon} size={16} viewBox="0 0 33 32" />
+        {this.translatedFromText(data)}
+        <span style={{color: this.linkColor}}>Show original</span>
+        <this.svg color={this.subTextColor} path={icons.gear} size={16} />
       </p>
+    )
+  }
+
+  // x.com's "Rate this translation:" row under a translated text: 14/16, two 24px buttons with 16px thumbs, 12px above
+  translatedFooter: RenderWidgetType<{data: GrokTranslatedPost}> = () => {
+    const s = this.utils.element.applyScale
+    const button = {display: 'flex', alignItems: 'center', justifyContent: 'center', width: s(24), height: s(24)}
+    return (
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          width: '100%',
+          gap: s(2),
+          marginTop: s(8),
+          fontSize: s(14),
+          lineHeight: s(16),
+          color: this.subTextColor,
+        }}
+      >
+        Rate this translation:
+        <div style={button}>
+          <this.svg color={this.subTextColor} path={icons.thumbsUp} size={16} />
+        </div>
+        <div style={button}>
+          <this.svg color={this.subTextColor} path={icons.thumbsDown} size={16} />
+        </div>
+      </div>
     )
   }
 
@@ -143,7 +164,7 @@ export class RenderXReferenceImage extends RenderTweetImage {
           </div>
         </div>
         <div style={{display: 'flex', alignItems: 'center', gap: s(9)}}>
-          <this.svg color={this.textColor} path={icons.grok} size={19} viewBox="0 0 33 32" />
+          <this.svg color={this.textColor} path={grokIcon} size={19} viewBox="0 0 33 32" />
           <this.svg color={this.subTextColor} path={icons.caret} size={19} />
         </div>
       </div>

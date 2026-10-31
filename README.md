@@ -35,7 +35,7 @@ npx twitter-snap@latest https://twitter.com/elonmusk/status/1349129669258448897 
 # Login with puppeteer
 npx twitter-snap@latest https://twitter.com/elonmusk/status/1349129669258448897 --session-type browser
 
-# Show the translation into a language under the text (needs login).
+# Show the post translated into a language, as x.com does (needs login).
 npx twitter-snap@latest --translate en https://x.com/teslajapan/status/2113567187046993971 --session-type file --cookies-file cookies.json
 
 # Output the API response directly to a file in raw JSON format.
@@ -219,8 +219,8 @@ FLAGS
       nderXReference|RenderXReferenceDark|Json|LiteJson|Media|RenderMakeItAQuote>
 
   --translate=<value>
-      Show the translation into this language under the text (x.com language code:
-      en, ja, ...)
+      Show the post translated into this language, as x.com does (x.com language
+      code: en, ja, ...)
 
   --width=<value>
       Width (650 unless set, 600 for RenderXReference)

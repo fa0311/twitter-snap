@@ -3,6 +3,7 @@ import type {CSSProperties, ReactElement} from 'react'
 import {type TweetApiUtilsData, userOrNullConverter} from 'twitter-openapi-typescript'
 import {
   type BirdwatchPivot,
+  type GrokTranslatedPost,
   NoteTweetResultRichTextTagRichtextTypesEnum as RichtextTypesEnum,
   type UserProfileImageShapeEnum,
 } from 'twitter-openapi-typescript-generated'
@@ -19,6 +20,10 @@ import {
   type RenderWidgetType,
 } from '../utils/utils.js'
 import {blankColor} from './video.js'
+
+// The Grok mark x.com puts before "Translated from <language>" (viewBox 0 0 33 32)
+export const grokIcon =
+  'M12.745 20.54l10.97-8.19c.539-.4 1.307-.244 1.564.38 1.349 3.288.746 7.241-1.938 9.955-2.683 2.714-6.417 3.31-9.83 1.954l-3.728 1.745c5.347 3.697 11.84 2.782 15.898-1.324 3.219-3.255 4.216-7.692 3.284-11.693l.008.009c-1.351-5.878.332-8.227 3.782-13.031L33 0l-4.54 4.59v-.014L12.743 20.544m-2.263 1.987c-3.837-3.707-3.175-9.446.1-12.755 2.42-2.449 6.388-3.448 9.852-1.979l3.72-1.737c-.67-.49-1.53-1.017-2.515-1.387-4.455-1.854-9.789-.931-13.41 2.728-3.483 3.523-4.579 8.94-2.697 13.561 1.405 3.454-.899 5.898-3.22 8.364C1.49 30.2.666 31.074 0 32l10.478-9.466'
 
 type UnifiedCardDetails = {
   type: 'details'
@@ -504,48 +509,60 @@ export class RenderTweetImage {
     )
   }
 
-  // x.com's line above a translated text, 13/16 in the sub color
-  translatedFrom: RenderWidgetType<{text: string}> = ({text}) => {
+  svg: RenderWidgetType<{color: string; path: string; size: number; viewBox?: string}> = ({
+    color,
+    path,
+    size,
+    viewBox,
+  }) => (
+    <svg
+      width={this.utils.element.applyScale(size)}
+      height={this.utils.element.applyScale(size)}
+      viewBox={viewBox ?? '0 0 24 24'}
+      fill={color}
+      style={{flexShrink: 0}}
+    >
+      <path d={path} />
+    </svg>
+  )
+
+  // x.com's translation of the post, only when --translate asked for it and X attached one
+  translated = (data: TweetApiUtilsData): GrokTranslatedPost | undefined => {
+    const grok = data.tweet.grokTranslatedPostWithAvailability
+    const translated = grok?.isAvailable ? grok.data : undefined
+    return this.utils.translate && translated?.translation ? translated : undefined
+  }
+
+  translatedFromText = (data: GrokTranslatedPost) => {
+    const language = data.sourceLanguage && new Intl.DisplayNames('en', {type: 'language'}).of(data.sourceLanguage)
+    return language ? `Translated from ${language}` : 'Translated'
+  }
+
+  // x.com's line above a translated text: the Grok mark and "Translated from <language>", 13/16 in the sub color
+  translatedFrom: RenderWidgetType<{data: GrokTranslatedPost}> = ({data}) => {
     const s = this.utils.element.applyScale
     return (
       <p
         style={{
           display: 'flex',
           alignItems: 'center',
+          width: '100%',
+          gap: s(4),
           margin: s(0),
+          paddingTop: s(4),
           fontSize: s(13),
           lineHeight: s(16),
           color: this.subTextColor,
         }}
       >
-        {text}
+        <this.svg color={this.subTextColor} path={grokIcon} size={16} viewBox="0 0 33 32" />
+        {this.translatedFromText(data)}
       </p>
     )
   }
 
-  // The translation X attached to the post, in the language --translate asked for: x.com swaps the text for it and
-  // puts "Translated from <language>" above; the snapshot keeps the original and adds both under it
-  translation = (data: TweetApiUtilsData): ReactElement | undefined => {
-    const s = this.utils.element.applyScale
-    const grok = data.tweet.grokTranslatedPostWithAvailability
-    const translated = grok?.isAvailable ? grok.data : undefined
-    if (!this.utils.translate || !translated?.translation) return undefined
-    const entities = translated.entities
-    const ranges = [
-      ...(entities?.hashtags ?? []),
-      ...(entities?.symbols ?? []),
-      ...(entities?.urls ?? []),
-      ...(entities?.userMentions ?? []),
-    ].map(({indices}) => ({fromIndex: indices[0], toIndex: indices[1]}))
-    const language =
-      translated.sourceLanguage && new Intl.DisplayNames('en', {type: 'language'}).of(translated.sourceLanguage)
-    return (
-      <div style={{display: 'flex', flexDirection: 'column', width: '100%', gap: s(4), marginTop: s(8)}}>
-        <this.translatedFrom text={language ? `Translated from ${language}` : 'Translated'} />
-        <this.paragraph chars={this.richText(translated.translation, ranges)} fontSize={17} lineHeight={24} />
-      </div>
-    )
-  }
+  // What x.com puts under a translated text; the plain themes show nothing there (the page's rating controls)
+  translatedFooter: RenderWidgetType<{data: GrokTranslatedPost}> | undefined = undefined
 
   // Graphemes of a text, the entity ranges (code point indices, as X counts them) in the link color
   richText = (text: string, entities: {fromIndex: number; toIndex: number}[]) => {
@@ -1213,12 +1230,14 @@ export class RenderTweetImage {
   tweetRender: RenderWidgetType<{data: TweetApiUtilsData; quoted: boolean}> = ({data, quoted}) => {
     const note = data.tweet.noteTweet?.noteTweetResults.result
     const legacy = data.tweet.legacy!
-    const text = note?.text ?? legacy.fullText
-    const noteEntity = note?.entitySet
-    const legacySet = data.tweet.legacy!.entities
+    // x.com swaps the text for its translation; its entities index the translated text, the media follow it
+    const translated = quoted ? undefined : this.translated(data)
+    const text = translated?.translation ?? note?.text ?? legacy.fullText
+    const noteEntity = translated?.entities ?? note?.entitySet
+    const legacySet = translated ? undefined : legacy.entities
     const extEntities = legacy.extendedEntities
-    const inlineMedia = note?.media?.inlineMedia ?? []
-    const richtextTags = note?.richtext?.richtextTags ?? []
+    const inlineMedia = translated ? [] : (note?.media?.inlineMedia ?? [])
+    const richtextTags = translated ? [] : (note?.richtext?.richtextTags ?? [])
     const video = this.video && !quoted
 
     const normalizeMap: {
@@ -1295,8 +1314,8 @@ export class RenderTweetImage {
     const groups = new Map<number, typeof normalizeMedia>()
     for (const m of normalizeMedia) {
       const inline = normalizeInlineMedia.find(({mediaId}) => mediaId === m.idStr)
-      if (!inline && !note) charIndices.push({start: m.start, end: m.end, chars: []})
-      const index = inline ? inline.index : note ? trueSplit.length : m.start
+      if (!inline && !note && !translated) charIndices.push({start: m.start, end: m.end, chars: []})
+      const index = inline ? inline.index : note || translated ? trueSplit.length : m.start
       groups.set(index, [...(groups.get(index) ?? []), m])
     }
 
@@ -1408,6 +1427,7 @@ export class RenderTweetImage {
     let afterText = 0
 
     for (const {fn} of insert.filter(({index}) => index === 0)) textElement.push(fn())
+    if (translated) textElement.push(<this.translatedFrom key="translatedFrom" data={translated} />)
 
     for (const [i, t] of paragraphs.entries()) {
       for (const {fn} of insert.filter(({index}) => t.start - 1 === index)) textElement.push(fn())
@@ -1418,8 +1438,9 @@ export class RenderTweetImage {
       for (const {fn} of insert.filter(({index}) => t.end + 1 === index)) textElement.push(fn())
     }
 
-    const translation = quoted || paragraphs.length === 0 ? undefined : this.translation(data)
-    if (translation) textElement.splice(afterText, 0, translation)
+    if (translated && this.translatedFooter) {
+      textElement.splice(afterText, 0, <this.translatedFooter key="translatedFooter" data={translated} />)
+    }
 
     if (textElement.length === 0) {
       for (const {fn} of insert) textElement.push(fn())
