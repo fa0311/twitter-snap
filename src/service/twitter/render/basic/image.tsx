@@ -504,6 +504,49 @@ export class RenderTweetImage {
     )
   }
 
+  // x.com's line above a translated text, 13/16 in the sub color
+  translatedFrom: RenderWidgetType<{text: string}> = ({text}) => {
+    const s = this.utils.element.applyScale
+    return (
+      <p
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          margin: s(0),
+          fontSize: s(13),
+          lineHeight: s(16),
+          color: this.subTextColor,
+        }}
+      >
+        {text}
+      </p>
+    )
+  }
+
+  // The translation X attached to the post, in the language --translate asked for: x.com swaps the text for it and
+  // puts "Translated from <language>" above; the snapshot keeps the original and adds both under it
+  translation = (data: TweetApiUtilsData): ReactElement | undefined => {
+    const s = this.utils.element.applyScale
+    const grok = data.tweet.grokTranslatedPostWithAvailability
+    const translated = grok?.isAvailable ? grok.data : undefined
+    if (!this.utils.translate || !translated?.translation) return undefined
+    const entities = translated.entities
+    const ranges = [
+      ...(entities?.hashtags ?? []),
+      ...(entities?.symbols ?? []),
+      ...(entities?.urls ?? []),
+      ...(entities?.userMentions ?? []),
+    ].map(({indices}) => ({fromIndex: indices[0], toIndex: indices[1]}))
+    const language =
+      translated.sourceLanguage && new Intl.DisplayNames('en', {type: 'language'}).of(translated.sourceLanguage)
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', width: '100%', gap: s(4), marginTop: s(8)}}>
+        <this.translatedFrom text={language ? `Translated from ${language}` : 'Translated'} />
+        <this.paragraph chars={this.richText(translated.translation, ranges)} fontSize={17} lineHeight={24} />
+      </div>
+    )
+  }
+
   // Graphemes of a text, the entity ranges (code point indices, as X counts them) in the link color
   richText = (text: string, entities: {fromIndex: number; toIndex: number}[]) => {
     let index = 0
@@ -1362,6 +1405,7 @@ export class RenderTweetImage {
     // });
 
     const textElement: ReactElement[] = []
+    let afterText = 0
 
     for (const {fn} of insert.filter(({index}) => index === 0)) textElement.push(fn())
 
@@ -1370,8 +1414,12 @@ export class RenderTweetImage {
       textElement.push(
         <this.paragraph key={i} chars={t.chars} fontSize={quoted ? 15 : 17} lineHeight={quoted ? 20 : 24} />,
       )
+      afterText = textElement.length
       for (const {fn} of insert.filter(({index}) => t.end + 1 === index)) textElement.push(fn())
     }
+
+    const translation = quoted || paragraphs.length === 0 ? undefined : this.translation(data)
+    if (translation) textElement.splice(afterText, 0, translation)
 
     if (textElement.length === 0) {
       for (const {fn} of insert) textElement.push(fn())

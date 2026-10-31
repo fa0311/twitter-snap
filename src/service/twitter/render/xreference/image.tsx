@@ -107,6 +107,27 @@ export class RenderXReferenceImage extends RenderTweetImage {
     )
   }
 
+  // x.com prefixes the line with the Grok mark
+  translatedFrom: RenderWidgetType<{text: string}> = ({text}) => {
+    const s = this.utils.element.applyScale
+    return (
+      <p
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: s(5),
+          margin: s(0),
+          fontSize: s(13),
+          lineHeight: s(16),
+          color: this.subTextColor,
+        }}
+      >
+        <this.svg color={this.subTextColor} path={icons.grok} size={16} viewBox="0 0 33 32" />
+        {text}
+      </p>
+    )
+  }
+
   header: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
     const s = this.utils.element.applyScale
     const reg = [/_[a-z]+\.([a-z]+)$/, '.$1'] as const

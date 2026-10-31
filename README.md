@@ -61,6 +61,19 @@ npx twitter-snap@latest --theme RenderXReference https://x.com/elonmusk/status/1
 
 `RenderXReference` and `RenderXReferenceDark` reproduce the post page of x.com from values measured on the real page: the 600px column, type sizes, spacing, colors, media frames, polls, Community Notes and the action bar. They show the page as it was at that moment: views, counts, the time left on a poll, the page's controls. The other themes leave out what changes over time, so the image reads the same later. Photos are stacked at full width, each at its own proportions, and videos play one after another in one frame, where x.com would scroll a carousel that leaves the right-most media out of the picture. `--width` defaults to 600 for these themes. x.com's own font (Chirp) is not redistributable, so the text uses the same fallback fonts as the other themes and lines can break slightly differently.
 
+## Translation
+
+```shell
+npx twitter-snap@latest --session-type file --cookies-file cookies.json --translate en https://x.com/teslajapan/status/2113567187046993971
+```
+
+<p align="center">
+  <img src="./docs/img/translate-1.png" width="49%" />
+  <img src="./docs/img/translate-2.png" width="49%" />
+</p>
+
+`--translate <lang>` asks X for the post in that language (`en`, `ja`, `de`, ... as x.com uses them) and puts the translation under the original text, with x.com's line "Translated from <language>" above it. The language is always given explicitly: x.com itself translates into the viewer's language, and an image should not depend on who made it. X translates a post on the fly when it is read with a logged-in session, so `--session-type file` or `browser` is needed; a guest session gets no translation back. Posts already in that language and quoted posts stay as they are.
+
 ## Install
 
 `npm -g i twitter-snap@latest`

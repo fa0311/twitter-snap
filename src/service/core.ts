@@ -19,6 +19,7 @@ type SnapRunParam = {
   output?: '{id}-{count}.{if-type:png:mp4:json:}' | ({} & string)
   scale?: number
   theme?: 'Json' | 'Media' | 'RenderOceanBlueColor' | ({} & string)
+  translate?: string
   width?: number
 }
 
@@ -46,6 +47,7 @@ const toNextParam = (param: SnapRunParam, log: Logger): SnapRenderNextParam => {
     font: param.font ?? {text: [], emoji: undefined},
     scale: param.scale ?? 1,
     theme,
+    translate: param.translate,
     output: param.output ?? '{id}-{count}.{if-type:png:mp4:json:}',
     ffmpegPath: param.ffmpegPath,
     ffprobePath: param.ffprobePath,
@@ -103,6 +105,7 @@ type GetSnapAppRenderWithCacheParam<T> = {
   sessionType?: SnapAppBrowserUtilsParams['sessionType']
   browserProfile?: SnapAppBrowserUtilsParams['browserProfile']
   cookiesFile?: SnapAppBrowserUtilsParams['cookiesFile']
+  translate?: SnapAppBrowserUtilsParams['translate']
   limit?: number
   callback: (run: (param: Omit<SnapRunParam, 'font'>) => Promise<SnapRenderBaseUtils>) => Promise<T>
 }
@@ -124,6 +127,7 @@ export const getSnapAppRenderWithCache = ({logger}: {logger?: Logger}) => {
           sessionType: args.sessionType,
           browserProfile: args.browserProfile,
           cookiesFile: args.cookiesFile,
+          translate: args.translate,
         }),
       )
       return [session, font]

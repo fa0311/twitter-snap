@@ -155,6 +155,8 @@ export type SnapRenderNextParam = {
 
   scale: number
   theme: string
+  // language the posts were asked to be translated into, shown under the text
+  translate?: string
   width: number
 }
 
@@ -207,7 +209,18 @@ export class SnapRenderChild<T1> implements SnapRenderStream {
   placeholder = (data: T1) => this.definition.placeholder(data)
 
   next = async (data: T1, param: SnapRenderNextParam): Promise<SnapRenderBaseUtils> => {
-    const {scale, logger, output, ffmpegPath, ffprobePath, ffmpegTimeout, ffmpegAdditonalOption, font, width} = param
+    const {
+      scale,
+      logger,
+      output,
+      ffmpegPath,
+      ffprobePath,
+      ffmpegTimeout,
+      ffmpegAdditonalOption,
+      font,
+      width,
+      translate,
+    } = param
     if (!includeTheme(param.theme)) {
       throw new Error('No theme found')
     }
@@ -229,14 +242,14 @@ export class SnapRenderChild<T1> implements SnapRenderStream {
     }
 
     const renderImage = async (name: FilePath, theme: ThemeOf<'element'>) => {
-      const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme, scale}))
+      const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme, scale}), translate)
       const element = await this.image(theme)(data, utils)
       await utils.file.saveImg(await utils.render(element))
       return utils
     }
 
     const renderVideo = async (name: FilePath, theme: ThemeOf<'element'>) => {
-      const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme, scale}))
+      const utils = new SnapRenderColorUtils(...base(name), new ElementColorUtils({theme, scale}), translate)
       await this.video(theme)(data, utils)
       return utils
     }
