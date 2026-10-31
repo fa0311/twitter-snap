@@ -35,6 +35,9 @@ npx twitter-snap@latest https://twitter.com/elonmusk/status/1349129669258448897 
 # Login with puppeteer
 npx twitter-snap@latest https://twitter.com/elonmusk/status/1349129669258448897 --session-type browser
 
+# Show the translation into a language under the text (needs login).
+npx twitter-snap@latest --translate en https://x.com/teslajapan/status/2113567187046993971 --session-type file --cookies-file cookies.json
+
 # Output the API response directly to a file in raw JSON format.
 npx twitter-snap@latest --theme Json https://x.com/elonmusk/status/1349129669258448897 -o output/data.json
 # Download the media file and save it directly to a file in its raw format.
@@ -60,19 +63,6 @@ npx twitter-snap@latest --theme RenderXReference https://x.com/elonmusk/status/1
 </p>
 
 `RenderXReference` and `RenderXReferenceDark` reproduce the post page of x.com from values measured on the real page: the 600px column, type sizes, spacing, colors, media frames, polls, Community Notes and the action bar. They show the page as it was at that moment: views, counts, the time left on a poll, the page's controls. The other themes leave out what changes over time, so the image reads the same later. Photos are stacked at full width, each at its own proportions, and videos play one after another in one frame, where x.com would scroll a carousel that leaves the right-most media out of the picture. `--width` defaults to 600 for these themes. x.com's own font (Chirp) is not redistributable, so the text uses the same fallback fonts as the other themes and lines can break slightly differently.
-
-## Translation
-
-```shell
-npx twitter-snap@latest --session-type file --cookies-file cookies.json --translate en https://x.com/teslajapan/status/2113567187046993971
-```
-
-<p align="center">
-  <img src="./docs/img/translate-1.png" width="49%" />
-  <img src="./docs/img/translate-2.png" width="49%" />
-</p>
-
-`--translate <lang>` asks X for the post in that language (`en`, `ja`, `de`, ... as x.com uses them) and puts the translation under the original text, with x.com's line "Translated from <language>" above it. The language is always given explicitly: x.com itself translates into the viewer's language, and an image should not depend on who made it. X translates a post on the fly when it is read with a logged-in session, so `--session-type file` or `browser` is needed; a guest session gets no translation back. Posts already in that language and quoted posts stay as they are.
 
 ## Install
 
@@ -149,7 +139,8 @@ USAGE
     [--ffmpegAdditonalOption <value>] [--ffmpegTimeout <value>] [--ffmpegPath
     <value>] [--ffprobePath <value>] [--fontPath <value>] [--limit <value>]
     [--noCleanup] [--outputPrefix <value>] [-o <value>] [--sessionType
-    browser|file|guest] [--simpleLog] [--sleep <value>] [--theme
+    browser|file|guest] [--simpleLog] [--sleep <value>] [--translate <value>]
+    [--theme
     RenderOceanBlueColor|RenderOceanBlueDarkColor|RenderSunsetGardenColor|Render
     SunsetGardenDarkColor|RenderDawnBlossomColor|RenderDawnBlossomDarkColor|Rend
     erFierySunsetColor|RenderFierySunsetDarkColor|RenderTwilightSkyColor|RenderT
@@ -226,6 +217,10 @@ FLAGS
       wilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|
       RenderTransparentDark|RenderTransparentShadow|RenderTransparentShadowDark|Re
       nderXReference|RenderXReferenceDark|Json|LiteJson|Media|RenderMakeItAQuote>
+
+  --translate=<value>
+      Show the translation into this language under the text (x.com language code:
+      en, ja, ...)
 
   --width=<value>
       Width (650 unless set, 600 for RenderXReference)
