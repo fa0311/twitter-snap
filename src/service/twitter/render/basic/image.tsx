@@ -1098,9 +1098,12 @@ export class RenderTweetImage {
     width: number
   }> = ({blank, border, borderColor, height, media, radius, width}) => {
     const s = this.utils.element.applyScale
+    // The blank is laid over by a video whose sides must be even (yuv420p), so its inner size is made even here;
+    // one odd pixel would stay in blankColor under the video
+    const even = (n: number) => (blank ? n - (n % 2) : n)
     const box = {
-      width: width + border * 2,
-      height: height + border * 2,
+      width: even(width) + border * 2,
+      height: even(height) + border * 2,
       border: `${border}px solid ${borderColor}`,
       borderRadius: radius,
     }
