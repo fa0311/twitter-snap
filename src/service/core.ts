@@ -86,8 +86,8 @@ export const getSnapAppRender = ({logger, url, allowAppName}: GetSnapAppRenderPa
     login(param: SnapAppBrowserUtilsParams = {}) {
       return app.login(new SnapAppBrowserUtils(param))
     },
-    getRender({limit = 1, session}: {limit?: number; session: SnapSession}) {
-      return session.render(url, {limit})
+    getRender({limit = 1, session, thread = false}: {limit?: number; session: SnapSession; thread?: boolean}) {
+      return session.render(url, {limit, thread})
     },
     run<T>(render: SnapRenderStream, callback: SnapRunCallback<T>) {
       return runAll(render, log, callback)
@@ -104,6 +104,7 @@ type GetSnapAppRenderWithCacheParam<T> = {
   browserProfile?: SnapAppBrowserUtilsParams['browserProfile']
   cookiesFile?: SnapAppBrowserUtilsParams['cookiesFile']
   limit?: number
+  thread?: boolean
   callback: (run: (param: Omit<SnapRunParam, 'font'>) => Promise<SnapRenderBaseUtils>) => Promise<T>
 }
 
@@ -128,7 +129,7 @@ export const getSnapAppRenderWithCache = ({logger}: {logger?: Logger}) => {
       )
       return [session, font]
     })
-    const render = await session.render(args.url, {limit: args.limit ?? 1})
+    const render = await session.render(args.url, {limit: args.limit ?? 1, thread: args.thread ?? false})
 
     return runAll(render, log, (run) => args.callback((param) => run({...param, font})))
   }

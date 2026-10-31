@@ -9,6 +9,7 @@ import {
 
 import type {SnapRenderColorUtils} from '../../../../utils/render.js'
 import {splitLineBreak} from '../../../../utils/text.js'
+import type {TweetThread} from '../../utils.js'
 import {
   getUserAvatarUrl,
   getUserName,
@@ -55,6 +56,8 @@ export class RenderTweetImage {
   margin: number = 30
   padding: number = 12
   bodyGap: number = 10 // between header, text, quote and video blank
+  avatarMargin: number = 4 // around the 40px avatar; the thread line of a compact tweet is centered under it
+  avatarGap: number = 2 // between the avatar box and what stands next to it
   // The image shows what the page showed at that moment (views, counts, remaining time, controls); the plain themes
   // leave out what changes over time, so the image reads the same later
   timeDependent: boolean = false
@@ -206,6 +209,34 @@ export class RenderTweetImage {
   }
 
   render: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+    return <this.frame>{[<this.article key={data.tweet.restId} data={data} />]}</this.frame>
+  }
+
+  // The thread as x.com's conversation page lays it out: the earlier tweets lead into the tweet with a line between
+  // their avatars, the tweet itself in full, then the author's continuation, again joined by a line. As on the page,
+  // the tweet and its continuation are not joined.
+  renderThread: RenderWidgetType<{data: TweetThread}> = ({data}) => {
+    const index = data.tweets.indexOf(data.focal)
+    return (
+      <this.frame>
+        {data.tweets.map((tweet, i) =>
+          i === index ? (
+            <this.article key={tweet.tweet.restId} data={tweet} />
+          ) : (
+            <this.compact
+              key={tweet.tweet.restId}
+              data={tweet}
+              line={i < index || i < data.tweets.length - 1}
+              spaced={i === index + 1}
+            />
+          ),
+        )}
+      </this.frame>
+    )
+  }
+
+  // The card on the theme's background, holding a tweet or the blocks of a thread
+  frame: RenderWidgetType<{children: ReactElement[]}> = ({children}) => {
     return (
       <div
         style={{
@@ -227,19 +258,89 @@ export class RenderTweetImage {
             flexDirection: 'column',
             borderRadius: this.utils.element.applyScale(10),
             padding: this.utils.element.applyScale(this.padding),
-            gap: this.utils.element.applyScale(12),
             boxShadow: this.utils.element.getBoxShadow(),
           }}
         >
-          <this.userRender data={data} />
-          {data.tweet.card?.legacy && <this.ogp data={data} quoted={false} />}
-          {data.tweet.birdwatchPivot && <this.birdwatch data={data.tweet.birdwatchPivot} />}
-
-          <this.bottonWidget data={data} />
+          {children}
         </div>
       </div>
     )
   }
+
+  // One tweet in full: header, text, media, quote, card, Community Note and the time line
+  article: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', gap: this.utils.element.applyScale(12)}}>
+        <this.userRender data={data} />
+        {data.tweet.card?.legacy && <this.ogp data={data} quoted={false} />}
+        {data.tweet.birdwatchPivot && <this.birdwatch data={data.tweet.birdwatchPivot} />}
+
+        <this.bottonWidget data={data} />
+      </div>
+    )
+  }
+
+  // A tweet of the thread other than the one itself, as x.com shows the ancestors and the author's continuation:
+  // the avatar column with the joining line (2px, from 4px under the avatar to 4px above the next), one header
+  // line with the date, 15px text, media at the column's width. The line runs through the bottom spacing.
+  compact: RenderWidgetType<{data: TweetApiUtilsData; line: boolean; spaced: boolean}> = ({data, line, spaced}) => {
+    const s = this.utils.element.applyScale
+    const column = this.utils.element.applyScaleNum(40 + this.avatarMargin * 2)
+    const width = this.contentWidth() - column - this.utils.element.applyScaleNum(this.avatarGap)
+    const lineGap = 4 - this.avatarMargin
+    const icon = getUserAvatarUrl(data.user)
+    const card = data.tweet.card?.legacy
+    const sub = {margin: s(0), fontSize: s(15), lineHeight: s(20), color: this.subTextColor}
+    const below = {display: 'flex', flexDirection: 'column' as const, marginTop: s(12)}
+    return (
+      <div style={{display: 'flex', gap: s(this.avatarGap), paddingTop: s(spaced ? 12 : 0)}}>
+        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', width: column, flexShrink: 0}}>
+          <this.icon alt="icon" margin={this.avatarMargin} size={40} src={icon} type={data.user.profileImageShape} />
+          {line && (
+            <div
+              style={{
+                width: s(2),
+                flexGrow: 1,
+                marginTop: s(lineGap),
+                marginBottom: s(lineGap),
+                background: this.borderColor,
+              }}
+            />
+          )}
+        </div>
+        <div style={{display: 'flex', flexDirection: 'column', width, paddingBottom: s(12)}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: s(4)}}>
+            {this.username({data})}
+            <p style={sub}>@{getUserScreenName(data.user)}</p>
+            <p style={sub}>·</p>
+            <p style={sub}>{this.shortDate(data.tweet.legacy!.createdAt)}</p>
+          </div>
+          <div style={{display: 'flex', flexDirection: 'column', marginTop: s(2)}}>
+            <this.tweetRender data={data} quoted={false} compact={true} width={width} />
+          </div>
+          {data.quoted && (
+            <div style={below}>
+              <this.quotedRender data={data.quoted} width={width} />
+            </div>
+          )}
+          {card && (
+            <div style={below}>
+              <this.ogp data={data} quoted={false} width={width} />
+            </div>
+          )}
+          {data.tweet.birdwatchPivot && (
+            <div style={below}>
+              <this.birdwatch data={data.tweet.birdwatchPivot} />
+            </div>
+          )}
+          {this.compactFooter && <this.compactFooter data={data} />}
+        </div>
+      </div>
+    )
+  }
+
+  // What a theme shows under a compact tweet (x.com: the small action bar); nothing in the plain themes
+  compactFooter: RenderWidgetType<{data: TweetApiUtilsData}> | undefined = undefined
 
   bottonWidget: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
     const time = data.tweet.legacy!.createdAt
@@ -575,7 +676,7 @@ export class RenderTweetImage {
   }
 
   // Cards; inside a quoted tweet the large image runs flush with the box and carries no caption
-  ogp: RenderWidgetType<{data: TweetApiUtilsData; quoted: boolean}> = ({data, quoted}) => {
+  ogp: RenderWidgetType<{data: TweetApiUtilsData; quoted: boolean; width?: number}> = ({data, quoted, width}) => {
     const legacy = data.tweet.card?.legacy
     if (legacy?.name.startsWith('poll')) return <this.poll data={data} />
     const value = (key: string) => legacy?.bindingValues.find((v) => v.key === key)?.value
@@ -860,7 +961,7 @@ export class RenderTweetImage {
             flexDirection: 'column',
             gap: this.utils.element.applyScale(2),
             justifyContent: 'center',
-            width: this.contentWidth() - this.utils.element.applyScaleNum(size),
+            width: (width ?? this.contentWidth()) - this.utils.element.applyScaleNum(size),
           }}
         >
           <p
@@ -982,10 +1083,11 @@ export class RenderTweetImage {
   }
 
   // The quoted tweet as x.com shows it: 12px padding, one header line (avatar 24, name, handle, date), media flush with the box
-  quotedRender: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+  quotedRender: RenderWidgetType<{data: TweetApiUtilsData; width?: number}> = ({data, width}) => {
     const icon = getUserAvatarUrl(data.user)
     const id = getUserScreenName(data.user)
     const card = data.tweet.card?.legacy
+    const inner = (width ?? this.contentWidth()) - this.utils.element.applyScaleNum(1) * 2
     const flush = (data.tweet.legacy?.extendedEntities?.media ?? []).length > 0 || card !== undefined
     const sub = {
       margin: this.utils.element.applyScale(0),
@@ -1015,7 +1117,7 @@ export class RenderTweetImage {
           <p style={sub}>{this.shortDate(data.tweet.legacy!.createdAt)}</p>
         </div>
         <div style={{display: 'flex', flexDirection: 'column', marginTop: this.utils.element.applyScale(4)}}>
-          <this.tweetRender data={data} quoted={true} />
+          <this.tweetRender data={data} quoted={true} width={inner} />
         </div>
         {card && (
           <div
@@ -1027,7 +1129,7 @@ export class RenderTweetImage {
               marginRight: -this.utils.element.applyScaleNum(12),
             }}
           >
-            <this.ogp data={data} quoted={true} />
+            <this.ogp data={data} quoted={true} width={inner} />
           </div>
         )}
       </div>
@@ -1052,10 +1154,10 @@ export class RenderTweetImage {
     }[]
     quoted: boolean
     spaced: boolean
-  }> = ({blank, media, quoted, spaced}) => {
+    width: number
+  }> = ({blank, media, quoted, spaced, width}) => {
     const s = this.utils.element.applyScaleNum
     const border = quoted ? 0 : s(1)
-    const width = quoted ? this.contentWidth() - s(1) * 2 : this.contentWidth()
     const inner = width - border * 2
     const spacing = {
       ...(spaced ? {marginTop: this.utils.element.applyScale(quoted ? 4 : 12)} : {}),
@@ -1167,7 +1269,17 @@ export class RenderTweetImage {
     return hours > 0 ? `${hours}:${pad(minutes)}:${pad(total % 60)}` : `${minutes}:${pad(total % 60)}`
   }
 
-  tweetRender: RenderWidgetType<{data: TweetApiUtilsData; quoted: boolean}> = ({data, quoted}) => {
+  // The text with its media, links and inline media; quoted and compact (thread) tweets use x.com's 15px type.
+  // width: what the media may take, the content width unless the tweet sits in a box or a thread column
+  tweetRender: RenderWidgetType<{data: TweetApiUtilsData; quoted: boolean; compact?: boolean; width?: number}> = ({
+    data,
+    quoted,
+    compact,
+    width,
+  }) => {
+    const small = quoted || compact
+    const mediaWidth =
+      width ?? (quoted ? this.contentWidth() - this.utils.element.applyScaleNum(1) * 2 : this.contentWidth())
     const note = data.tweet.noteTweet?.noteTweetResults.result
     const legacy = data.tweet.legacy!
     const text = note?.text ?? legacy.fullText
@@ -1242,6 +1354,16 @@ export class RenderTweetImage {
       start: number
     }[] = []
 
+    // x.com shows the text between displayTextRange only: the reply mentions before it and the media link after it
+    // stay out of sight (a note's text has no such range)
+    if (!note) {
+      const [from, to] = legacy.displayTextRange
+      charIndices.push(
+        {start: 0, end: normalizeMap.findIndex(({array}) => array === from), chars: []},
+        {start: normalizeMap.findIndex(({array}) => array === to), end: trueSplit.length, chars: []},
+      )
+    }
+
     const insert: {
       fn: () => ReactElement
       index: number
@@ -1269,6 +1391,7 @@ export class RenderTweetImage {
             media={video ? media.filter(({type}) => type === 'photo') : media}
             quoted={quoted}
             spaced={index > 0}
+            width={mediaWidth}
           />
         ),
       })
@@ -1363,19 +1486,16 @@ export class RenderTweetImage {
 
     const textElement: ReactElement[] = []
 
-    for (const {fn} of insert.filter(({index}) => index === 0)) textElement.push(fn())
-
+    // Media go in front of the first paragraph that starts at or after their position in the text (inline media of
+    // a note), the rest after the text: the media links of a tweet sit behind the shown text
+    const pending = [...insert].sort((a, b) => a.index - b.index)
     for (const [i, t] of paragraphs.entries()) {
-      for (const {fn} of insert.filter(({index}) => t.start - 1 === index)) textElement.push(fn())
+      while (pending.length > 0 && pending[0].index <= t.start) textElement.push(pending.shift()!.fn())
       textElement.push(
-        <this.paragraph key={i} chars={t.chars} fontSize={quoted ? 15 : 17} lineHeight={quoted ? 20 : 24} />,
+        <this.paragraph key={i} chars={t.chars} fontSize={small ? 15 : 17} lineHeight={small ? 20 : 24} />,
       )
-      for (const {fn} of insert.filter(({index}) => t.end + 1 === index)) textElement.push(fn())
     }
-
-    if (textElement.length === 0) {
-      for (const {fn} of insert) textElement.push(fn())
-    }
+    for (const {fn} of pending) textElement.push(fn())
     // } else {
     //     const last = textDataList[textDataList.length - 1];
     //     insert.filter(({ index }) => index > last.end).forEach(({ fn }) => textElement.push(fn()));

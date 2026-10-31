@@ -24,20 +24,23 @@ export type ExtractGroups<T extends string> =
     ? {[K in GroupName | keyof ExtractGroups<Tail>]: string}
     : Record<never, never>
 
+// What the command line asks of a route: how many items, and whether a tweet URL means the author's whole thread
+export type SnapAppUtils = {limit: number; thread: boolean}
+
 type SnapAppCallback<T1, V1 extends string> = (
-  utils: {limit: number},
+  utils: SnapAppUtils,
   api: T1,
   match: ExtractGroups<V1>,
 ) => Promise<SnapRenderStream>
 
-type SnapAppRoute<T1> = (utils: {limit: number}, api: T1, match: RegExpExecArray) => Promise<SnapRenderStream>
+type SnapAppRoute<T1> = (utils: SnapAppUtils, api: T1, match: RegExpExecArray) => Promise<SnapRenderStream>
 
 export class Session<T1> {
   constructor(public api: T1) {}
 }
 
 export type SnapSession = {
-  render: (url: string, utils: {limit: number}) => Promise<SnapRenderStream>
+  render: (url: string, utils: SnapAppUtils) => Promise<SnapRenderStream>
 }
 
 export type SnapAppInfo = {

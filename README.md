@@ -37,6 +37,8 @@ npx twitter-snap@latest https://twitter.com/elonmusk/status/1349129669258448897 
 
 # Reproduce the post page of x.com.
 npx twitter-snap@latest --theme RenderXReference https://x.com/elonmusk/status/1604617643973124097
+# Put the author's thread around the tweet in one image.
+npx twitter-snap@latest --thread https://x.com/SpaceX/status/1786759044948189202
 
 # Output the API response directly to a file in raw JSON format.
 npx twitter-snap@latest --theme Json https://x.com/elonmusk/status/1349129669258448897 -o output/data.json
@@ -128,7 +130,7 @@ USAGE
     wilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|
     RenderTransparentDark|RenderTransparentShadow|RenderTransparentShadowDark|Re
     nderXReference|RenderXReferenceDark|Json|LiteJson|Media|RenderMakeItAQuote]
-    [--width <value>] [--scale <value>]
+    [--thread] [--width <value>] [--scale <value>]
 
 ARGUMENTS
   URL  Twitter url
@@ -198,6 +200,10 @@ FLAGS
       wilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|
       RenderTransparentDark|RenderTransparentShadow|RenderTransparentShadowDark|Re
       nderXReference|RenderXReferenceDark|Json|LiteJson|Media|RenderMakeItAQuote>
+
+  --thread
+      The author's thread (their chain of self-replies) around the tweet, in one
+      image
 
   --width=<value>
       Width (650 unless set, 600 for RenderXReference)
