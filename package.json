@@ -75,7 +75,7 @@
     "log-symbols": "^7.0.1",
     "ora": "^9.4.1",
     "pngjs": "^7.0.0",
-    "puppeteer": "^25.15.0",
+    "puppeteer": "^25.16.0",
     "react": "^19.3.1",
     "twitter-openapi-typescript": "^0.1.4",
     "twitter-openapi-typescript-generated": "^0.1.4"
