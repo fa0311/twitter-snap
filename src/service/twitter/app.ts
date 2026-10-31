@@ -1,14 +1,15 @@
 import {type TweetApiUtilsData, TwitterOpenApi, type TwitterOpenApiClient} from 'twitter-openapi-typescript'
-import {mediaCallback, Session, SnapApp, SnapRender} from './../../app.js'
+import {mediaCallback, Session, SnapApp, type SnapAppUtils, SnapRender} from './../../app.js'
 import {URLPath} from '../../utils/path.js'
-import type {SnapRenderColorUtils} from '../../utils/render.js'
+import type {SnapRenderColorUtils, SnapRenderUtils} from '../../utils/render.js'
+import type {FileReplace} from '../../utils/replace.js'
 import {sleepLoop} from '../../utils/sleep.js'
 import {RenderTweetImage} from './render/basic/image.js'
 import {RenderBasicVideo} from './render/basic/video.js'
 import {RenderMakeItAQuoteImage} from './render/makeItAQuote/image.js'
 import {getUserScreenName, getVideo, toLiteJson} from './render/utils/utils.js'
 import {RenderXReferenceImage} from './render/xreference/image.js'
-import {tweetCursor} from './utils.js'
+import {type TweetThread, tweetCursor, tweetThread} from './utils.js'
 
 const app = new SnapApp(
   'twitter',
@@ -83,26 +84,51 @@ const tweetImage = (utils: SnapRenderColorUtils, video: boolean) =>
     ? new RenderXReferenceImage(utils, video)
     : new RenderTweetImage(utils, video)
 
+const mediaOf = (data: TweetApiUtilsData) => data.tweet.legacy?.extendedEntities?.media ?? []
+
+const isImage = (data: TweetApiUtilsData) => mediaOf(data).every((media) => media.type === 'photo')
+
+const placeholder = (data: TweetApiUtilsData): FileReplace[] => {
+  const createdAt = new Date(data.tweet.legacy?.createdAt ?? 0)
+  return [
+    ['{id}', data.tweet.restId],
+    ['{user-screen-name}', getUserScreenName(data.user)],
+    ['{user-id}', data.user.restId],
+    ['{time-yyyy}', pad(createdAt.getFullYear(), 4)],
+    ['{time-mm}', pad(createdAt.getMonth() + 1, 2)],
+    ['{time-dd}', pad(createdAt.getDate(), 2)],
+    ['{time-hh}', pad(createdAt.getHours(), 2)],
+    ['{time-mi}', pad(createdAt.getMinutes(), 2)],
+    ['{time-ss}', pad(createdAt.getSeconds(), 2)],
+  ]
+}
+
+const mediaPlaceholder = (data: ReturnType<typeof mediaOf>[number]): FileReplace[] => {
+  const videoInfo = data.videoInfo && getVideo(data.videoInfo)
+  return [
+    ['{media-id}', data.idStr],
+    ['{media-video-variants-id}', videoInfo?.url.split('/').pop()?.split('.')[0]],
+    ['{media-video-bitrate}', videoInfo?.bitrate],
+  ]
+}
+
+const saveMedia = async (data: ReturnType<typeof mediaOf>[number], utils: SnapRenderUtils) => {
+  const isVideo = data.videoInfo !== undefined && data.type !== 'photo'
+  utils.logger.update(`Downloading ${isVideo ? 'video' : 'image'} ${data.idStr}`)
+  const mediaUrl = data.videoInfo && data.type !== 'photo' ? getVideo(data.videoInfo).url : data.mediaUrlHttps
+
+  const url = URLPath.fromURL(mediaUrl)
+
+  if (!utils.file.path.isExtension('') && !utils.file.path.isExtension(url.extension)) {
+    utils.logger.hint(`Extension is ignored, saving as ${url.extension}`)
+  }
+
+  await utils.file.saveFetch(url)
+}
+
 const render = new SnapRender<TweetApiUtilsData>({
-  isImage: (data) => {
-    const extEntities = data.tweet.legacy?.extendedEntities
-    const extMedia = extEntities?.media ?? []
-    return extMedia.every((media) => media.type === 'photo')
-  },
-  placeholder: (data) => {
-    const createdAt = new Date(data.tweet.legacy?.createdAt ?? 0)
-    return [
-      ['{id}', data.tweet.restId],
-      ['{user-screen-name}', getUserScreenName(data.user)],
-      ['{user-id}', data.user.restId],
-      ['{time-yyyy}', pad(createdAt.getFullYear(), 4)],
-      ['{time-mm}', pad(createdAt.getMonth() + 1, 2)],
-      ['{time-dd}', pad(createdAt.getDate(), 2)],
-      ['{time-hh}', pad(createdAt.getHours(), 2)],
-      ['{time-mi}', pad(createdAt.getMinutes(), 2)],
-      ['{time-ss}', pad(createdAt.getSeconds(), 2)],
-    ]
-  },
+  isImage,
+  placeholder,
   color: {
     image: async (data, utils) => {
       utils.logger.update(`Rendering image ${getUserScreenName(data.user)} ${data.tweet.restId}`)
@@ -145,30 +171,33 @@ const render = new SnapRender<TweetApiUtilsData>({
     },
   },
   other: {
-    Media: mediaCallback(
-      (data: TweetApiUtilsData) => data.tweet.legacy?.extendedEntities?.media ?? [],
-      (data) => {
-        const videoInfo = data.videoInfo && getVideo(data.videoInfo)
-        return [
-          ['{media-id}', data.idStr],
-          ['{media-video-variants-id}', videoInfo?.url.split('/').pop()?.split('.')[0]],
-          ['{media-video-bitrate}', videoInfo?.bitrate],
-        ]
-      },
-      async (data, utils) => {
-        const isVideo = data.videoInfo !== undefined && data.type !== 'photo'
-        utils.logger.update(`Downloading ${isVideo ? 'video' : 'image'} ${data.idStr}`)
-        const mediaUrl = data.videoInfo && data.type !== 'photo' ? getVideo(data.videoInfo).url : data.mediaUrlHttps
+    Media: mediaCallback(mediaOf, mediaPlaceholder, saveMedia),
+  },
+})
 
-        const url = URLPath.fromURL(mediaUrl)
-
-        if (!utils.file.path.isExtension('') && !utils.file.path.isExtension(url.extension)) {
-          utils.logger.hint(`Extension is ignored, saving as ${url.extension}`)
-        }
-
-        await utils.file.saveFetch(url)
-      },
-    ),
+// The author's thread around a tweet, in one output named after that tweet; the quote theme stays per tweet
+const thread = new SnapRender<TweetThread>({
+  isImage: (data) => data.tweets.every(isImage),
+  placeholder: (data) => placeholder(data.focal),
+  color: {
+    image: async (data, utils) => {
+      utils.logger.update(`Rendering thread ${getUserScreenName(data.focal.user)} ${data.focal.tweet.restId}`)
+      return tweetImage(utils, false).renderThread({data})
+    },
+    video: async (data, utils) => {
+      utils.logger.update(`Rendering thread ${getUserScreenName(data.focal.user)} ${data.focal.tweet.restId}`)
+      const element = tweetImage(utils, true).renderThread({data})
+      const input = await utils.file.tempImg(await utils.render(element))
+      utils.logger.update(`Rendering video ${getUserScreenName(data.focal.user)} ${data.focal.tweet.restId}`)
+      await new RenderBasicVideo(utils).renderThread({data, input})
+    },
+  },
+  json: {
+    Json: async (data) => data.tweets,
+    LiteJson: async (data) => data.tweets.map((e) => toLiteJson(e)),
+  },
+  other: {
+    Media: mediaCallback((data: TweetThread) => data.tweets.flatMap(mediaOf), mediaPlaceholder, saveMedia),
   },
 })
 
@@ -179,14 +208,34 @@ const getUserId = async (api: TwitterOpenApiClient, screenName: string) => {
   return id
 }
 
+// A timeline has no author thread to follow: --thread is only defined for a tweet URL
+const timeline = (utils: SnapAppUtils, request: Parameters<typeof tweetCursor>[1]) => {
+  if (utils.thread) throw new Error('--thread needs a tweet URL')
+  return render.run(tweetCursor({limit: utils.limit}, request))
+}
+
 app.call(`/(?<user>[a-zA-Z0-9_]+)/status/(?<id>[0-9]+)`, async (utils, api, {id}) => {
   const guest = api.config.apiKey?.('x-csrf-token') === undefined
+  const byId = async (tweetId: string) => (await api.getDefaultApi().getTweetResultByRestId({tweetId})).data
+
+  if (utils.thread) {
+    const fn = (async function* () {
+      // TweetDetail holds the ancestors, the tweet and the author's continuation; a guest reads one tweet at a time
+      const pool = guest
+        ? []
+        : (await api.getTweetApi().getTweetDetail({focalTweetId: id})).data.data.flatMap((e) => [e, ...e.replies])
+      const focal = pool.find((e) => e.tweet.restId === id) ?? (await byId(id))
+      if (!focal) throw new Error('No data')
+      yield tweetThread(focal, pool, byId)
+    })()
+    return thread.run(fn)
+  }
 
   if (guest) {
     const fn = (async function* () {
-      const res = await api.getDefaultApi().getTweetResultByRestId({tweetId: id})
-      if (!res.data) throw new Error('No data')
-      yield res.data
+      const data = await byId(id)
+      if (!data) throw new Error('No data')
+      yield data
     })()
     return render.run(fn)
   }
@@ -203,70 +252,45 @@ app.call(`/search\\?(?<params>.*)`, async (utils, api, {params}) => {
     throw new Error('no query')
   }
 
-  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getSearchTimeline({rawQuery: id, cursor})
-  })
-  return render.run(fn)
+  return timeline(utils, (cursor) => api.getTweetApi().getSearchTimeline({rawQuery: id, cursor}))
 })
 
 app.call(`/home`, async (utils, api) => {
-  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getHomeTimeline({cursor})
-  })
-  return render.run(fn)
+  return timeline(utils, (cursor) => api.getTweetApi().getHomeTimeline({cursor}))
 })
 
 app.call(`/i/lists/(?<id>[0-9]+)`, async (utils, api, {id}) => {
-  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getListLatestTweetsTimeline({listId: id, cursor})
-  })
-  return render.run(fn)
+  return timeline(utils, (cursor) => api.getTweetApi().getListLatestTweetsTimeline({listId: id, cursor}))
 })
 
 app.call(`/(?<user>[a-zA-Z0-9_]+)/with_replies`, async (utils, api, {user}) => {
   const id = await getUserId(api, user)
-  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getUserRepliesTimeline({userId: id, cursor})
-  })
-  return render.run(fn)
+  return timeline(utils, (cursor) => api.getTweetApi().getUserRepliesTimeline({userId: id, cursor}))
 })
 
 app.call(`/(?<user>[a-zA-Z0-9_]+)/media`, async (utils, api, {user}) => {
   const id = await getUserId(api, user)
-  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getUserVideoTimeline({userId: id, cursor})
-  })
-  return render.run(fn)
+  return timeline(utils, (cursor) => api.getTweetApi().getUserVideoTimeline({userId: id, cursor}))
 })
 
 app.call(`/(?<user>[a-zA-Z0-9_]+)/likes`, async (utils, api, {user}) => {
   const id = await getUserId(api, user)
-  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getLikes({userId: id, cursor})
-  })
-  return render.run(fn)
+  return timeline(utils, (cursor) => api.getTweetApi().getLikes({userId: id, cursor}))
 })
 
 app.call(`/i/bookmarks`, async (utils, api) => {
-  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getBookmarks({cursor})
-  })
-  return render.run(fn)
+  return timeline(utils, (cursor) => api.getTweetApi().getBookmarks({cursor}))
 })
 
 app.call(`/i/communities/(?<id>[0-9]+)`, async (utils, api, {id}) => {
-  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getCommunityTweetsTimeline({communityId: id, cursor, rankingMode: 'Recency'})
-  })
-  return render.run(fn)
+  return timeline(utils, (cursor) =>
+    api.getTweetApi().getCommunityTweetsTimeline({communityId: id, cursor, rankingMode: 'Recency'}),
+  )
 })
 
 app.call(`/(?<user>[a-zA-Z0-9_]+)`, async (utils, api, {user}) => {
   const id = await getUserId(api, user)
-  const fn = tweetCursor({limit: utils.limit}, async (cursor) => {
-    return api.getTweetApi().getUserOriginalsTimeline({userId: id, cursor})
-  })
-  return render.run(fn)
+  return timeline(utils, (cursor) => api.getTweetApi().getUserOriginalsTimeline({userId: id, cursor}))
 })
 
 export default app

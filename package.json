@@ -61,10 +61,10 @@
   },
   "dependencies": {
     "@clack/prompts": "^1.8.1",
-    "@oclif/core": "^5.1.9",
-    "@oclif/plugin-help": "^7.0.5",
-    "@oclif/plugin-plugins": "^7.0.8",
-    "@oclif/plugin-warn-if-update-available": "^4.0.3",
+    "@oclif/core": "^5.1.10",
+    "@oclif/plugin-help": "^7.0.6",
+    "@oclif/plugin-plugins": "^7.0.13",
+    "@oclif/plugin-warn-if-update-available": "^4.0.5",
     "@vercel/og": "^0.11.1",
     "cli-color": "^2.0.4",
     "escape-string-regexp": "^5.0.0",
@@ -75,7 +75,7 @@
     "log-symbols": "^7.0.1",
     "ora": "^9.4.1",
     "pngjs": "^7.0.0",
-    "puppeteer": "^25.15.0",
+    "puppeteer": "^25.16.0",
     "react": "^19.3.1",
     "twitter-openapi-typescript": "^0.1.4",
     "twitter-openapi-typescript-generated": "^0.1.4"

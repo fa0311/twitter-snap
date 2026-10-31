@@ -92,6 +92,46 @@ describe('Twitter test', () => {
     expect(result).toBeUndefined()
   })
 
+  it('thread_to_image', async () => {
+    // the third post of SpaceX's EVA suit thread: a guest reads the two posts above it one by one
+    const {stderr, error, result, stdout} = await run(
+      'https://x.com/SpaceX/status/1786759332794880339',
+      'temp/thread_to_image/{count}.png',
+      '--thread',
+    )
+    await count('temp/thread_to_image', 1)
+    await access('temp/thread_to_image/0.png')
+
+    expect(stdout).toContain('Rendering')
+
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
+  })
+
+  it('thread_to_video', async () => {
+    // the video sits in the first post of the thread, not in the one the URL names
+    const {stderr, error, result, stdout} = await run(
+      'https://x.com/SpaceX/status/1786759332794880339',
+      'temp/thread_to_video/{count}.mp4',
+      '--thread',
+    )
+    await count('temp/thread_to_video', 1)
+    await access('temp/thread_to_video/0.mp4')
+
+    expect(stdout).toContain('Rendering')
+
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
+  })
+
+  it('thread_needs_tweet_url', async () => {
+    const {stderr} = await run('https://x.com/SpaceX', 'temp/thread_needs_tweet_url/{count}.png', '--thread')
+
+    expect(stderr).toContain('--thread needs a tweet URL')
+  })
+
   it('single_text_tweet_to_video', async () => {
     const {stderr, error, result, stdout} = await run(
       'https://x.com/elonmusk/status/1349129669258448897',

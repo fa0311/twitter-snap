@@ -117,6 +117,10 @@ export default class Default extends Command {
       description: 'Theme type',
       options: themeNameList,
     })(),
+    thread: Flags.boolean({
+      default: false,
+      description: "The author's thread (their chain of self-replies) around the tweet, in one image",
+    }),
     width: Flags.integer({
       description: 'Width (650 unless set, 600 for RenderXReference)',
     }),
@@ -167,7 +171,7 @@ export default class Default extends Command {
 
       const render = await logger.guard({
         text: 'Initializing render',
-        callback: app.getRender({limit: flags.limit, session}),
+        callback: app.getRender({limit: flags.limit, session, thread: flags.thread}),
       })
 
       const ffmpegOption = flags.ffmpegAdditonalOption?.split(' ') || []
