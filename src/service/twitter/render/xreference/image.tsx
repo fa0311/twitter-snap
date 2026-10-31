@@ -1,3 +1,4 @@
+import type {ReactElement} from 'react'
 import type {TweetApiUtilsData} from 'twitter-openapi-typescript'
 
 import type {SnapRenderColorUtils} from '../../../../utils/render.js'
@@ -47,6 +48,8 @@ export class RenderXReferenceImage extends RenderTweetImage {
     this.frameBorderColor = dark ? '#2f3336' : '#eff3f4'
     this.mediaRadius = 16
     this.bodyGap = 12
+    this.avatarMargin = 0
+    this.avatarGap = 8
     this.timeDependent = true
   }
 
@@ -70,7 +73,8 @@ export class RenderXReferenceImage extends RenderTweetImage {
     </svg>
   )
 
-  render: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+  // The column of the page: 1px borders, 12px above and below, 16px at the sides
+  frame: RenderWidgetType<{children: ReactElement[]}> = ({children}) => {
     const s = this.utils.element.applyScale
     return (
       <div
@@ -88,6 +92,15 @@ export class RenderXReferenceImage extends RenderTweetImage {
           paddingRight: s(this.sidePadding),
         }}
       >
+        {children}
+      </div>
+    )
+  }
+
+  article: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+    const s = this.utils.element.applyScale
+    return (
+      <div style={{display: 'flex', flexDirection: 'column'}}>
         <this.userRender data={data} />
         {data.tweet.card?.legacy && (
           <div style={{display: 'flex', flexDirection: 'column', marginTop: s(12)}}>
@@ -102,7 +115,16 @@ export class RenderXReferenceImage extends RenderTweetImage {
         <div style={{display: 'flex', marginTop: s(16), marginBottom: s(16)}}>
           <this.bottonWidget data={data} />
         </div>
-        <this.actionBar data={data} />
+        <this.actionBar data={data} compact={false} />
+      </div>
+    )
+  }
+
+  // The small action bar under a tweet of the thread, as the page shows it: 12px below the text, 20px tall
+  compactFooter: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+    return (
+      <div style={{display: 'flex', flexDirection: 'column', marginTop: this.utils.element.applyScale(12)}}>
+        <this.actionBar data={data} compact={true} />
       </div>
     )
   }
@@ -168,7 +190,9 @@ export class RenderXReferenceImage extends RenderTweetImage {
     return <this.svg color={this.linkColor} path={icons.verified} size={19} viewBox="0 0 22 22" />
   }
 
-  actionBar: RenderWidgetType<{data: TweetApiUtilsData}> = ({data}) => {
+  // The action bar: under the tweet itself 48px tall over a 1px line with 23px icons, under a tweet of the thread
+  // the 20px bar with 19px icons
+  actionBar: RenderWidgetType<{data: TweetApiUtilsData; compact: boolean}> = ({data, compact}) => {
     const s = this.utils.element.applyScale
     const legacy = data.tweet.legacy!
     const items: {count?: number; path: string}[] = [
@@ -184,15 +208,15 @@ export class RenderXReferenceImage extends RenderTweetImage {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          height: s(48),
-          paddingLeft: s(4),
-          paddingRight: s(4),
-          borderTop: `${s(1)} solid ${this.frameBorderColor}`,
+          height: s(compact ? 20 : 48),
+          paddingLeft: s(compact ? 0 : 4),
+          paddingRight: s(compact ? 0 : 4),
+          ...(compact ? {} : {borderTop: `${s(1)} solid ${this.frameBorderColor}`}),
         }}
       >
         {items.map(({path, count}) => (
           <div key={path} style={{display: 'flex', alignItems: 'center'}}>
-            <this.svg color={this.subTextColor} path={path} size={23} />
+            <this.svg color={this.subTextColor} path={path} size={compact ? 19 : 23} />
             {count ? (
               <span
                 style={{

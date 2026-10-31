@@ -61,6 +61,19 @@ npx twitter-snap@latest --theme RenderXReference https://x.com/elonmusk/status/1
 
 `RenderXReference` and `RenderXReferenceDark` reproduce the post page of x.com from values measured on the real page: the 600px column, type sizes, spacing, colors, media frames, polls, Community Notes and the action bar. They show the page as it was at that moment: views, counts, the time left on a poll, the page's controls. The other themes leave out what changes over time, so the image reads the same later. Photos are stacked at full width, each at its own proportions, and videos play one after another in one frame, where x.com would scroll a carousel that leaves the right-most media out of the picture. `--width` defaults to 600 for these themes. x.com's own font (Chirp) is not redistributable, so the text uses the same fallback fonts as the other themes and lines can break slightly differently.
 
+## Thread
+
+```shell
+npx twitter-snap@latest --thread https://x.com/SpaceX/status/1786759044948189202
+```
+
+<p float="left">
+  <img src="./docs/img/thread-1.png" width="49%" />
+  <img src="./docs/img/thread-2.png" width="49%" />
+</p>
+
+`--thread` puts the author's thread around the tweet in one image: the chain of their own replies through it, from its first tweet to the last, laid out as the conversation page of x.com does. The tweets before and after stand compact and are joined by a line, the tweet of the URL is shown in full; other people's replies are never part of it. A guest sees the tweets above the one in the URL, the continuation below needs a login (`--session-type file`). Videos play one after another, each in its own frame.
+
 ## Install
 
 `npm -g i twitter-snap@latest`
@@ -143,7 +156,7 @@ USAGE
     wilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|
     RenderTransparentDark|RenderTransparentShadow|RenderTransparentShadowDark|Re
     nderXReference|RenderXReferenceDark|Json|LiteJson|Media|RenderMakeItAQuote]
-    [--width <value>] [--scale <value>]
+    [--thread] [--width <value>] [--scale <value>]
 
 ARGUMENTS
   URL  Twitter url
@@ -213,6 +226,10 @@ FLAGS
       wilightSkyDarkColor|RenderPlainColor|RenderPlainDarkColor|RenderTransparent|
       RenderTransparentDark|RenderTransparentShadow|RenderTransparentShadowDark|Re
       nderXReference|RenderXReferenceDark|Json|LiteJson|Media|RenderMakeItAQuote>
+
+  --thread
+      The author's thread (their chain of self-replies) around the tweet, in one
+      image
 
   --width=<value>
       Width (650 unless set, 600 for RenderXReference)

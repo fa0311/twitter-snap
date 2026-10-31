@@ -46,7 +46,7 @@ const getRender = async (url: string) => {
   })
 
   const item = await itemCache(url, async () => {
-    const render = await session.render(url, {limit: 1})
+    const render = await session.render(url, {limit: 1, thread: false})
     for await (const item of render) return item
     throw new Error('No data')
   })
