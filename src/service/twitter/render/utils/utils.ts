@@ -1,6 +1,6 @@
 import type {CSSProperties, ReactElement} from 'react'
 import type {TweetApiUtilsData} from 'twitter-openapi-typescript'
-import type {MediaExtended, MediaVideoInfo, User} from 'twitter-openapi-typescript-generated'
+import type {MediaVideoInfo, User} from 'twitter-openapi-typescript-generated'
 
 export type RenderWidgetType<T> = (props: T) => ReactElement
 export type RenderCssType<T> = (props: T) => CSSProperties

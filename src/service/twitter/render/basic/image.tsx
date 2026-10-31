@@ -187,11 +187,9 @@ export class RenderTweetImage {
     return `${(Math.floor(num / 100000000) / 10).toFixed(1)}B`
   }
 
-  // "Oct 22" this year, "Oct 22, 2024" otherwise, as x.com dates a quoted tweet
+  // "Oct 22, 2024": x.com drops the year of a quoted tweet from this year, a snapshot read later should not
   shortDate = (time: string): string => {
-    const date = new Date(time)
-    const thisYear = date.getFullYear() === new Date().getFullYear()
-    return date.toLocaleString('en-US', {month: 'short', day: 'numeric', ...(thisYear ? {} : {year: 'numeric'})})
+    return new Date(time).toLocaleString('en-US', {month: 'short', day: 'numeric', year: 'numeric'})
   }
 
   toOriginal = (url: URL): URL => {
@@ -1017,7 +1015,7 @@ export class RenderTweetImage {
   // when that keeps them 240px tall, otherwise a carousel 0.68 of the width tall with each photo at most 0.8 wide (cropped).
   // Inside a quoted tweet the media runs flush with the box.
   mediaGroup: RenderWidgetType<{
-    blankId?: string
+    blankIds: string[]
     media: {
       durationMillis?: number
       height: number
@@ -1028,7 +1026,7 @@ export class RenderTweetImage {
     }[]
     quoted: boolean
     spaced: boolean
-  }> = ({blankId, media, quoted, spaced}) => {
+  }> = ({blankIds, media, quoted, spaced}) => {
     const s = this.utils.element.applyScaleNum
     const width = quoted ? this.contentWidth() - s(1) * 2 : this.contentWidth()
     const spacing = {
@@ -1043,7 +1041,7 @@ export class RenderTweetImage {
       return (
         <div style={{display: 'flex', ...spacing}}>
           <this.mediaFrame
-            blank={m.idStr === blankId}
+            blank={blankIds.indexOf(m.idStr)}
             border={border}
             borderColor={this.mediaBorderColor}
             height={inner}
@@ -1077,7 +1075,7 @@ export class RenderTweetImage {
         {frames.map(({m, full, visible}) => (
           <this.mediaFrame
             key={m.idStr}
-            blank={m.idStr === blankId}
+            blank={blankIds.indexOf(m.idStr)}
             border={frame}
             borderColor={this.frameBorderColor}
             height={inner}
@@ -1092,9 +1090,9 @@ export class RenderTweetImage {
   }
 
   // One media frame: the photo, or a video's poster with x.com's duration pill and mute button, or the blank the
-  // video is laid over later (painted in blankColor, found again on the rendered image)
+  // video is laid over later (painted in its marker color, found again on the rendered image; -1 for no blank)
   mediaFrame: RenderWidgetType<{
-    blank: boolean
+    blank: number
     border: number
     borderColor: string
     height: number
@@ -1132,8 +1130,8 @@ export class RenderTweetImage {
           background: this.backgroundColor,
         }}
       >
-        {blank ? (
-          <div style={{width: width - (width % 2), height: height - (height % 2), background: blankColor}} />
+        {blank >= 0 ? (
+          <div style={{width: width - (width % 2), height: height - (height % 2), background: blankColor(blank)}} />
         ) : (
           <img
             alt="img"
@@ -1141,8 +1139,8 @@ export class RenderTweetImage {
             style={{width, height, objectFit: 'cover', flexShrink: 0}}
           />
         )}
-        {!blank && label && <p style={{...pill, left: s(12), bottom: s(12), margin: s(0)}}>{label}</p>}
-        {!blank && media.type === 'video' && (
+        {blank < 0 && label && <p style={{...pill, left: s(12), bottom: s(12), margin: s(0)}}>{label}</p>}
+        {blank < 0 && media.type === 'video' && (
           <div
             style={{
               display: 'flex',
@@ -1266,11 +1264,11 @@ export class RenderTweetImage {
       groups.set(index, [...(groups.get(index) ?? []), m])
     }
 
-    const blankId = video ? normalizeMedia.find(({type}) => type !== 'photo')?.idStr : undefined
+    const blankIds = video ? normalizeMedia.filter(({type}) => type !== 'photo').map(({idStr}) => idStr) : []
     for (const [index, media] of groups) {
       insert.push({
         index,
-        fn: () => <this.mediaGroup key={index} blankId={blankId} media={media} quoted={quoted} spaced={index > 0} />,
+        fn: () => <this.mediaGroup key={index} blankIds={blankIds} media={media} quoted={quoted} spaced={index > 0} />,
       })
     }
 
