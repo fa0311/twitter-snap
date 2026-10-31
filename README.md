@@ -49,6 +49,16 @@ npx twitter-snap@latest --theme LiteJson -o {stdout} https://x.com/elonmusk | ch
 npx twitter-snap@latest --theme RenderXReference https://x.com/elonmusk/status/1604617643973124097
 ```
 
+<p float="left">
+  <img src="./docs/img/xreference-1.png" width="49%" />
+  <img src="./docs/img/xreference-2.png" width="49%" />
+</p>
+
+<p float="left">
+  <img src="./docs/img/xreference-3.png" width="49%" />
+  <img src="./docs/img/xreference-4.png" width="49%" />
+</p>
+
 `RenderXReference` and `RenderXReferenceDark` reproduce the post page of x.com from values measured on the real page: the 600px column, type sizes, spacing, colors, media frames, polls, Community Notes and the action bar. They show the page as it was at that moment: views, counts, the time left on a poll, the page's controls. The other themes leave out what changes over time, so the image reads the same later. Photos are stacked at full width, each at its own proportions, and videos play one after another in one frame, where x.com would scroll a carousel that leaves the right-most media out of the picture. `--width` defaults to 600 for these themes. x.com's own font (Chirp) is not redistributable, so the text uses the same fallback fonts as the other themes and lines can break slightly differently.
 
 ## Install
