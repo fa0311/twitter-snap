@@ -176,8 +176,8 @@ importers:
         specifier: ^7.0.5
         version: 7.0.5
       '@oclif/plugin-plugins':
-        specifier: ^7.0.8
-        version: 7.0.8(supports-color@8.1.1)
+        specifier: ^7.0.13
+        version: 7.0.13(supports-color@8.1.1)
       '@oclif/plugin-warn-if-update-available':
         specifier: ^4.0.3
         version: 4.0.3(supports-color@8.1.1)
@@ -947,8 +947,8 @@ packages:
     resolution: {integrity: sha512-fPtsm8xrKTotTl4yQn5pem74iHXbXM6XYPCtU9bMPQEKuyUD//gllE1eGLX5OOOKTV8XJIf3MwAbGtTqCAAPdw==}
     engines: {node: '>=22.0.0'}
 
-  '@oclif/plugin-plugins@7.0.8':
-    resolution: {integrity: sha512-qFliLKkVsC53yIb/FCNFEijetvvJHV4q5Vi/zhX3Lwj8KZOpNK2ST80xjCQpWTN3gKwXna901QxAeolrH1Y94Q==}
+  '@oclif/plugin-plugins@7.0.13':
+    resolution: {integrity: sha512-NQCbUWFYQyIHZHutTYBsfmT299yCkrJqu4AarUXjm7fAj4ss6bkgk8hqHuNqI1WGEf1kQhb4qjzSM0HfLIA6uw==}
     engines: {node: '>=22.0.0'}
 
   '@oclif/plugin-warn-if-update-available@4.0.3':
@@ -3212,7 +3212,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@oclif/plugin-plugins@7.0.8(supports-color@8.1.1)':
+  '@oclif/plugin-plugins@7.0.13(supports-color@8.1.1)':
     dependencies:
       '@oclif/core': 5.1.9
       ansis: 3.17.0
