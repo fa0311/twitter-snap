@@ -602,7 +602,9 @@ export class RenderTweetImage {
               src={summary.url}
               style={{
                 width: '100%',
-                borderRadius: quoted ? 0 : this.utils.element.applyScale(this.mediaRadius),
+                borderRadius: quoted
+                  ? this.utils.element.applyScales([0, 0, 15, 15])
+                  : this.utils.element.applyScale(this.mediaRadius),
                 border: quoted ? 'none' : `${this.utils.element.applyScale(1)} solid ${this.mediaBorderColor}`,
               }}
             />
@@ -1059,36 +1061,49 @@ export class RenderTweetImage {
       ...(spaced ? {marginTop: this.utils.element.applyScale(quoted ? 4 : 12)} : {}),
       ...(quoted ? {marginLeft: -s(12), marginRight: -s(12)} : {}),
     }
-    const frame = (m: {height: number; width: number}) => ({
+    // satori clips an <img> only by its own corners, not by a rounded parent, so the radius sits on each item;
+    // inside a quoted tweet the last item takes over the box's bottom corners
+    const radius = (last: boolean) => {
+      if (!quoted) return this.utils.element.applyScale(this.mediaRadius)
+      return last ? this.utils.element.applyScales([0, 0, 15, 15]) : '0'
+    }
+    const frame = (m: {height: number; width: number}, last: boolean) => ({
       border,
       borderColor: this.mediaBorderColor,
       height: Math.round((inner * m.height) / m.width),
-      radius: quoted ? 0 : this.mediaRadius,
+      radius: radius(last),
       width: inner,
     })
 
     return (
       <div style={{display: 'flex', flexDirection: 'column', gap: s(4), ...spacing}}>
-        {media.map((m) => (
-          <this.mediaFrame key={m.idStr} blank={false} media={m} {...frame(m)} />
+        {media.map((m, i) => (
+          <this.mediaFrame key={m.idStr} blank={false} media={m} {...frame(m, !blank && i === media.length - 1)} />
         ))}
-        {blank && <this.mediaFrame blank={true} media={{mediaUrlHttps: '', type: 'video'}} {...frame(blank)} />}
+        {blank && <this.mediaFrame blank={true} media={{mediaUrlHttps: '', type: 'video'}} {...frame(blank, true)} />}
       </div>
     )
   }
 
   // One media frame: the photo, or a video's poster with x.com's duration pill and mute button, or the blank the
-  // video is laid over later (painted in blankColor, found again on the rendered image)
+  // video is laid over later (painted in blankColor, found again on the rendered image). The border and the corners
+  // sit on the image itself: satori does not clip an image by a rounded parent.
   mediaFrame: RenderWidgetType<{
     blank: boolean
     border: number
     borderColor: string
     height: number
     media: {durationMillis?: number; mediaUrlHttps: string; type: string}
-    radius: number
+    radius: string
     width: number
   }> = ({blank, border, borderColor, height, media, radius, width}) => {
     const s = this.utils.element.applyScale
+    const box = {
+      width: width + border * 2,
+      height: height + border * 2,
+      border: `${border}px solid ${borderColor}`,
+      borderRadius: radius,
+    }
     const pill = {
       display: 'flex',
       alignItems: 'center',
@@ -1104,26 +1119,14 @@ export class RenderTweetImage {
     const label =
       media.type === 'animated_gif' ? 'GIF' : media.type === 'video' ? this.duration(media.durationMillis) : undefined
     return (
-      <div
-        style={{
-          display: 'flex',
-          position: 'relative',
-          overflow: 'hidden',
-          flexShrink: 0,
-          width: width + border * 2,
-          height: height + border * 2,
-          borderRadius: s(radius),
-          border: `${border}px solid ${borderColor}`,
-          background: this.backgroundColor,
-        }}
-      >
+      <div style={{display: 'flex', position: 'relative', flexShrink: 0, width: box.width, height: box.height}}>
         {blank ? (
-          <div style={{width: width - (width % 2), height: height - (height % 2), background: blankColor}} />
+          <div style={{...box, background: blankColor}} />
         ) : (
           <img
             alt="img"
             src={this.toOriginal(new URL(media.mediaUrlHttps)).toString()}
-            style={{width, height, objectFit: 'cover', flexShrink: 0}}
+            style={{...box, objectFit: 'cover', flexShrink: 0}}
           />
         )}
         {!blank && label && <p style={{...pill, left: s(12), bottom: s(12), margin: s(0)}}>{label}</p>}
