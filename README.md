@@ -24,8 +24,6 @@ npx twitter-snap@latest https://x.com/SpaceX/status/1786759044948189202
   <img src="./docs/img/quote.png" width="49%" />
 </p>
 
-[More Samples](https://github.com/fa0311/twitter-snap/issues/47)
-
 ```shell
 # Interactive mode
 npx twitter-snap@latest -i
