@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises'
 import ffmpeg from 'fluent-ffmpeg'
 
 export type VideoUtilsParam = {
@@ -51,10 +52,12 @@ export class VideoUtils {
     command.inputFormat('lavfi')
     command.addOption('-t', '0.01')
     command.output(temp)
-    return this.runFFMpeg(command).then(
+    const holds = await this.runFFMpeg(command).then(
       () => true,
       () => false,
     )
+    await fs.rm(temp, {force: true}) // the probe is not a render intermediate, --noCleanup does not keep it
+    return holds
   }
 
   getFFmpeg = () => {
