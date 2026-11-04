@@ -1,5 +1,4 @@
 import * as fs from 'node:fs/promises'
-import {runCommand} from '@oclif/test'
 import {afterAll, beforeAll, describe, expect, it} from 'vitest'
 
 import {access, count, run} from './utils.js'
@@ -289,14 +288,11 @@ describe('Twitter test', () => {
     expect(result).toBeUndefined()
   })
 
-  // webp holds a still and motion alike: the post decides which. No -preset here, libwebp has its own presets.
   it('single_video_tweet_to_webp', async () => {
-    const {stderr, error, result} = await runCommand([
+    const {stderr, error, result} = await run(
       'https://x.com/SpaceX/status/1768794901586804837',
-      '--simpleLog',
-      '-o="temp/single_video_tweet_to_webp/{count}.webp"',
-      '--sessionType="guest"',
-    ])
+      'temp/single_video_tweet_to_webp/{count}.webp',
+    )
     await count('temp/single_video_tweet_to_webp', 1)
     await access('temp/single_video_tweet_to_webp/0.webp')
     expect(stderr).toBe('')
@@ -305,12 +301,10 @@ describe('Twitter test', () => {
   })
 
   it('single_text_tweet_to_webp', async () => {
-    const {stderr, error, result} = await runCommand([
+    const {stderr, error, result} = await run(
       'https://x.com/elonmusk/status/1349129669258448897',
-      '--simpleLog',
-      '-o="temp/single_text_tweet_to_webp/{count}.webp"',
-      '--sessionType="guest"',
-    ])
+      'temp/single_text_tweet_to_webp/{count}.webp',
+    )
     await count('temp/single_text_tweet_to_webp', 1)
     await access('temp/single_text_tweet_to_webp/0.webp')
     expect(stderr).toBe('')
