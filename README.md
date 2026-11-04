@@ -8,7 +8,7 @@ npx twitter-snap@latest https://x.com/SpaceX/status/1786759044948189202
 ```
 
 <p float="left">
-  <img src="./docs/img/post-light.png" width="49%" />
+  <img src="./docs/img/post-light.webp" width="49%" />
   <img src="./docs/img/post-dark.png" width="49%" />
   <img src="./docs/img/post-x-light.png" width="49%" />
   <img src="./docs/img/post-x-dark.png" width="49%" />
