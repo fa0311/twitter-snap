@@ -35,19 +35,19 @@ npx twitter-snap@latest https://twitter.com/elonmusk/status/1349129669258448897 
 # Login with puppeteer
 npx twitter-snap@latest https://twitter.com/elonmusk/status/1349129669258448897 --session-type browser
 
-# Reproduce the post page of x.com.
-npx twitter-snap@latest --theme RenderXReference https://x.com/elonmusk/status/1604617643973124097
-# Put the author's thread around the tweet in one image.
-npx twitter-snap@latest --thread https://x.com/SpaceX/status/1786759044948189202
-# Show the post translated into a language, as x.com does (needs login).
-npx twitter-snap@latest --translate en https://x.com/teslajapan/status/2113567187046993971 --session-type file --cookies-file cookies.json
-
 # Output the API response directly to a file in raw JSON format.
 npx twitter-snap@latest --theme Json https://x.com/elonmusk/status/1349129669258448897 -o output/data.json
 # Download the media file and save it directly to a file in its raw format.
 npx twitter-snap@latest --theme Media https://x.com/elonmusk/status/1349129669258448897 -o output/{count}
 # Use chatgpt to summarize the data in this tweet.
 npx twitter-snap@latest --theme LiteJson -o {stdout} https://x.com/elonmusk | chatgpt -p 'Summarize the data in this tweet.'
+
+# Look like the post page of x.com.
+npx twitter-snap@latest --theme RenderXReference https://x.com/elonmusk/status/1604617643973124097
+# Include the author's thread.
+npx twitter-snap@latest --thread https://x.com/SpaceX/status/1786759044948189202
+# Translate the post.
+npx twitter-snap@latest --translate en https://x.com/teslajapan/status/2113567187046993971 --session-type file
 ```
 
 ## Install
