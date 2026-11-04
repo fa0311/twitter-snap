@@ -1,4 +1,5 @@
 import * as fs from 'node:fs/promises'
+import {runCommand} from '@oclif/test'
 import {afterAll, beforeAll, describe, expect, it} from 'vitest'
 
 import {access, count, run} from './utils.js'
@@ -283,6 +284,35 @@ describe('Twitter test', () => {
       'Json',
     )
     expect(stdout).toContain('SpaceX')
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
+  })
+
+  // webp holds a still and motion alike: the post decides which. No -preset here, libwebp has its own presets.
+  it('single_video_tweet_to_webp', async () => {
+    const {stderr, error, result} = await runCommand([
+      'https://x.com/SpaceX/status/1768794901586804837',
+      '--simpleLog',
+      '-o="temp/single_video_tweet_to_webp/{count}.webp"',
+      '--sessionType="guest"',
+    ])
+    await count('temp/single_video_tweet_to_webp', 1)
+    await access('temp/single_video_tweet_to_webp/0.webp')
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
+  })
+
+  it('single_text_tweet_to_webp', async () => {
+    const {stderr, error, result} = await runCommand([
+      'https://x.com/elonmusk/status/1349129669258448897',
+      '--simpleLog',
+      '-o="temp/single_text_tweet_to_webp/{count}.webp"',
+      '--sessionType="guest"',
+    ])
+    await count('temp/single_text_tweet_to_webp', 1)
+    await access('temp/single_text_tweet_to_webp/0.webp')
     expect(stderr).toBe('')
     expect(error).toBeUndefined()
     expect(result).toBeUndefined()

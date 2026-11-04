@@ -46,6 +46,8 @@ npx twitter-snap@latest --translate en https://x.com/teslajapan/status/211356718
 npx twitter-snap@latest --theme Json https://x.com/elonmusk/status/1349129669258448897 -o output/data.json
 # Download the media file and save it directly to a file in its raw format.
 npx twitter-snap@latest --theme Media https://x.com/elonmusk/status/1349129669258448897 -o output/{count}
+# Output as WebP (animated when the post has a video).
+npx twitter-snap@latest https://x.com/SpaceX/status/1786759044948189202 -o output/{id}.webp
 # Use chatgpt to summarize the data in this tweet.
 npx twitter-snap@latest --theme LiteJson -o {stdout} https://x.com/elonmusk | chatgpt -p 'Summarize the data in this tweet.'
 ```

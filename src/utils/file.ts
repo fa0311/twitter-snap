@@ -38,7 +38,7 @@ export class FileUtils {
   tempCleanup = async () => {
     await Promise.all(
       this.tempPathList.map(async (temp) => {
-        await fs.rm(temp.path.toString(), {recursive: temp.type === 'dir'})
+        await fs.rm(temp.path.toString(), {force: true, recursive: temp.type === 'dir'}) // a probe may never have written its file
       }),
     )
     this.tempPathList = []

@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import {sep} from 'node:path'
 
-const imageFormat = new Set(['png', 'jpg', 'jpeg', 'webp', 'svg', 'pdf'])
+const imageFormat = new Set(['png', 'jpg', 'jpeg', 'svg', 'pdf'])
 
 export class DirectoryPath {
   constructor(public path: string) {}
