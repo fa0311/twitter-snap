@@ -8,14 +8,20 @@ npx twitter-snap@latest https://twitter.com/elonmusk/status/1770222178279252062
 ```
 
 <p float="left">
-  <img src="./docs/img/output-1.png" width="49%" />
-  <img src="./docs/img/output-2.png" width="49%" />
-  <img src="./docs/img/output-3.png" width="49%" />
-  <img src="./docs/img/output-4.png" width="49%" />
+  <img src="./docs/img/post-light.png" width="49%" />
+  <img src="./docs/img/post-dark.png" width="49%" />
+  <img src="./docs/img/post-x-light.png" width="49%" />
+  <img src="./docs/img/post-x-dark.png" width="49%" />
 </p>
 
 <p float="left">
-  <img src="./docs/img/output-1-1.png" width="49%" />
+  <img src="./docs/img/thread.png" width="49%" />
+  <img src="./docs/img/pixiv.png" width="49%" />
+</p>
+
+<p float="left">
+  <img src="./docs/img/translate.png" width="49%" />
+  <img src="./docs/img/quote.png" width="49%" />
 </p>
 
 [More Samples](https://github.com/fa0311/twitter-snap/issues/47)
@@ -25,7 +31,7 @@ npx twitter-snap@latest https://twitter.com/elonmusk/status/1770222178279252062
 npx twitter-snap@latest -i
 ```
 
-<img src="./docs/img/input-1.png" width="49%" />
+<img src="./docs/img/interactive.png" width="49%" />
 
 ---
 
