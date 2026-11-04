@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises'
 import ffmpeg from 'fluent-ffmpeg'
 
 export type VideoUtilsParam = {
@@ -39,10 +40,24 @@ export class VideoUtils {
     command.addOption('-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2')
     command.addOption('-r', '30')
     command.addOption('-t', '5')
-    command.addOption('-c:v', 'libx264')
     command.addOption('-pix_fmt', 'yuv420p')
     command.output(output)
     await this.runFFMpegIntegration(command, title)
+  }
+
+  // Whether the container of `temp` holds a sound track: ffmpeg is asked to write a tiny silent one into it.
+  holdsAudio = async (temp: string) => {
+    const command = this.getFFmpeg()
+    command.input('anullsrc=r=48000:cl=mono')
+    command.inputFormat('lavfi')
+    command.addOption('-t', '0.01')
+    command.output(temp)
+    const holds = await this.runFFMpeg(command).then(
+      () => true,
+      () => false,
+    )
+    await fs.rm(temp, {force: true}) // the probe is not a render intermediate, --noCleanup does not keep it
+    return holds
   }
 
   getFFmpeg = () => {

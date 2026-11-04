@@ -287,4 +287,28 @@ describe('Twitter test', () => {
     expect(error).toBeUndefined()
     expect(result).toBeUndefined()
   })
+
+  it('single_video_tweet_to_webp', async () => {
+    const {stderr, error, result} = await run(
+      'https://x.com/SpaceX/status/1768794901586804837',
+      'temp/single_video_tweet_to_webp/{count}.webp',
+    )
+    await count('temp/single_video_tweet_to_webp', 1)
+    await access('temp/single_video_tweet_to_webp/0.webp')
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
+  })
+
+  it('single_text_tweet_to_webp', async () => {
+    const {stderr, error, result} = await run(
+      'https://x.com/elonmusk/status/1349129669258448897',
+      'temp/single_text_tweet_to_webp/{count}.webp',
+    )
+    await count('temp/single_text_tweet_to_webp', 1)
+    await access('temp/single_text_tweet_to_webp/0.webp')
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
+  })
 })

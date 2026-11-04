@@ -180,6 +180,7 @@ export class RenderBasicVideo {
       command.inputOptions('-loop', '1')
     }
 
+    const silent = !(await this.utils.video.holdsAudio(this.utils.file.getTemp().toString())) // e.g. an animated image
     const filters = [`[0]scale=trunc(iw/2)*2:trunc(ih/2)*2[i]`]
     let clip = 0
     let offset = 0
@@ -189,11 +190,16 @@ export class RenderBasicVideo {
       const inputs = group.map(() => 1 + clip++)
       const pad = `scale=w=${width}:h=${height}:force_original_aspect_ratio=1,pad=w=${width}:h=${height}:x=trunc((ow-iw)/4)*2:y=trunc((oh-ih)/4)*2:color=black,setsar=1/1`
       const all = (e: string) => inputs.map((_, j) => `[${e}${k}_${j}]`).join('')
+      if (!silent) {
+        filters.push(
+          ...inputs.map((n, j) => `[${n}]anull[a${k}_${j}]`),
+          `${all('a')}concat=n=${inputs.length}:v=0:a=1[audio${k}]`,
+        )
+      }
+
       filters.push(
-        ...inputs.map((n, j) => `[${n}]anull[a${k}_${j}]`),
         ...inputs.map((n, j) => `[${n}]${pad}[v${k}_${j}]`),
         `${all('v')}concat=n=${inputs.length}:v=1:a=0[video${k}]`,
-        `${all('a')}concat=n=${inputs.length}:v=0:a=1[audio${k}]`,
         `[video${k}]tpad=start_duration=${offset}:start_mode=clone[wait${k}]`,
         `[${1 + clips.length + k}:v]alphaextract[mask${k}]`,
         `[wait${k}][mask${k}]alphamerge=shortest=1[rounded${k}]`,
@@ -203,13 +209,11 @@ export class RenderBasicVideo {
       offset += inputs.reduce((sum, n) => sum + clips[n - 1].duration, 0)
       main = `over${k}`
     }
-    filters.push(
-      `[${main}]format=yuv420p[marge]`,
-      `${groups.map((_, k) => `[audio${k}]`).join('')}concat=n=${groups.length}:v=0:a=1[audio]`,
-    )
+    filters.push(`[${main}]format=yuv420p[marge]`)
+    if (!silent) filters.push(`${groups.map((_, k) => `[audio${k}]`).join('')}concat=n=${groups.length}:v=0:a=1[audio]`)
     command.complexFilter(filters)
     command.map('[marge]')
-    command.map('[audio]')
+    if (!silent) command.map('[audio]')
 
     command.output(this.utils.file.path.toString())
     await this.utils.video.runFFMpegIntegration(command, title)
