@@ -181,7 +181,7 @@ export class RenderBasicVideo {
     }
 
     const silent = !(await this.utils.video.holdsAudio(this.utils.file.getTemp().toString())) // e.g. an animated image
-    const filters = [`[0]scale=trunc(iw/2)*2:trunc(ih/2)*2[i]`]
+    const filters = [`[0]crop=trunc(iw/2)*2:trunc(ih/2)*2[i]`]
     let clip = 0
     let offset = 0
     let main = 'i'
