@@ -99,19 +99,19 @@ export class ElementColorUtils extends ElementUtils {
       }
 
       case 'RenderTransparent': {
-        return 'none'
+        return 'transparent'
       }
 
       case 'RenderTransparentDark': {
-        return 'none'
+        return 'transparent'
       }
 
       case 'RenderTransparentShadow': {
-        return 'none'
+        return 'transparent'
       }
 
       case 'RenderTransparentShadowDark': {
-        return 'none'
+        return 'transparent'
       }
 
       case 'RenderXReference': {
