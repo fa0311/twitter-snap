@@ -92,6 +92,23 @@ describe('Twitter test', () => {
     expect(result).toBeUndefined()
   })
 
+  it('transparent_theme_image', async () => {
+    const {stderr, error, result, stdout} = await run(
+      'https://x.com/elonmusk/status/1604617643973124097',
+      'temp/transparent_theme_image/{count}.png',
+      '--theme',
+      'RenderTransparentShadow',
+    )
+    await count('temp/transparent_theme_image', 1)
+    await access('temp/transparent_theme_image/0.png')
+
+    expect(stdout).toContain('Rendering')
+
+    expect(stderr).toBe('')
+    expect(error).toBeUndefined()
+    expect(result).toBeUndefined()
+  })
+
   it('thread_to_image', async () => {
     // the third post of SpaceX's EVA suit thread: a guest reads the two posts above it one by one
     const {stderr, error, result, stdout} = await run(
