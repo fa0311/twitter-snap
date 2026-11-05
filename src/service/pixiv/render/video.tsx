@@ -47,7 +47,7 @@ export const ugoiraEncode = async (utils: SnapRenderUtils, ugoira: UgoiraBody, o
   command.input(imagesTemp.toString())
   command.inputOptions(['-f', 'concat'])
   command.inputOptions(['-safe', '0'])
-  command.complexFilter([`[0:v]scale=trunc(iw/2)*2:trunc(ih/2)*2[output]`])
+  command.complexFilter([`[0:v]crop=trunc(iw/2)*2:trunc(ih/2)*2[output]`])
   command.map('[output]')
   if (output.extension === 'mov') {
     command.addOption('-c:v', 'prores_ks')
@@ -80,7 +80,7 @@ export const pixivVideoRender = async (data: PixivData, utils: SnapRenderColorUt
   command.input(ugoiraTemp.toString())
 
   command.complexFilter([
-    `[0]scale=trunc(iw/2)*2:trunc(ih/2)*2[i]`,
+    `[0]crop=trunc(iw/2)*2:trunc(ih/2)*2[i]`,
     `[1]scale=${width}:-1[video]`,
     `[i][video]overlay=x=${overlay}:y=${overlay}[marge]`,
   ])

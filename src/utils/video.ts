@@ -37,7 +37,7 @@ export class VideoUtils {
     const command = this.getFFmpeg()
     command.input(input)
     command.addInputOptions('-loop', '1')
-    command.addOption('-vf', 'scale=trunc(iw/2)*2:trunc(ih/2)*2')
+    command.addOption('-vf', 'crop=trunc(iw/2)*2:trunc(ih/2)*2')
     command.addOption('-r', '30')
     command.addOption('-t', '5')
     command.addOption('-pix_fmt', 'yuv420p')
