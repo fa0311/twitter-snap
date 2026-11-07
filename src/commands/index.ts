@@ -58,7 +58,7 @@ export default class Default extends Command {
     }),
     ffmpegTimeout: Flags.integer({
       default: -1,
-      description: 'FFmpeg timeout',
+      description: 'FFmpeg timeout in seconds',
     }),
     ffmpegPath: Flags.string({
       aliases: ['ffmpeg-path'],

@@ -169,7 +169,7 @@ FLAGS
       [default: ffmpeg] FFmpeg path
 
   --ffmpegTimeout=<value>
-      [default: -1] FFmpeg timeout
+      [default: -1] FFmpeg timeout in seconds
 
   --ffprobePath=<value>
       [default: ffprobe] FFprobe path
