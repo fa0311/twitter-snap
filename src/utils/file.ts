@@ -1,5 +1,4 @@
 import fs from 'node:fs/promises'
-import type {ImageResponse} from '@vercel/og'
 
 import {DirectoryPath, type FilePath, type URLPath} from './path.js'
 
@@ -48,9 +47,9 @@ export class FileUtils {
     await path.writeFile(Buffer.from(data))
   }
 
-  tempImg = async (img: ImageResponse) => {
+  tempImg = async (img: Buffer) => {
     const temp = this.getTemp('png')
-    await this.writeFile(await img.arrayBuffer(), temp)
+    await temp.writeFile(img)
     return temp
   }
 
@@ -60,8 +59,8 @@ export class FileUtils {
     return temp
   }
 
-  saveImg = async (img: ImageResponse) => {
-    await this.writeFile(await img.arrayBuffer(), this.path)
+  saveImg = async (img: Buffer) => {
+    await this.path.writeFile(img)
   }
 
   save = async (data: ArrayBuffer) => {

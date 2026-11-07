@@ -59,12 +59,6 @@ const app = new SnapApp(
       }
     }
   },
-  async () => {
-    return {
-      text: undefined,
-      emoji: 'twemoji',
-    }
-  },
   async () => {},
 )
 

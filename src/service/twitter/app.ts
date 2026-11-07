@@ -40,28 +40,6 @@ const app = new SnapApp(
     }
   },
   async (utils) => {
-    const base = 'https://github.com/fa0311/twitter-snap-core/releases/download/assets-fonts/'
-    const list = [
-      ['SEGOEUISL.TTF', 'Segoe UI', 500, 'normal'],
-      ['SEGOEUIB.TTF', 'Segoe UI', 700, 'normal'],
-      ['SEGUISLI.TTF', 'Segoe UI', 500, 'italic'],
-      ['SEGOEUIZ.TTF', 'Segoe UI', 700, 'italic'],
-      ['Meiryo.ttf', 'Meiryo', 500, 'normal'],
-      ['Meiryo-Bold.ttf', 'Meiryo', 700, 'normal'],
-      ['Meiryo-Italic.ttf', 'Meiryo', 500, 'italic'],
-      ['Meiryo-BoldItalic.ttf', 'Meiryo', 700, 'italic'],
-    ] as const
-    const fonts = list.map(async ([file, name, weight, style]) => {
-      const data = await utils.getFonts(file, async () => (await fetch(`${base}${file}`)).arrayBuffer())
-      return {data, name, weight, style}
-    })
-
-    return {
-      text: await Promise.all(fonts),
-      emoji: 'twemoji',
-    }
-  },
-  async (utils) => {
     TwitterOpenApi.fetchApi = async (...args) => {
       const res = await fetch(...args)
       if (res.status === 429) {
