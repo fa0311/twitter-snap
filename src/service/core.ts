@@ -44,7 +44,7 @@ const toNextParam = (param: SnapRunParam, log: Logger): SnapRenderNextParam => {
   const theme = param.theme ?? 'RenderOceanBlueColor'
   return {
     width: param.width ?? (theme.startsWith('RenderXReference') ? 600 : 650), // x.com's column is 600px
-    font: param.font ?? {text: [], emoji: undefined},
+    font: param.font ?? {text: []},
     scale: param.scale ?? 1,
     theme,
     translate: param.translate,

@@ -1,5 +1,6 @@
 import {mediaCallback, Session, SnapApp, SnapRender} from '../../app.js'
 import {SnapAppCookies} from '../../utils/cookies.js'
+import {loadFonts} from '../../utils/font.js'
 import {URLPath} from '../../utils/path.js'
 import {pixivRender} from './render/image.js'
 import {pixivVideoRender, ugoiraEncode} from './render/video.js'
@@ -59,10 +60,9 @@ const app = new SnapApp(
       }
     }
   },
-  async () => {
+  async (utils) => {
     return {
-      text: undefined,
-      emoji: 'twemoji',
+      text: await loadFonts(utils),
     }
   },
   async () => {},

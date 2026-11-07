@@ -1,5 +1,6 @@
 import {type TweetApiUtilsData, TwitterOpenApi, type TwitterOpenApiClient} from 'twitter-openapi-typescript'
 import {mediaCallback, Session, SnapApp, type SnapAppUtils, SnapRender} from './../../app.js'
+import {loadFonts} from '../../utils/font.js'
 import {URLPath} from '../../utils/path.js'
 import type {SnapRenderColorUtils, SnapRenderUtils} from '../../utils/render.js'
 import type {FileReplace} from '../../utils/replace.js'
@@ -40,25 +41,8 @@ const app = new SnapApp(
     }
   },
   async (utils) => {
-    const base = 'https://github.com/fa0311/twitter-snap-core/releases/download/assets-fonts/'
-    const list = [
-      ['SEGOEUISL.TTF', 'Segoe UI', 500, 'normal'],
-      ['SEGOEUIB.TTF', 'Segoe UI', 700, 'normal'],
-      ['SEGUISLI.TTF', 'Segoe UI', 500, 'italic'],
-      ['SEGOEUIZ.TTF', 'Segoe UI', 700, 'italic'],
-      ['Meiryo.ttf', 'Meiryo', 500, 'normal'],
-      ['Meiryo-Bold.ttf', 'Meiryo', 700, 'normal'],
-      ['Meiryo-Italic.ttf', 'Meiryo', 500, 'italic'],
-      ['Meiryo-BoldItalic.ttf', 'Meiryo', 700, 'italic'],
-    ] as const
-    const fonts = list.map(async ([file, name, weight, style]) => {
-      const data = await utils.getFonts(file, async () => (await fetch(`${base}${file}`)).arrayBuffer())
-      return {data, name, weight, style}
-    })
-
     return {
-      text: await Promise.all(fonts),
-      emoji: 'twemoji',
+      text: await loadFonts(utils),
     }
   },
   async (utils) => {

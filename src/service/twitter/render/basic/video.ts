@@ -1,11 +1,10 @@
 import fs from 'node:fs'
-import {ImageResponse} from '@vercel/og'
 import {PNG} from 'pngjs'
 import {createElement} from 'react'
 import type {TweetApiUtilsData} from 'twitter-openapi-typescript'
-
 import {type FilePath, URLPath} from '../../../../utils/path.js'
 import type {SnapRenderColorUtils} from '../../../../utils/render.js'
+import {renderPng} from '../../../../utils/render.js'
 import type {TweetThread} from '../../utils.js'
 import {getUserScreenName} from '../utils/utils.js'
 
@@ -115,11 +114,11 @@ export class RenderBasicVideo {
       const shape = createElement('div', {
         style: {display: 'flex', width, height, background: '#000000', borderRadius: blank.radius},
       })
-      const png = new ImageResponse(shape, {width, height}).arrayBuffer()
+      const png = renderPng(shape, {width, height, fonts: []})
       removeList.push(mask.toString())
       return {blank, height, mask, png, width}
     })
-    for (const {mask, png} of frames) fs.writeFileSync(mask.toString(), Buffer.from(await png))
+    for (const {mask, png} of frames) fs.writeFileSync(mask.toString(), await png)
 
     const res = groups.flat().map(async ({url}) => {
       const path = URLPath.fromURL(url)

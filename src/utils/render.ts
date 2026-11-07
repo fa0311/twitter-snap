@@ -1,11 +1,20 @@
-import {ImageResponse} from '@vercel/og'
 import type {ReactElement} from 'react'
+import satori from 'satori'
+import sharp from 'sharp'
 
 import type {ElementColorUtils, ElementUtils} from './element.js'
 import type {FileUtils} from './file.js'
-import type {FontOptions} from './font.js'
+import {type FontOptions, type FontTextOptions, loadAdditionalAsset} from './font.js'
 import type {Logger} from './logger.js'
 import type {VideoUtils} from './video.js'
+
+export const renderPng = async (
+  element: ReactElement,
+  options: {width: number; height?: number; fonts: FontTextOptions[]},
+) => {
+  const svg = await satori(element, {...options, loadAdditionalAsset})
+  return sharp(Buffer.from(svg)).resize(options.width).png().toBuffer()
+}
 
 export class SnapRenderBaseUtils {
   public stdout: unknown = undefined
@@ -19,12 +28,7 @@ export class SnapRenderBaseUtils {
   ) {}
 
   render = async (element: ReactElement) => {
-    return new ImageResponse(element, {
-      emoji: this.font.emoji,
-      fonts: this.font.text,
-      height: undefined,
-      width: this.width,
-    })
+    return renderPng(element, {width: this.width, fonts: this.font.text ?? []})
   }
 }
 
