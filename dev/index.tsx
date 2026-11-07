@@ -8,7 +8,7 @@ import {apps} from '../src/service/core.js'
 import simpleCache from '../src/utils/cache.js'
 import {ElementColorUtils} from '../src/utils/element.js'
 import {FileUtils} from '../src/utils/file.js'
-import {type FontOptions, FontUtils} from '../src/utils/font.js'
+import {type Font, loadFonts} from '../src/utils/font.js'
 import {LoggerMute} from '../src/utils/logger.js'
 import {SnapAppBrowserUtils} from '../src/utils/login.js'
 import {FilePath} from '../src/utils/path.js'
@@ -20,7 +20,7 @@ const app = new Hono()
 
 app.use(renderer)
 
-const sessionCache = simpleCache<[SnapSession, FontOptions]>()
+const sessionCache = simpleCache<[SnapSession, Font[]]>()
 const itemCache = simpleCache<SnapRenderItem>()
 
 const getRender = async (url: string) => {
@@ -29,8 +29,8 @@ const getRender = async (url: string) => {
     throw new Error('Unsupported URL')
   }
 
-  const [session, font] = await sessionCache(app.name, async () => {
-    const font = await app.fonts(new FontUtils({}))
+  const [session, fonts] = await sessionCache(app.name, async () => {
+    const fonts = await loadFonts()
     const type = await fs
       .access('cookies.json')
       .then(() => 'file' as const)
@@ -42,7 +42,7 @@ const getRender = async (url: string) => {
         cookiesFile: 'cookies.json',
       }),
     )
-    return [session, font]
+    return [session, fonts]
   })
 
   const item = await itemCache(url, async () => {
@@ -50,17 +50,17 @@ const getRender = async (url: string) => {
     for await (const item of render) return item
     throw new Error('No data')
   })
-  return {item, font}
+  return {item, fonts}
 }
 
-const getUtils = (font: FontOptions, name: string, theme: string, width: number, scale: number) => {
+const getUtils = (fonts: Font[], name: string, theme: string, width: number, scale: number) => {
   return new SnapRenderColorUtils(
     new LoggerMute(),
     new FileUtils(FilePath.from(name)),
     new VideoUtils({
       ffmpegAdditonalOption: ['-preset', 'ultrafast'],
     }),
-    font,
+    fonts,
     width,
     new ElementColorUtils({theme, scale}),
   )
@@ -115,9 +115,9 @@ app.get('/', async (c) => {
 
 app.get('/element', async (c) => {
   const {url, theme, width, scale} = getQuery(c)
-  const {font, item} = await getRender(url)
+  const {fonts, item} = await getRender(url)
   const id = Math.random().toString(32).slice(2)
-  const param = getUtils(font, `temp/${id}.png`, theme, width, scale)
+  const param = getUtils(fonts, `temp/${id}.png`, theme, width, scale)
   const element = await item.image(theme, param)
   return c.render(
     <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center'}}>
@@ -128,9 +128,9 @@ app.get('/element', async (c) => {
 
 app.get('/image', async (c) => {
   const {url, theme, width, scale} = getQuery(c)
-  const {font, item} = await getRender(url)
+  const {fonts, item} = await getRender(url)
   const id = Math.random().toString(32).slice(2)
-  const param = getUtils(font, `temp/${id}.png`, theme, width, scale)
+  const param = getUtils(fonts, `temp/${id}.png`, theme, width, scale)
   const element = await item.image(theme, param)
   c.header('Content-Type', 'image/png')
   const body = await param.render(element)
@@ -140,9 +140,9 @@ app.get('/image', async (c) => {
 
 app.get('/video', async (c) => {
   const {url, theme, width, scale} = getQuery(c)
-  const {font, item} = await getRender(url)
+  const {fonts, item} = await getRender(url)
   const id = Math.random().toString(32).slice(2)
-  const param = getUtils(font, `temp/${id}.mp4`, theme, width, scale)
+  const param = getUtils(fonts, `temp/${id}.mp4`, theme, width, scale)
   await item.video(theme, param)
   const body = await fs.readFile(`./temp/${id}.mp4`)
   await param.file.tempCleanup()

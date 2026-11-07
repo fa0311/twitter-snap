@@ -154,9 +154,9 @@ export default class Default extends Command {
         text: 'Initializing API',
         callback: app.init(),
       })
-      const font = await logger.guard({
+      const fonts = await logger.guard({
         text: 'Loading font',
-        callback: app.getFont({cachePath: flags.fontPath}),
+        callback: app.getFonts(flags.fontPath),
       })
       const session = await logger.guard({
         text: 'Logging in',
@@ -183,7 +183,7 @@ export default class Default extends Command {
           try {
             const res = await run({
               width: flags.width,
-              font,
+              fonts,
               scale: flags.scale,
               theme: flags.theme,
               translate: flags.translate,

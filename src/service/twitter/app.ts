@@ -1,6 +1,5 @@
 import {type TweetApiUtilsData, TwitterOpenApi, type TwitterOpenApiClient} from 'twitter-openapi-typescript'
 import {mediaCallback, Session, SnapApp, type SnapAppUtils, SnapRender} from './../../app.js'
-import {loadFonts} from '../../utils/font.js'
 import {URLPath} from '../../utils/path.js'
 import type {SnapRenderColorUtils, SnapRenderUtils} from '../../utils/render.js'
 import type {FileReplace} from '../../utils/replace.js'
@@ -38,11 +37,6 @@ const app = new SnapApp(
       case 'guest': {
         return new Session(await twitter.getGuestClient())
       }
-    }
-  },
-  async (utils) => {
-    return {
-      text: await loadFonts(utils),
     }
   },
   async (utils) => {

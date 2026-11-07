@@ -1,9 +1,8 @@
 import type {SnapAppInfo, SnapRenderNextParam, SnapRenderStream, SnapSession} from '../app.js'
 import simpleCache from '../utils/cache.js'
-import {type FontOptions, FontUtils, type FontUtilsOptions} from '../utils/font.js'
+import {type Font, loadFonts} from '../utils/font.js'
 import {type Logger, LoggerMute} from '../utils/logger.js'
 import {SnapAppBrowserUtils, type SnapAppBrowserUtilsParams} from '../utils/login.js'
-import {DirectoryPath} from '../utils/path.js'
 import type {SnapRenderBaseUtils} from '../utils/render.js'
 import pixiv from './pixiv/app.js'
 import twitter from './twitter/app.js'
@@ -15,7 +14,7 @@ type SnapRunParam = {
   ffmpegPath?: string
   ffmpegTimeout?: number
   ffprobePath?: string
-  font?: FontOptions
+  fonts: Font[]
   output?: '{id}-{count}.{if-type:png:mp4:json:}' | ({} & string)
   scale?: number
   theme?: 'Json' | 'Media' | 'RenderOceanBlueColor' | ({} & string)
@@ -44,7 +43,7 @@ const toNextParam = (param: SnapRunParam, log: Logger): SnapRenderNextParam => {
   const theme = param.theme ?? 'RenderOceanBlueColor'
   return {
     width: param.width ?? (theme.startsWith('RenderXReference') ? 600 : 650), // x.com's column is 600px
-    font: param.font ?? {text: []},
+    fonts: param.fonts,
     scale: param.scale ?? 1,
     theme,
     translate: param.translate,
@@ -82,8 +81,8 @@ export const getSnapAppRender = ({logger, url, allowAppName}: GetSnapAppRenderPa
     init() {
       return app.init({logger: log})
     },
-    getFont({cachePath}: {cachePath?: string} = {}) {
-      return app.fonts(new FontUtils({dir: cachePath ? DirectoryPath.from(cachePath) : undefined}))
+    getFonts(cachePath?: string) {
+      return loadFonts(cachePath)
     },
     login(param: SnapAppBrowserUtilsParams = {}) {
       return app.login(new SnapAppBrowserUtils(param))
@@ -101,28 +100,23 @@ type GetSnapAppRenderWithCacheParam<T> = {
   url: string
   allowAppName?: string[]
   cachePath?: string
-  fontUtils?: FontUtilsOptions
   sessionType?: SnapAppBrowserUtilsParams['sessionType']
   browserProfile?: SnapAppBrowserUtilsParams['browserProfile']
   cookiesFile?: SnapAppBrowserUtilsParams['cookiesFile']
   translate?: SnapAppBrowserUtilsParams['translate']
   limit?: number
   thread?: boolean
-  callback: (run: (param: Omit<SnapRunParam, 'font'>) => Promise<SnapRenderBaseUtils>) => Promise<T>
+  callback: (run: (param: Omit<SnapRunParam, 'fonts'>) => Promise<SnapRenderBaseUtils>) => Promise<T>
 }
 
 export const getSnapAppRenderWithCache = ({logger}: {logger?: Logger}) => {
   const log = logger ?? new LoggerMute()
-  const cache = simpleCache<[SnapSession, FontOptions]>()
+  const cache = simpleCache<[SnapSession, Font[]]>()
   return async <T>(args: GetSnapAppRenderWithCacheParam<T>) => {
     const app = getApp({url: args.url, allowAppName: args.allowAppName})
 
-    const [session, font] = await cache(app.name, async () => {
-      const font = await app.fonts(
-        new FontUtils({
-          dir: args.cachePath ? DirectoryPath.from(args.cachePath) : undefined,
-        }),
-      )
+    const [session, fonts] = await cache(app.name, async () => {
+      const fonts = await loadFonts(args.cachePath)
       const session = await app.login(
         new SnapAppBrowserUtils({
           sessionType: args.sessionType,
@@ -131,10 +125,10 @@ export const getSnapAppRenderWithCache = ({logger}: {logger?: Logger}) => {
           translate: args.translate,
         }),
       )
-      return [session, font]
+      return [session, fonts]
     })
     const render = await session.render(args.url, {limit: args.limit ?? 1, thread: args.thread ?? false})
 
-    return runAll(render, log, (run) => args.callback((param) => run({...param, font})))
+    return runAll(render, log, (run) => args.callback((param) => run({...param, fonts})))
   }
 }

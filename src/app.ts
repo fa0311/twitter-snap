@@ -3,7 +3,7 @@ import type {ReactElement} from 'react'
 import {type ColorThemeType, colorThemeList, hasKind, type ThemeNameType, type ThemeOf, themeList} from './config.js'
 import {ElementColorUtils, ElementUtils} from './utils/element.js'
 import {FileUtils} from './utils/file.js'
-import type {FontOptions, FontUtils} from './utils/font.js'
+import type {Font} from './utils/font.js'
 import type {Logger} from './utils/logger.js'
 import type {SnapAppBrowserUtils} from './utils/login.js'
 import type {FilePath} from './utils/path.js'
@@ -47,7 +47,6 @@ export type SnapAppInfo = {
   name: string
   pattern: RegExp
   routes: RegExp[]
-  fonts: (utils: FontUtils) => Promise<FontOptions>
   init: ({logger}: {logger: Logger}) => Promise<void>
   test: (url: string) => boolean
   login: (utils: SnapAppBrowserUtils) => Promise<SnapSession>
@@ -62,7 +61,6 @@ export class SnapApp<T1> implements SnapAppInfo {
     public name: string,
     pattern: string,
     public callback: (util: SnapAppBrowserUtils) => Promise<Session<T1>>,
-    public fonts: (utils: FontUtils) => Promise<FontOptions>,
     public init: ({logger}: {logger: Logger}) => Promise<void>,
   ) {
     this.pattern = new RegExp(pattern)
@@ -152,7 +150,7 @@ export type SnapRenderNextParam = {
   ffmpegTimeout?: number
   ffprobePath?: string
 
-  font: FontOptions
+  fonts: Font[]
   logger: Logger
   output: string
 
@@ -220,7 +218,7 @@ export class SnapRenderChild<T1> implements SnapRenderStream {
       ffprobePath,
       ffmpegTimeout,
       ffmpegAdditonalOption,
-      font,
+      fonts,
       width,
       translate,
     } = param
@@ -239,7 +237,7 @@ export class SnapRenderChild<T1> implements SnapRenderStream {
           ffprobePath,
           ffmpegAdditonalOption,
         }),
-        font,
+        fonts,
         width,
       ] as const
     }

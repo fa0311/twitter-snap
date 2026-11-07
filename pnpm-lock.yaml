@@ -181,6 +181,9 @@ importers:
       '@oclif/plugin-warn-if-update-available':
         specifier: ^4.0.5
         version: 4.0.5(supports-color@8.1.1)
+      '@twemoji/parser':
+        specifier: ^17.0.2
+        version: 17.0.2
       cli-color:
         specifier: ^2.0.4
         version: 2.0.4
@@ -1137,6 +1140,9 @@ packages:
   '@szmarczak/http-timer@5.0.1':
     resolution: {integrity: sha512-+PmQX0PiAYPMeVYe237LJAYvOMYW1j2rH5YROyS3b4CTVJum34HfRvKvAzozHAQG0TnHNdUfY9nCeUyRAs//cw==}
     engines: {node: '>=14.16'}
+
+  '@twemoji/parser@17.0.2':
+    resolution: {integrity: sha512-X/P7pHsGOxnrupQYUVetIeuxBGgffFu8CLwoPMMjH9CWmQvlXiCpbTW/BXxMOCWXQojgHdmgdvm6IsCqAQ5nxA==}
 
   '@types/chai@5.2.3':
     resolution: {integrity: sha512-Mw558oeA9fFbv65/y4mHtXDs9bPnFMZAL/jxdPFUpOHHIXX91mcgEHbS5Lahr+pwZFR8A7GQleRWeI6cGFC2UA==}
@@ -3347,6 +3353,8 @@ snapshots:
   '@szmarczak/http-timer@5.0.1':
     dependencies:
       defer-to-connect: 2.0.1
+
+  '@twemoji/parser@17.0.2': {}
 
   '@types/chai@5.2.3':
     dependencies:

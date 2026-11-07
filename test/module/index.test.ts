@@ -22,7 +22,7 @@ const first = async (render: SnapRenderStream): Promise<SnapRenderItem> => {
 
 const getSnap = (url: string) => {
   const snap = getSnapAppRender({url})
-  const font = snap.getFont()
+  const fonts = snap.getFonts()
   const item = snap
     .login({sessionType: 'guest'})
     .then((session) => snap.getRender({limit: 1, session}))
@@ -37,7 +37,7 @@ const getSnap = (url: string) => {
       warn: warn.put.bind(warn),
     })
     const res = await (await item).next({
-      font: await font,
+      fonts: await fonts,
       logger,
       output: name,
       scale: 1,
