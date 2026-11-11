@@ -1,6 +1,6 @@
 {
   "name": "twitter-snap",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Create beautiful Tweet images fast",
   "keywords": [
     "twitter",
@@ -79,8 +79,8 @@
     "react": "^19.3.1",
     "satori": "^0.33.5",
     "sharp": "^0.35.5",
-    "twitter-openapi-typescript": "^0.1.7",
-    "twitter-openapi-typescript-generated": "^0.1.6"
+    "twitter-openapi-typescript": "^0.1.8",
+    "twitter-openapi-typescript-generated": "^0.1.8"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
