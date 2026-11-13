@@ -93,7 +93,7 @@
     "@types/node": "^24.10.0",
     "@types/pngjs": "^6.0.5",
     "@types/react": "^19.3.0",
-    "hono": "^4.13.13",
+    "hono": "^4.13.16",
     "oclif": "^6.0.8",
     "react-dom": "^19.3.1",
     "rimraf": "^6.1.3",

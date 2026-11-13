@@ -235,13 +235,13 @@ importers:
         version: 2.5.15
       '@hono/react-renderer':
         specifier: ^1.0.1
-        version: 1.0.1(hono@4.13.13)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        version: 1.0.1(hono@4.13.16)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@hono/vite-build':
         specifier: ^1.11.1
-        version: 1.11.1(hono@4.13.13)
+        version: 1.11.1(hono@4.13.16)
       '@hono/vite-dev-server':
         specifier: ^0.26.1
-        version: 0.26.1(hono@4.13.13)
+        version: 0.26.1(hono@4.13.16)
       '@oclif/test':
         specifier: ^5.0.3
         version: 5.0.3(@oclif/core@5.1.10)(supports-color@8.1.1)
@@ -261,8 +261,8 @@ importers:
         specifier: ^19.3.0
         version: 19.3.0
       hono:
-        specifier: ^4.13.13
-        version: 4.13.13
+        specifier: ^4.13.16
+        version: 4.13.16
       oclif:
         specifier: ^6.0.8
         version: 6.0.8(@types/node@24.19.2)(supports-color@8.1.1)
@@ -1638,8 +1638,8 @@ packages:
     resolution: {integrity: sha512-Ox1pJVrDCyGHMG9CFg1tmrRUMRPRsAWYc/PinY0XzJU4K7y7vjNoLKIQ7BR5UJMCxNN8EM1MNDmHWA/B3aZUuw==}
     engines: {node: '>=6'}
 
-  hono@4.13.13:
-    resolution: {integrity: sha512-CQ46U0ZkAGmbT/4UxdzzGJpacP2IeKgY4a5/tOI9AABbpOMfK739wfDXmv1usCk+3RkKj1hQy4/fjhiwa2xlrA==}
+  hono@4.13.16:
+    resolution: {integrity: sha512-AOLOEhvrV+iH92xXCnFr/5+3KjPKcI3xP63XJtX5spAnkznPdHijlIsUTpi7/9EhWqrTCekw5c5zh1K+YsVw7A==}
     engines: {node: '>=16.9.0'}
 
   hosted-git-info@7.0.2:
@@ -2775,24 +2775,24 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
-  '@hono/node-server@1.19.19(hono@4.13.13)':
+  '@hono/node-server@1.19.19(hono@4.13.16)':
     dependencies:
-      hono: 4.13.13
+      hono: 4.13.16
 
-  '@hono/react-renderer@1.0.1(hono@4.13.13)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+  '@hono/react-renderer@1.0.1(hono@4.13.16)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
-      hono: 4.13.13
+      hono: 4.13.16
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
 
-  '@hono/vite-build@1.11.1(hono@4.13.13)':
+  '@hono/vite-build@1.11.1(hono@4.13.16)':
     dependencies:
-      hono: 4.13.13
+      hono: 4.13.16
 
-  '@hono/vite-dev-server@0.26.1(hono@4.13.13)':
+  '@hono/vite-dev-server@0.26.1(hono@4.13.16)':
     dependencies:
-      '@hono/node-server': 1.19.19(hono@4.13.13)
-      hono: 4.13.13
+      '@hono/node-server': 1.19.19(hono@4.13.16)
+      hono: 4.13.16
       minimatch: 9.0.9
 
   '@inquirer/ansi@1.0.2': {}
@@ -3737,7 +3737,7 @@ snapshots:
 
   hex-rgb@4.3.0: {}
 
-  hono@4.13.13: {}
+  hono@4.13.16: {}
 
   hosted-git-info@7.0.2:
     dependencies:
