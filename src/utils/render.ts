@@ -1,7 +1,7 @@
+import {Resvg} from '@resvg/resvg-js'
 import {parse} from '@twemoji/parser'
 import type {ReactElement} from 'react'
 import satori from 'satori'
-import sharp from 'sharp'
 
 import type {ElementColorUtils, ElementUtils} from './element.js'
 import type {FileUtils} from './file.js'
@@ -74,7 +74,7 @@ const loadAdditionalAsset = (code: string, segment: string) => {
 
 export const renderPng = async (element: ReactElement, options: {width: number; height?: number; fonts: Font[]}) => {
   const svg = await satori(element, {...options, loadAdditionalAsset})
-  return sharp(Buffer.from(svg)).resize(options.width).png().toBuffer()
+  return new Resvg(svg).render().asPng()
 }
 
 export class SnapRenderBaseUtils {

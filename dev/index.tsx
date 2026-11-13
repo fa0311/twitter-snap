@@ -135,7 +135,7 @@ app.get('/image', async (c) => {
   c.header('Content-Type', 'image/png')
   const body = await param.render(element)
   await param.file.tempCleanup()
-  return c.body(body)
+  return c.body(new Uint8Array(body))
 })
 
 app.get('/video', async (c) => {
