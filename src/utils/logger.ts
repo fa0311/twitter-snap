@@ -156,15 +156,16 @@ export class Logger {
     this.fail(this.toString(e))
   }
 
-  private fail(text?: string) {
+  // The failed step stays on screen and the error goes under it, whichever logger and step it was
+  private fail(text: string) {
     if (this.progress) {
       this.progress.fail()
-      this.error(text)
       this.update()
-      this.stackLogDump()
     } else {
       this.ora?.fail()
     }
+
+    this.error(text)
   }
 
   protected logNormalizer(e: unknown[]) {
