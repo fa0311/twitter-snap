@@ -244,7 +244,6 @@ EXAMPLES
 # Features
 
 - `https?://(www.)?(mobile.)?(x|twitter).com`
-
   - `/:user/status/:id`
   - `/search?:params`
   - `/home`
