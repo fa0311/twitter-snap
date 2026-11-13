@@ -16,6 +16,14 @@ updates:
       prefix: fix(deps)
       # no release for dev-deps
       prefix-development: chore(dev-deps)
+    groups:
+      deps:
+        dependency-type: 'production'
+      dev-deps:
+        dependency-type: 'development'
+      security:
+        applies-to: security-updates
+        patterns: ['*']
     ignore:
       - dependency-name: '@salesforce/dev-scripts'
       - dependency-name: '*'
