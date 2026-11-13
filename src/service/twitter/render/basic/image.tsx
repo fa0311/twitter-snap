@@ -461,6 +461,8 @@ export class RenderTweetImage {
                 )}
                 <p
                   style={{
+                    // satori paints like browsers: the absolute bar would cover an unpositioned label
+                    position: 'relative',
                     flexGrow: 1,
                     margin: s(0),
                     padding: this.utils.element.applyScales([0, 12]),
@@ -475,6 +477,7 @@ export class RenderTweetImage {
                 {results && (
                   <p
                     style={{
+                      position: 'relative',
                       margin: s(0),
                       paddingLeft: s(12),
                       fontSize: font,

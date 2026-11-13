@@ -1,6 +1,6 @@
 import {Resvg} from '@resvg/resvg-js'
 import {parse} from '@twemoji/parser'
-import type {ReactElement} from 'react'
+import {createElement, type ReactElement} from 'react'
 import satori from 'satori'
 
 import type {ElementColorUtils, ElementUtils} from './element.js'
@@ -72,8 +72,12 @@ const loadAdditionalAsset = (code: string, segment: string) => {
   return asset
 }
 
+// satori sizes boxes like browsers (content-box) since 0.34; the templates were written for its old border-box
+const borderBox = createElement('style', {}, '* { box-sizing: border-box; }')
+
 export const renderPng = async (element: ReactElement, options: {width: number; height?: number; fonts: Font[]}) => {
-  const svg = await satori(element, {...options, loadAdditionalAsset})
+  const root = createElement('div', {style: {display: 'flex', width: '100%'}}, borderBox, element)
+  const svg = await satori(root, {...options, loadAdditionalAsset})
   return new Resvg(svg).render().asPng()
 }
 
