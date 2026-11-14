@@ -93,13 +93,13 @@
     "@types/node": "^24.10.0",
     "@types/pngjs": "^6.0.5",
     "@types/react": "^19.3.0",
-    "hono": "^4.13.17",
+    "hono": "^4.13.18",
     "oclif": "^6.0.15",
     "react-dom": "^19.3.1",
     "rimraf": "^6.1.4",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
-    "vite": "^8.3.7",
+    "vite": "^8.3.8",
     "vitest": "^5.1.0"
   },
   "engines": {
