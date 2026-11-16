@@ -215,8 +215,8 @@ importers:
         specifier: ^7.0.0
         version: 7.0.0
       puppeteer:
-        specifier: ^25.16.0
-        version: 25.16.0
+        specifier: ^25.17.0
+        version: 25.17.0
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -841,8 +841,8 @@ packages:
     resolution: {integrity: sha512-//0sR/cow/s4ICQaYoAobOl4aU8cjU6x/V24V7XkKotb9+O+3zySIYp146vpaobYHnxa4pZX8NkV54Z5AwbDKA==}
     engines: {node: '>=12'}
 
-  '@puppeteer/browsers@3.2.6':
-    resolution: {integrity: sha512-MJP29gVoHznmqmwhH1tlZqzfeQ3aylTpSSa6WKZXtkwYUH02i9imBmWGTyZrbnAou5paX78SE4jMAUqnEPf8ug==}
+  '@puppeteer/browsers@3.2.7':
+    resolution: {integrity: sha512-B3C/v8OEEaJYcN1IzzgbPmt+GbFANr4Mf/NrqNuGk/dIchrv6quNqxgT+A6qE0Ge0MN95NjKUddcR1JMpYRMWA==}
     engines: {node: '>=22.12.0'}
     hasBin: true
     peerDependencies:
@@ -1451,8 +1451,8 @@ packages:
     resolution: {integrity: sha512-Btj2BOOO83o3WyH59e8MgXsxEQVcarkUOpEYrubB0urwnN10yQ364rsiByU11nZlqWYZm05i/of7io4mzihBtQ==}
     engines: {node: '>=8'}
 
-  devtools-protocol@0.0.1704951:
-    resolution: {integrity: sha512-GQhQOs9u/Mvm1zMtJIH872JS4AskuZdUSsPNPk4ChahtWAUqgz6atEtIsMt+nO7MqF1Ic4HxII/k8Cu36JivNg==}
+  devtools-protocol@0.0.1717327:
+    resolution: {integrity: sha512-3RDLDzyvv8XAYf1L+TL1og0EEk0eOW1Jn0yi88uG6Bj8fUKO1ZKfgNtwbJkqf5SWdPDS4VGEPxwdUWz78V6Xcg==}
 
   dom-serializer@2.0.0:
     resolution: {integrity: sha512-wIkAryiqt/nV5EQKqQpo3SToSOV9J0DnbJqwK7Wv/Trc92zIAYZ4FlMu+JPFW1DfGFt81ZTCGgDEabffXeLyJg==}
@@ -1822,6 +1822,10 @@ packages:
     resolution: {integrity: sha512-/vlFKAoH5Cgt3Ie+JLhRbwOsCQePABiU3tJ1egGvyQ+33R/vcwM2Zl2QR/LzjsBeItPt3oSVXapn+m4nQDvpzw==}
     engines: {node: '>=14'}
 
+  lilconfig@3.1.5:
+    resolution: {integrity: sha512-aRAOI9Ia43ygL4o1EOmC/sc/0OFxrm7qcQngiIyWaqVnSnz932ybJ07zyCcgMNGSDP8Yxaf88Xj1zHEXmvQ4SA==}
+    engines: {node: '>=14'}
+
   linebreak@1.1.0:
     resolution: {integrity: sha512-MHp03UImeVhB7XZtjd0E4n6+3xr5Dq/9xI/5FptGk5FrbDR3zagPa2DS6U8ks/3HjbKWG9Q1M2ufOzxV2qLYSQ==}
 
@@ -2098,12 +2102,12 @@ packages:
   proto-list@1.2.4:
     resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
 
-  puppeteer-core@25.16.0:
-    resolution: {integrity: sha512-VA5Pf54N8shfopNkZZXCdiiwfnnY8ZJYAMqFQRhlH5mGUhfwf53Ar770GPtdpTDLUqvQeYpIBtC9/G2Jij2IJw==}
+  puppeteer-core@25.17.0:
+    resolution: {integrity: sha512-YAgBitkd+K9gxRt+wzBAFTTkGjkC8aC2o4OxofsU8JUy2nnK/RflTCJ9bRCvCMNbq9TPhqFk4Phz98otN9FrGg==}
     engines: {node: '>=22.12.0'}
 
-  puppeteer@25.16.0:
-    resolution: {integrity: sha512-LOr3reYnxAYYfQkpopz1fQnL0LdvqhpR5U2Fu+QnwzTX2gpVTHsn91UETo5NNC1md2/oC54Zu1ChBXgZDNSP1A==}
+  puppeteer@25.17.0:
+    resolution: {integrity: sha512-J+OQNlI7I6ZjHhF6Q8M+LgiUGldF7meer5EqMJBZMHgnFN3zcehOhpz/x0bYDEEvbEiXzKzmqSRP3QT+5accjQ==}
     engines: {node: '>=22.12.0'}
     hasBin: true
 
@@ -2405,8 +2409,8 @@ packages:
       jsdom:
         optional: true
 
-  webdriver-bidi-protocol@1.0.1:
-    resolution: {integrity: sha512-WXWs/aXF2a6Al1Z2/V/7Gp2oPZOAAmHjJOTmv4KCXRJ122IMj3tSSMc6a4q3K4QOmhQbse/Ahr+oTVJOU2dUiw==}
+  webdriver-bidi-protocol@1.0.2:
+    resolution: {integrity: sha512-nghazPI+J5RrLZ+qb6vMjC6l1/tnwqr2muVEax4Ufd6eIdcjeqNnhLsAxTG9s+7Zf4umgf0DrEwDC8CoU91nAA==}
 
   which@1.3.1:
     resolution: {integrity: sha512-HxJdYWq1MTIQbJ3nw0cqssHoTNU267KlrDuGZ1WYlxDStUtKUhOaJmh112/TZmHxxUfuJqPXSOm7tDyas0OSIQ==}
@@ -2446,8 +2450,8 @@ packages:
     resolution: {integrity: sha512-42AtmgqjV+X1VpdOfyTGOYRi0/zsoLqtXQckTmqTeybT+BDIbM/Guxo7x3pE2vtpr1ok6xRqM9OpBe+Jyoqyww==}
     engines: {node: '>=18'}
 
-  ws@8.22.0:
-    resolution: {integrity: sha512-Ydggc987+RO0AnWtZ/7Wq9FtNvcrL1b/RO0ud9mWjUPgDrsAAwQSF51sm2hm1XofbU/4jkpGEsLFsZZxU+1DOg==}
+  ws@8.22.2:
+    resolution: {integrity: sha512-/rEZ2ejown2N5gxVTHUu9bVVC7ttu0/Tgzf5hbTOixR3Fs7mbbXgn2DbdbcKgJOmpQMtrIUWivtYuVMnp/W/yA==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -3085,7 +3089,7 @@ snapshots:
       '@pnpm/network.ca-file': 1.0.2
       config-chain: 1.1.13
 
-  '@puppeteer/browsers@3.2.6':
+  '@puppeteer/browsers@3.2.7':
     dependencies:
       modern-tar: 0.8.6
       yargs: 18.2.0
@@ -3447,9 +3451,9 @@ snapshots:
 
   chardet@2.2.0: {}
 
-  chromium-bidi@157.0.8090-0(devtools-protocol@0.0.1704951):
+  chromium-bidi@157.0.8090-0(devtools-protocol@0.0.1717327):
     dependencies:
-      devtools-protocol: 0.0.1704951
+      devtools-protocol: 0.0.1717327
       mitt: 3.0.1
       zod: 4.6.7
 
@@ -3549,7 +3553,7 @@ snapshots:
 
   detect-libc@2.1.2: {}
 
-  devtools-protocol@0.0.1704951: {}
+  devtools-protocol@0.0.1717327: {}
 
   dom-serializer@2.0.0:
     dependencies:
@@ -3892,6 +3896,8 @@ snapshots:
 
   lilconfig@3.1.3: {}
 
+  lilconfig@3.1.5: {}
+
   linebreak@1.1.0:
     dependencies:
       base64-js: 0.0.8
@@ -4113,27 +4119,27 @@ snapshots:
 
   proto-list@1.2.4: {}
 
-  puppeteer-core@25.16.0:
+  puppeteer-core@25.17.0:
     dependencies:
-      '@puppeteer/browsers': 3.2.6
-      chromium-bidi: 157.0.8090-0(devtools-protocol@0.0.1704951)
-      devtools-protocol: 0.0.1704951
+      '@puppeteer/browsers': 3.2.7
+      chromium-bidi: 157.0.8090-0(devtools-protocol@0.0.1717327)
+      devtools-protocol: 0.0.1717327
       typed-query-selector: 2.12.3
-      webdriver-bidi-protocol: 1.0.1
-      ws: 8.22.0
+      webdriver-bidi-protocol: 1.0.2
+      ws: 8.22.2
     transitivePeerDependencies:
       - bufferutil
       - proxy-agent
       - utf-8-validate
       - yauzl
 
-  puppeteer@25.16.0:
+  puppeteer@25.17.0:
     dependencies:
-      '@puppeteer/browsers': 3.2.6
-      chromium-bidi: 157.0.8090-0(devtools-protocol@0.0.1704951)
-      devtools-protocol: 0.0.1704951
-      lilconfig: 3.1.3
-      puppeteer-core: 25.16.0
+      '@puppeteer/browsers': 3.2.7
+      chromium-bidi: 157.0.8090-0(devtools-protocol@0.0.1717327)
+      devtools-protocol: 0.0.1717327
+      lilconfig: 3.1.5
+      puppeteer-core: 25.17.0
       typed-query-selector: 2.12.3
     transitivePeerDependencies:
       - bufferutil
@@ -4414,7 +4420,7 @@ snapshots:
     transitivePeerDependencies:
       - msw
 
-  webdriver-bidi-protocol@1.0.1: {}
+  webdriver-bidi-protocol@1.0.2: {}
 
   which@1.3.1:
     dependencies:
@@ -4454,7 +4460,7 @@ snapshots:
       string-width: 7.2.0
       strip-ansi: 7.2.0
 
-  ws@8.22.0: {}
+  ws@8.22.2: {}
 
   wsl-utils@0.4.0:
     dependencies:
