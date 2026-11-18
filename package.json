@@ -79,8 +79,8 @@
     "puppeteer": "^25.17.0",
     "react": "^19.3.1",
     "satori": "^0.63.2",
-    "twitter-openapi-typescript": "^0.1.8",
-    "twitter-openapi-typescript-generated": "^0.1.8"
+    "twitter-openapi-typescript": "^0.1.9",
+    "twitter-openapi-typescript-generated": "^0.1.9"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.6.6",
