@@ -173,11 +173,11 @@ importers:
         specifier: ^5.1.12
         version: 5.1.12
       '@oclif/plugin-help':
-        specifier: ^7.0.7
-        version: 7.0.7
+        specifier: ^7.0.10
+        version: 7.0.10
       '@oclif/plugin-plugins':
-        specifier: ^7.0.16
-        version: 7.0.16(supports-color@8.1.1)
+        specifier: ^7.0.17
+        version: 7.0.17(supports-color@8.1.1)
       '@oclif/plugin-warn-if-update-available':
         specifier: ^4.0.5
         version: 4.0.5(supports-color@8.1.1)
@@ -215,8 +215,8 @@ importers:
         specifier: ^7.0.0
         version: 7.0.0
       puppeteer:
-        specifier: ^25.17.0
-        version: 25.17.0
+        specifier: ^25.18.1
+        version: 25.18.1
       react:
         specifier: ^19.3.1
         version: 19.3.1
@@ -804,16 +804,16 @@ packages:
     resolution: {integrity: sha512-t8W/ljOb9DIsFNXbfLU4UpZ8+C/X0QuvJOuQXQVCthiw5zSdwKnKoq7HmyBUJwwo28302eiN0rRj8vN9k1U1Mw==}
     engines: {node: '>=22.0.0'}
 
-  '@oclif/plugin-help@7.0.7':
-    resolution: {integrity: sha512-k1mWE1bp3AhO6MIKRpdgbGKiPORNCikYRhpGCM7kIz0ywn72/vijoSPOxTfZRbVZyJKFtR25rZ9Lj+QGG2aBNQ==}
+  '@oclif/plugin-help@7.0.10':
+    resolution: {integrity: sha512-MinKzVlVMkggwECYLxZ4ppl/Yb8lm1Ge1In7FU/yuA1LyEXrE3pT1d2LT+3nZfhklo25qO4hczJykEMM4C5/Vw==}
     engines: {node: '>=22.0.0'}
 
   '@oclif/plugin-not-found@4.0.7':
     resolution: {integrity: sha512-i1SKG/rnCx/uy2YYzo3mthouiV5sFC+LXbudwRbjDgHEY87uSGPQG02kRYuge5s5XDmn0c8FOqzu6IVbx1aV5w==}
     engines: {node: '>=22.0.0'}
 
-  '@oclif/plugin-plugins@7.0.16':
-    resolution: {integrity: sha512-v5Aw3LW1ks1JJDa1op5rF7jc3W9fp1+1/h+ePrxToAB3aD7mG/UZP9tmJed6Y4FEFn5DpAwbvW1OKhsUx7PIHg==}
+  '@oclif/plugin-plugins@7.0.17':
+    resolution: {integrity: sha512-3GfUDxQMjbEjX/8aIEFrp+FXdKaHjTxU4slbYj5rvWzi4I0w0ikRrgIRkkKRwh8NXQnhN1lZHaIjjzfBD9D/UA==}
     engines: {node: '>=22.0.0'}
 
   '@oclif/plugin-warn-if-update-available@4.0.5':
@@ -2102,12 +2102,12 @@ packages:
   proto-list@1.2.4:
     resolution: {integrity: sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==}
 
-  puppeteer-core@25.17.0:
-    resolution: {integrity: sha512-YAgBitkd+K9gxRt+wzBAFTTkGjkC8aC2o4OxofsU8JUy2nnK/RflTCJ9bRCvCMNbq9TPhqFk4Phz98otN9FrGg==}
+  puppeteer-core@25.18.1:
+    resolution: {integrity: sha512-C0wHOJHDfAggGBtN5uUfsJGpeSKtPL5jzhgQYDuz4XKeOG1FUkxeZI2M5yK7AUyrdHO+RgDuiCfjmOpcw3PYTA==}
     engines: {node: '>=22.12.0'}
 
-  puppeteer@25.17.0:
-    resolution: {integrity: sha512-J+OQNlI7I6ZjHhF6Q8M+LgiUGldF7meer5EqMJBZMHgnFN3zcehOhpz/x0bYDEEvbEiXzKzmqSRP3QT+5accjQ==}
+  puppeteer@25.18.1:
+    resolution: {integrity: sha512-fCsfwERKluvC84jsVyhDoBZMNuI8t5FFnWXcTdH1vn3NhMk6clZcrF0Da2se6/Hj6CBJ+2PRPpqeV0qPIETeJA==}
     engines: {node: '>=22.12.0'}
     hasBin: true
 
@@ -3027,7 +3027,7 @@ snapshots:
       wrap-ansi: 7.0.0
       wsl-utils: 0.4.0
 
-  '@oclif/plugin-help@7.0.7':
+  '@oclif/plugin-help@7.0.10':
     dependencies:
       '@oclif/core': 5.1.12
 
@@ -3040,7 +3040,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@oclif/plugin-plugins@7.0.16(supports-color@8.1.1)':
+  '@oclif/plugin-plugins@7.0.17(supports-color@8.1.1)':
     dependencies:
       '@oclif/core': 5.1.12
       ansis: 3.17.0
@@ -4026,7 +4026,7 @@ snapshots:
       '@inquirer/input': 2.3.0
       '@inquirer/select': 2.5.0
       '@oclif/core': 5.1.12
-      '@oclif/plugin-help': 7.0.7
+      '@oclif/plugin-help': 7.0.10
       '@oclif/plugin-not-found': 4.0.7(@types/node@24.19.2)
       '@oclif/plugin-warn-if-update-available': 4.0.5(supports-color@8.1.1)
       ansis: 3.17.0
@@ -4119,7 +4119,7 @@ snapshots:
 
   proto-list@1.2.4: {}
 
-  puppeteer-core@25.17.0:
+  puppeteer-core@25.18.1:
     dependencies:
       '@puppeteer/browsers': 3.2.7
       chromium-bidi: 157.0.8090-0(devtools-protocol@0.0.1717327)
@@ -4133,13 +4133,13 @@ snapshots:
       - utf-8-validate
       - yauzl
 
-  puppeteer@25.17.0:
+  puppeteer@25.18.1:
     dependencies:
       '@puppeteer/browsers': 3.2.7
       chromium-bidi: 157.0.8090-0(devtools-protocol@0.0.1717327)
       devtools-protocol: 0.0.1717327
       lilconfig: 3.1.5
-      puppeteer-core: 25.17.0
+      puppeteer-core: 25.18.1
       typed-query-selector: 2.12.3
     transitivePeerDependencies:
       - bufferutil
